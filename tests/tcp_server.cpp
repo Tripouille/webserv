@@ -5,7 +5,30 @@
 #include <cstdlib>
 #include <iostream>
 #include <unistd.h>
+#include <vector>
+#include <algorithm>
+#include <fstream>
+#include <sstream>
 #define PORT 8080
+using std::string;
+using std::vector;
+
+vector<string> split(string const& s, char delimitor)
+{
+	vector<string>	res;
+	size_t			start = -1;
+	size_t			end = 0;
+
+	while (s[++start])
+	{
+		end = start;
+		while (s[end] && s[end] != delimitor)
+			++end;
+		res.push_back(s.substr(start, end - start));
+		start = end;
+	}
+	return (res);
+}
 
 int main(void)
 {
@@ -44,14 +67,45 @@ int main(void)
 		exit(EXIT_FAILURE);
 	}
 
+
+
+
+
+
 	char buffer[1024] = {0};
 	valread = recv(new_socket, buffer, 1024, 0);
-	std::cout << buffer << std::endl;
+	//std::cout << buffer << std::endl;
+	vector<string> header = split(buffer, '\n');
+	for_each(header.begin(), header.end(), [](string const & s){std::cout << s << std::endl;});
+	vector<string> header_first_line = split(header[0], ' ');
+	for_each(header_first_line.begin(), header_first_line.end(), [](string const & s){std::cout << s << std::endl;});
+
+
+	string message = "HTTP/1.1 200 OK\n";
 	if (valread < 0)
 		std::cout << "No bytes are there to read" << std::endl;
-	const char* hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
-	std::cout << "(hello message sent)" << std::endl;
-	write(new_socket, hello, strlen(hello));
+	else if (header_first_line[1] == "/elephant.jpg")
+	{
+		message += "Content-Type: image/jpeg\nContent-Length: ";
+		std::ifstream file("." + header_first_line[1]);
+		if (!file.is_open())
+		{
+			perror("can't open file");
+			return (-1);
+		}
+		std::stringstream buffer;
+		buffer << file.rdbuf();
+		message += std::to_string(buffer.str().size()) + "\n\n" + buffer.str();
+		std::cout << "message : " << buffer.str().size() << std::endl;
+	}
+	else
+		message += "Content-Type: text/plain\nContent-Length: 12\n\nHello world!";
+	std::cout << "(message sent)" << std::endl;
+	write(new_socket, message.c_str(), message.size());
+
+
+
+
 	
 	close(new_socket);
 }
