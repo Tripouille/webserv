@@ -49,7 +49,7 @@ int main(void)
 	std::cout << buffer << std::endl;
 	if (valread < 0)
 		std::cout << "No bytes are there to read" << std::endl;
-	const char* hello = "Hello from the server";
+	const char* hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
 	std::cout << "(hello message sent)" << std::endl;
 	write(new_socket, hello, strlen(hello));
 	
