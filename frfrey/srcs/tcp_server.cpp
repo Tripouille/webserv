@@ -98,8 +98,36 @@ int main(void)
 		message += std::to_string(buffer.str().size()) + "\n\n" + buffer.str();
 		std::cout << "message : " << buffer.str().size() << std::endl;
 	}
+	else if (header_first_line[1] != "/")
+	{
+		message += "Content-Type: text/html\nContent-Length: ";
+		std::ifstream file("." + header_first_line[1]);
+		if (!file.is_open())
+		{
+			file.close();
+			file.open("." + string("/404.html"));
+			if (!file.is_open())
+			{
+				perror("can't open file");
+				return (-1);
+			}
+		}
+		std::stringstream buffer;
+		buffer << file.rdbuf();
+		message += std::to_string(buffer.str().size()) + "\n\n" + buffer.str();
+		std::cout << "message : " << buffer.str().size() << std::endl;
+	}
 	else
-		message += "Content-Type: text/plain\nContent-Length: 12\n\nHello world!";
+	{
+		message += "Content-Type: text/html\nContent-Length: ";
+		std::ifstream file("." + string("/index.html"));
+		if (!file.is_open())
+			std::ifstream file("." + string("/404.html"));
+		std::stringstream buffer;
+		buffer << file.rdbuf();
+		message += std::to_string(buffer.str().size()) + "\n\n" + buffer.str();
+		std::cout << "message : " << buffer.str().size() << std::endl;
+	}
 	std::cout << "(message sent)" << std::endl;
 	write(new_socket, message.c_str(), message.size());
 
