@@ -16,16 +16,18 @@ using std::vector;
 vector<string> split(string const& s, char delimitor)
 {
 	vector<string>	res;
-	size_t			start = -1;
+	size_t			start = 0;
 	size_t			end = 0;
 
-	while (s[++start])
+	while (s[start])
 	{
 		end = start;
 		while (s[end] && s[end] != delimitor)
 			++end;
 		res.push_back(s.substr(start, end - start));
 		start = end;
+		while (s[start] == delimitor)
+			++start;
 	}
 	return (res);
 }
