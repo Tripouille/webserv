@@ -16,16 +16,18 @@ using std::vector;
 vector<string> split(string const& s, char delimitor)
 {
 	vector<string>	res;
-	size_t			start = -1;
+	size_t			start = 0;
 	size_t			end = 0;
 
-	while (s[++start])
+	while (s[start])
 	{
 		end = start;
 		while (s[end] && s[end] != delimitor)
 			++end;
 		res.push_back(s.substr(start, end - start));
 		start = end;
+		while (s[start] == delimitor)
+			++start;
 	}
 	return (res);
 }
@@ -74,7 +76,6 @@ int main(void)
 
 	char buffer[1024] = {0};
 	valread = recv(new_socket, buffer, 1024, 0);
-	//std::cout << buffer << std::endl;
 	vector<string> header = split(buffer, '\n');
 	for_each(header.begin(), header.end(), [](string const & s){std::cout << s << std::endl;});
 	vector<string> header_first_line = split(header[0], ' ');
@@ -104,6 +105,8 @@ int main(void)
 		std::ifstream file("." + header_first_line[1]);
 		if (!file.is_open())
 		{
+			message = "HTTP/1.1 404\n";
+			message += "Content-Type: text/html\nstatus: 404\nContent-Length: ";
 			file.close();
 			file.open("." + string("/404.html"));
 			if (!file.is_open())
@@ -128,12 +131,7 @@ int main(void)
 		message += std::to_string(buffer.str().size()) + "\n\n" + buffer.str();
 		std::cout << "message : " << buffer.str().size() << std::endl;
 	}
-	std::cout << "(message sent)" << std::endl;
 	write(new_socket, message.c_str(), message.size());
-
-
-
-
 
 	close(new_socket);
 }
