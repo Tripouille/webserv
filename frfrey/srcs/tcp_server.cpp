@@ -136,7 +136,7 @@ int main(void)
 		read_fd_set = active_fd_set;
 		// int select(int ndffs, fd_set *readfds, fd_set *writefds, fd_sert *exceptfds, struct timeval* timeout)
 		// timeout = NULL > infinite
-		timeval tv = {10, 0};
+		timeval tv = {10, 0}; // a remplacer par NULL
 		if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, &tv) < 0)
 		{
 			perror("in select");
@@ -187,83 +187,4 @@ int main(void)
 			}
 		}
 	}
-
-
-
-	/*std::cout << "++++++++ Waiting for new connection ++++++++" << std::endl << std::endl;
-	if ((new_socket = accept(server_fd, (sockaddr*)&address, (socklen_t*)&addrlen)) < 0)
-	{
-		perror("Error : in accept");
-		exit(EXIT_FAILURE);
-	}
-
-
-
-
-
-
-	char buffer[1024] = {0};
-	valread = recv(new_socket, buffer, 1024, 0);
-	vector<string> header = split(buffer, '\n');
-	for_each(header.begin(), header.end(), [](string const & s){std::cout << s << std::endl;});
-	vector<string> header_first_line = split(header[0], ' ');
-	for_each(header_first_line.begin(), header_first_line.end(), [](string const & s){std::cout << s << std::endl;});
-
-
-	string message = "HTTP/1.1 200 OK\n";
-	if (valread < 0)
-		std::cout << "No bytes are there to read" << std::endl;
-	else if (header_first_line[1] == "/elephant.jpg")
-	{
-		message += "Content-Type: image/jpeg\nContent-Length: ";
-		std::ifstream file("." + header_first_line[1]);
-		if (!file.is_open())
-		{
-			perror("can't open file");
-			return (-1);
-		}
-		std::stringstream buffer;
-		buffer << file.rdbuf();
-		message += std::to_string(buffer.str().size()) + "\n\n" + buffer.str();
-		std::cout << "message : " << buffer.str().size() << std::endl;
-	}
-	else if (header_first_line[1] != "/")
-	{
-		message += "Content-Type: text/html\nContent-Length: ";
-		std::ifstream file("." + header_first_line[1]);
-		if (!file.is_open())
-		{
-			message = "HTTP/1.1 404\n";
-			message += "Content-Type: text/html\nContent-Length: ";
-			file.close();
-			file.open("." + string("/404.html"));
-			if (!file.is_open())
-			{
-				perror("can't open file");
-				return (-1);
-			}
-		}
-		std::stringstream buffer;
-		buffer << file.rdbuf();
-		message += std::to_string(buffer.str().size()) + "\n\n" + buffer.str();
-		std::cout << "message : " << buffer.str().size() << std::endl;
-	}
-	else
-	{
-		message += "Content-Type: text/html\nContent-Length: ";
-		std::ifstream file("." + string("/index.html"));
-		if (!file.is_open())
-			std::ifstream file("." + string("/404.html"));
-		std::stringstream buffer;
-		buffer << file.rdbuf();
-		message += std::to_string(buffer.str().size()) + "\n\n" + buffer.str();
-		std::cout << "message : " << buffer.str().size() << std::endl;
-	}
-	write(new_socket, message.c_str(), message.size());
-
-	close(new_socket);*/
 }
-
-//includes en plus (https://www.gta.ufrj.br/ensino/eel878/sockets/sockaddr_inman.html)
-//mot-clé struct inutile (c > c++)
-// read > recv
