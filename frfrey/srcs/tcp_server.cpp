@@ -106,7 +106,7 @@ int main(void)
 		if (!file.is_open())
 		{
 			message = "HTTP/1.1 404\n";
-			message += "Content-Type: text/html\nstatus: 404\nContent-Length: ";
+			message += "Content-Type: text/html\nContent-Length: ";
 			file.close();
 			file.open("." + string("/404.html"));
 			if (!file.is_open())
