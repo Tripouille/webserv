@@ -90,7 +90,7 @@ void read_data_and_answer(char const * buffer, int fd)
 		buffer << file.rdbuf();
 		message += std::to_string(buffer.str().size()) + "\n\n" + buffer.str();
 	}
-	write(fd, message.c_str(), message.size());
+	send(fd, message.c_str(), message.size(), 0);
 }
 
 int main(void)
