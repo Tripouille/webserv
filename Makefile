@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+         #
+#    By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/11/05 15:27:30 by frfrey            #+#    #+#              #
-#    Updated: 2020/11/05 18:02:48 by frfrey           ###   ########lyon.fr    #
+#    Updated: 2020/11/06 16:05:01 by aalleman         ###   ########lyon.fr    #
 #                                                                              #
 # **************************************************************************** #
 
@@ -37,7 +37,7 @@ ifdef DEBUG
 FLAG					+= -g
 endif
 
-#FLAGS					= -g3 -fsanitize=address -Wconversion
+#FLAG					= -g3 -fsanitize=address
 
 # **************************************************************************** #
 #								REGLES									       #
