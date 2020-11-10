@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <stdlib.h>
 #include <iostream>
 #include <unistd.h>
 #include <vector>
@@ -23,20 +24,20 @@ vector<string> split(std::string s, char delimitor)
 
 	while (s[start])
 	{
+		while (s[start] == delimitor)
+			++start;
 		end = start;
 		while (s[end] && s[end] != delimitor)
 			++end;
 		res.push_back(s.substr(start, end - start));
 		start = end;
-		while (s[start] == delimitor)
-			++start;
 	}
 	return (res);
 }
 
 void read_data_and_answer(char const * buffer, int fd)
 {
-	vector<string> header = split(string(buffer), '\n');
+	vector<string> header = split(buffer, '\n');
 	std::cerr << std::endl << "Header received : " << std::endl;
 	for_each(header.begin(), header.end(), [](string const & s){std::cout << s << std::endl;});
 	std::cerr << std::endl;
@@ -93,6 +94,8 @@ void read_data_and_answer(char const * buffer, int fd)
 	send(fd, message.c_str(), message.size(), 0);
 }
 
+/* Enlever les perror */
+
 int main(void)
 {
 	int				server_fd, new_socket;
@@ -106,12 +109,22 @@ int main(void)
 		return (0);
 	}
 
+	// Flag SO_REUSEADDR pour éviter l'erreur "bind failed: Address already in use"
+	// A voir si on a le droit
+	int n = 1;
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) < 0)
+	{
+		perror("in setsockopt");
+		close(server_fd);
+		exit(EXIT_FAILURE);
+	}
+
 	memset((char*)&address, 0, addrlen);
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = htonl(INADDR_ANY);
 	address.sin_port = htons(PORT);
 
-	if (bind(server_fd, (sockaddr*)&address, sizeof(address)) < 0)
+	if (bind(server_fd, (sockaddr*)&address, addrlen) < 0)
 	{
 		perror("Error : bind failed");
 		return (0);
@@ -132,9 +145,8 @@ int main(void)
 
 	while (1)
 	{
-		// Block until input arrives on one or more active sockets
 		read_fd_set = active_fd_set;
-		// int select(int ndffs, fd_set *readfds, fd_set *writefds, fd_sert *exceptfds, struct timeval* timeout)
+		// int select(int ndffs, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval* timeout)
 		// timeout = NULL > infinite
 		timeval tv = {10, 0}; // a remplacer par NULL
 		if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, &tv) < 0)
@@ -165,7 +177,7 @@ int main(void)
 				{
 					// Data arriving on an already-connected socket
 					std::cerr << std::endl << "Data arriving on an already connected socket" << std::endl;
-					char buffer[MAXMSG];
+					char buffer[MAXMSG + 1];
 					int nbytes;
 
 					if ((nbytes = recv(i, buffer, MAXMSG, 0)) < 0)
@@ -175,12 +187,14 @@ int main(void)
 					}
 					else if (nbytes == 0) // end of file
 					{
+						std::cerr << "nbytes = 0" << std::endl;
 						close(i);
 						FD_CLR(i, &active_fd_set);
 					}
 					else
 					{
-						buffer[nbytes - 1] = 0;
+						std::cerr << "nbytes = " << nbytes << std::endl;
+						buffer[nbytes] = 0;
 						read_data_and_answer(buffer, i);
 					}
 				}
