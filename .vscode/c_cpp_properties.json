@@ -6,11 +6,12 @@
                 "${default}",
                 "/usr/include",
                 "/usr/include/c++/7",
-                "/usr/include/x86_64-linux-gnu/bits"
+                "/usr/include/x86_64-linux-gnu/bits",
+                "includes"
             ],
             "compilerPath": "/usr/bin/clang",
             "cStandard": "c11",
-            "cppStandard": "c++14",
+            "cppStandard": "c++98",
             "intelliSenseMode": "clang-x64"
         }
     ],
