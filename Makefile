@@ -6,35 +6,33 @@
 #    By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/11/05 15:27:30 by frfrey            #+#    #+#              #
-#    Updated: 2020/11/06 16:05:01 by aalleman         ###   ########lyon.fr    #
+#    Updated: 2020/11/25 16:56:43 by aalleman         ###   ########lyon.fr    #
 #                                                                              #
 # **************************************************************************** #
 
 
-HEADER					= frfrey/includes/
+HEADERS_PATH			= includes/
+HEADERS_NAME			= TcpListener.hpp
+HEADERS					= $(addprefix $(HEADERS_PATH), $(HEADERS_NAME))
 
-SRC_PATH				= frfrey/srcs/
+SRCS_PATH				= srcs/
+SRCS_NAME				= main.cpp TcpListener.cpp
+SRCS					= $(addprefix $(SRCS_PATH), $(SRCS_NAME))
 
-SRC_NAME				= tcp_server.cpp
+OBJS_PATH				= objs/
+OBJS_NAME				= $(SRCS_NAME:.cpp=.o)
+OBJS					= $(addprefix $(OBJS_PATH), $(OBJS_NAME))
 
-SRCS					= $(addprefix $(SRC_PATH), $(SRC_NAME))
-
-OBJ_NAME				= $(SRC_NAME:.cpp=.o)
-
-OBJ_PATH				= obj/
-
-OBJ						= $(addprefix $(OBJ_PATH), $(OBJ_NAME))
-
-NAME					= server
+NAME					= webserv
 
 RM						= rm -rf
 
-CC						= clang++-9
+CC						= clang++
 
-FLAG					= -Wall -Wextra -Werror -std=c++17
+FLAGS					= -Wall -Wextra -Werror -Wconversion -std=c++98
 
 ifdef DEBUG
-FLAG					+= -g
+FLAGS					+= -g
 endif
 
 #FLAG					= -g3 -fsanitize=address
@@ -43,41 +41,22 @@ endif
 #								REGLES									       #
 # **************************************************************************** #
 
-all: $(OBJ_PATH) $(NAME) $(HEADER)
+all: $(NAME)
 
-$(NAME): $(OBJ)
-	@$(CC) $(FLAG) $(OBJ) -o $(NAME)
-	@printf "\33[2K\r \033[0m\033[0;33mTcp_Server: \t\033[0;38;5;121mUpdated\n\033[0m"
+$(NAME): $(OBJS_PATH) $(OBJS)
+	$(CC) $(FLAGS) $(OBJS) -o $(NAME)
 
-$(OBJ_PATH):
-	@mkdir -p obj/ 2> /dev/null
+$(OBJS_PATH):
+	mkdir -p objs/ 2> /dev/null
 
-$(OBJ_PATH)%.o: $(SRC_PATH)%.cpp
-	@printf "\033[2K\r\033[0;32m[Compiling] : \t\033[0;32m\033[0m$<"
-	@$(CC) $(FLAG) -I $(HEADER) -c $< -o $@
+$(OBJS): $(SRCS) $(HEADERS)
+	$(CC) $(FLAGS) -I $(HEADERS_PATH) -c $< -o $@
 
 clean:
-	@printf "\033[2K\r\033[31mDeleting LeTcp_Serverarn srcs/	\033[37m"
-	@sleep 0.1
-	@printf "\033[2K\r\033[31mDeleting Tcp_Server srcs/.	\033[37m"
-	@sleep 0.1
-	@printf "\033[2K\r\033[31mDeleting Tcp_Server srcs/..	\033[37m"
-	@sleep 0.1
-	@printf "\033[2K\r\033[31mDeleting Tcp_Server srcs/...	\033[37m"
-	@sleep 0.1
-	@printf "\033[2K\r\033[31mDeleting Tcp_Server srcs/	\033[37m"
-	@sleep 0.1
-	@printf "\033[2K\r\033[31mDeleting Tcp_Server srcs/.	\033[37m"
-	@sleep 0.1
-	@printf "\033[2K\r\033[31mDeleting Tcp_Server srcs/..	\033[37m"
-	@sleep 0.1
-	@printf "\033[2K\r\033[31mDeleting Tcp_Server srcs/...	\033[37m"
-	@sleep 0.1
-	@${RM} ${OBJ_PATH}
-	@printf "\33[2K\r \033[0;32m[OK] \033[0m \033[36m Deleted successfully!\n\033[0m"
+	${RM} ${OBJS_PATH}
 
 fclean: clean
-	@${RM} ${NAME}
+	${RM} ${NAME}
 
 re: fclean all
 
