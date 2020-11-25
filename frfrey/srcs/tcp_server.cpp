@@ -6,7 +6,7 @@
 /*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/25 14:20:44 by aalleman          #+#    #+#             */
-/*   Updated: 2020/11/25 14:20:49 by aalleman         ###   ########lyon.fr   */
+/*   Updated: 2020/11/25 17:02:48 by aalleman         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,8 +105,6 @@ void read_data_and_answer(char const * buffer, int fd)
 	}
 	send(fd, message.c_str(), message.size(), 0);
 }
-
-/* Enlever les perror */
 
 int main(void)
 {

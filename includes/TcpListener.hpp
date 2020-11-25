@@ -4,6 +4,9 @@
 # include <iostream>
 # include <sys/socket.h>
 # include <unistd.h>
+# include <netinet/in.h>
+# include <cstring>
+# include <cerrno>
 # define BACKLOG 3
 using std::string;
 
@@ -16,7 +19,8 @@ class TcpListener
 				tcpException(const char * str = "") throw() : _str(str) {}
 				virtual ~tcpException(void) throw() {}
 				virtual const char * what(void) const throw()
-				{
+				{;
+					std::cerr << strerror(errno) << " : ";
 					return (_str);
 				}
 			private:

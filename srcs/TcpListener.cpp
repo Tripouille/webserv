@@ -34,7 +34,7 @@ TcpListener::init(void)
 		throw tcpException("Setting socket option failed");
 	}
 
-	if (bind(_socket, reinterpret_cast<sockaddr*>(&_address), sizeof(_address)) < 0)
+	if (bind(_socket, reinterpret_cast<sockaddr*>(&_address), sizeof(sockaddr_in)) < 0)
 	{
 		close(_socket);
 		throw tcpException("Bind failed");
