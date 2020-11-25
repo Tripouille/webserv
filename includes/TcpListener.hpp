@@ -27,14 +27,14 @@ class TcpListener
 				const char * _str;
 		};
 
-		TcpListener(const char * ipAddress, int port);
+		TcpListener(in_addr_t const & ipAddress, uint16_t port);
 		virtual ~TcpListener();
 
 		void init(void);
 
 	private:
-		const char *	_address;
-		const int		_port;
+		in_addr_t		_ipAddress;
+		const uint16_t	_port;
 		int				_socket;
 		const int		_backlog;
 

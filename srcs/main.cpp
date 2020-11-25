@@ -7,15 +7,8 @@ using std::endl;
 
 int main(void)
 {
-	sockaddr_in		address;
-	size_t			addrlen = sizeof(address);
 
-	memset(reinterpret_cast<char*>(&address), 0, addrlen);
-	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = htonl(INADDR_ANY);
-	address.sin_port = htons(PORT);
-
-	TcpListener webserv(reinterpret_cast<const char *>(&address), PORT);
+	TcpListener webserv(INADDR_ANY, PORT);
 	try
 	{
 		webserv.init();
