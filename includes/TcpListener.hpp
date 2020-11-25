@@ -8,7 +8,12 @@
 # include <cstring>
 # include <cerrno>
 # define BACKLOG 3
+# define MAXMSG 512
+typedef int SOCKET;
 using std::string;
+using std::cerr;
+using std::cout;
+using std::endl;
 
 class TcpListener
 {
@@ -31,16 +36,19 @@ class TcpListener
 		virtual ~TcpListener();
 
 		void init(void);
+		void run(void);
 
 	private:
 		in_addr_t		_ipAddress;
 		const uint16_t	_port;
 		int				_socket;
 		const int		_backlog;
+		fd_set			_activeFdSet;
 
 		TcpListener(void);
 		TcpListener(TcpListener const& other);
 		TcpListener& operator=(TcpListener const& other);
+		void _killSocket(SOCKET sock);
 };
 
 #endif

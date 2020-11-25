@@ -12,6 +12,7 @@ int main(void)
 	try
 	{
 		webserv.init();
+		webserv.run();
 	}
 	catch (TcpListener::tcpException const & e)
 	{
