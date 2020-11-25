@@ -18,6 +18,8 @@ ifdef d
 FLAGS					+= -g3
 endif
 
+test: all
+	./webserv
 
 all: $(NAME)
 

@@ -19,9 +19,9 @@ class TcpListener
 				tcpException(const char * str = "") throw() : _str(str) {}
 				virtual ~tcpException(void) throw() {}
 				virtual const char * what(void) const throw()
-				{;
-					std::cerr << strerror(errno) << " : ";
-					return (_str);
+				{
+					static string s = string(_str) + " : " + strerror(errno);
+					return (s.c_str());
 				}
 			private:
 				const char * _str;
