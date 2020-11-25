@@ -28,7 +28,7 @@
 			"command": "make",
 			"args": [
 				"re",
-				"DEBUG=1"
+				"DEBUG=d"
 			],
 			"presentation": {
 				"echo": true,

@@ -14,7 +14,7 @@ RM						= rm -rf
 CC						= clang++
 FLAGS					= -Wall -Wextra -Werror -Wconversion -std=c++98
 
-ifdef d
+ifdef DEBUG
 FLAGS					+= -g3
 endif
 

@@ -14,7 +14,7 @@
 			},
 			"request": "launch",
 			"preLaunchTask": "Build.Debug",
-			"program": "${workspaceFolder}/server",
+			"program": "${workspaceFolder}/webserv",
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
