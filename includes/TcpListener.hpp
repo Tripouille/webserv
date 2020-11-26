@@ -21,15 +21,11 @@ class TcpListener
 		class tcpException : public std::exception
 		{
 			public:
-				tcpException(const char * str = "") throw() : _str(str) {}
+				tcpException(string str = "") throw();
 				virtual ~tcpException(void) throw() {}
-				virtual const char * what(void) const throw()
-				{
-					static string s = string(_str) + " : " + strerror(errno);
-					return (s.c_str());
-				}
+				virtual const char * what(void) const throw();
 			private:
-				const char * _str;
+				string _str;
 		};
 
 		TcpListener(in_addr_t const & ipAddress, uint16_t port);
@@ -44,11 +40,14 @@ class TcpListener
 		int				_socket;
 		const int		_backlog;
 		fd_set			_activeFdSet;
+		int				_clientNb;
 
 		TcpListener(void);
 		TcpListener(TcpListener const& other);
 		TcpListener& operator=(TcpListener const& other);
 		void _killSocket(SOCKET sock);
+		void _acceptNewClient(void);
+		void _receiveData(SOCKET sock);
 };
 
 #endif

@@ -7,7 +7,6 @@ using std::endl;
 
 int main(void)
 {
-
 	TcpListener webserv(INADDR_ANY, PORT);
 	try
 	{

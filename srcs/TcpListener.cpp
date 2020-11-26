@@ -1,9 +1,22 @@
 #include "TcpListener.hpp" 
 
+/* tcpException */
+
+TcpListener::tcpException::tcpException(string str) throw()
+						  : _str(str + " : " + strerror(errno))
+{
+}
+
+const char *
+TcpListener::tcpException::what(void) const throw()
+{
+	return (_str.c_str());
+}
+
 /* Constructors and destructor */
 
 TcpListener::TcpListener(in_addr_t const & ipAddress, uint16_t port)
-			: _ipAddress(ipAddress), _port(port), _backlog(BACKLOG)
+			: _ipAddress(ipAddress), _port(port), _backlog(BACKLOG), _clientNb(0)
 {
 }
 
@@ -48,6 +61,15 @@ TcpListener::init(void)
 		close(_socket);
 		throw tcpException("Bind failed");
 	}
+
+	if (listen(_socket, _backlog) < 0)
+	{
+		close(_socket);
+		throw tcpException("Listen failed");
+	}
+
+	FD_ZERO(&_activeFdSet);
+	FD_SET(_socket, &_activeFdSet);
 }
 
 void
@@ -61,28 +83,17 @@ TcpListener::_killSocket(SOCKET sock)
 void
 TcpListener::run(void)
 {
-	if (listen(_socket, _backlog) < 0)
-	{
-		close(_socket);
-		throw tcpException("Listen failed");
-	}
-
-	FD_ZERO(&_activeFdSet);
-	FD_SET(_socket, &_activeFdSet); //places _socket in the fd_set activeFdSet
-
 	fd_set setCopy;
-	int clientNb = 0;
 	bool running = true;
 	while (running)
 	{
 		setCopy = _activeFdSet;
-		// int select(int ndffs, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval* timeout)
-		timeval timeout = {10, 0}; // 10 secondes
+		timeval timeout = {10, 0}; //sec, usec
 		int socketCount = select(FD_SETSIZE, &setCopy, NULL, NULL, &timeout);
 		if (socketCount < 0)
 		{
 			close(_socket);
-			throw("Select failed");
+			throw tcpException("Select failed");
 		}
 
 		// Service all the sockets with input pending
@@ -91,46 +102,53 @@ TcpListener::run(void)
 			if (FD_ISSET(sock, &setCopy))
 			{
 				if (sock == _socket)
-				{
-					// Connection request on original socket
-					cout << endl << "Connection request on original socket" << endl;
-					SOCKET client = accept(_socket, NULL, NULL);
-					if (client < 0)
-						throw("Accept failed");
-					//std::cout << "Server : connect from host " << inet_ntoa(address.sin_addr)
-					//		<< ", port " << ntohs(address.sin_port) << std::endl;
-					FD_SET(client, &_activeFdSet);
-					clientNb++;
-					cout << clientNb << " clients connected" << endl;
-				}
+					_acceptNewClient();
 				else
-				{
-					// Data arriving on an already-connected socket
-					cout << endl << "Data arriving on an already connected socket" << endl;
-					char buffer[MAXMSG + 1];
-					ssize_t nbytes;
-
-					if ((nbytes = recv(sock, buffer, MAXMSG, 0)) < 0)
-					{
-						_killSocket(sock);
-						clientNb--;
-						cerr << "Error in recv" << endl; // A GERER
-					}
-					else if (nbytes == 0) // end of file
-					{
-						_killSocket(sock);
-						clientNb--;
-						std::cerr << "nbytes = 0" << std::endl;
-					}
-					else
-					{
-						std::cerr << "nbytes = " << nbytes << std::endl;
-						buffer[nbytes] = 0;
-						//read_data_and_answer(buffer, i);
-						cout << "buffer = " << buffer << endl;
-					}
-				}
+					_receiveData(sock);
 			}
 		}
+	}
+}
+
+void
+TcpListener::_acceptNewClient(void)
+{
+	cout << endl << "New connection to the server" << endl;
+	SOCKET client = accept(_socket, NULL, NULL);
+	if (client < 0)
+		throw tcpException("Accept failed");
+	//std::cout << "Server : connect from host " << inet_ntoa(address.sin_addr)
+	//		<< ", port " << ntohs(address.sin_port) << std::endl;
+	FD_SET(client, &_activeFdSet);
+	cout << ++_clientNb << " clients connected" << endl;
+
+}
+
+void
+TcpListener::_receiveData(SOCKET sock)
+{
+	// Data arriving on an already-connected socket
+	cout << endl << "Data arriving on an already connected socket" << endl;
+	char buffer[MAXMSG + 1];
+	ssize_t nbytes;
+
+	if ((nbytes = recv(sock, buffer, MAXMSG, 0)) < 0)
+	{
+		_killSocket(sock);
+		_clientNb--;
+		cerr << "Error in recv" << endl; // A GERER
+	}
+	else if (nbytes == 0) // end of file
+	{
+		_killSocket(sock);
+		_clientNb--;
+		std::cerr << "nbytes = 0" << std::endl;
+	}
+	else
+	{
+		std::cerr << "nbytes = " << nbytes << std::endl;
+		buffer[nbytes] = 0;
+		//read_data_and_answer(buffer, i);
+		cout << "buffer = " << buffer << endl;
 	}
 }
