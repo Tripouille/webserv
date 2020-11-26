@@ -130,31 +130,39 @@ TcpListener::_receiveData(SOCKET client)
 {
 	cout << endl << "Data arriving from socket " << client << endl;
 	char		buffer[CLIENT_MAX_BODY_SIZE + 2];
-	ssize_t		nbytes;
 	s_status	status = {200, "OK"};
+	ssize_t		nbytes;
 
-	if ((nbytes = recv(client, buffer, CLIENT_MAX_BODY_SIZE + 1, 0)) < 0)
+	nbytes = recv(client, buffer, CLIENT_MAX_BODY_SIZE + 1, 0);
+	if (nbytes == 0) // end of file
 	{
 		_disconnectClient(client);
-		status.code = 500; status.info = "Internal Server Error (Cannot recv)";
+		return ;
+	}
+	else if (nbytes < 0)
+	{
+		//_disconnectClient(client);
+		status.set(500, "Internal Server Error (Cannot recv)");
 		// A GERER : fonction pour envoyer erreur
 	}
 	else if (nbytes == CLIENT_MAX_BODY_SIZE + 1)
 	{
-		_disconnectClient(client);
-		status.code = 413; status.info = "Entity Too Large";
+		//_disconnectClient(client);
+		status.set(413, "Entity Too Large");
 		// A GERER : fonction pour envoyer erreur
 	}
-	else if (nbytes == 0) // end of file
-		_disconnectClient(client);
 	else
 	{
 		buffer[nbytes] = 0;
 		//renverra structure allouée avec infos de la requête
-		request req = _parseRequest(buffer, status);
+		s_request req = _parseRequest(buffer, status);
 		// appel de fonction pour répondre ou renvoyer une erreur
 		//cout << "buffer = " << buffer << endl;
 	}
+	_sendStatus(client, status);
+	send(client, "\r\n", 2, 0);
+	if (status.info != "OK")
+		_disconnectClient(client);
 }
 
 		/*struct request
@@ -163,25 +171,29 @@ TcpListener::_receiveData(SOCKET client)
 			map<string, string>	fields;
 			string				body;
 		};*/
-TcpListener::request
+TcpListener::s_request
 TcpListener::_parseRequest(char * buffer, s_status & status) const
 {
-	std::istringstream iss(buffer);
-	string line;
+	std::istringstream	iss(buffer);
+	string				line;
+	s_request			request;
+
+
 	getline(iss, line); // max 1024
 	if (line.size() > REQUEST_LINE_MAX_SIZE)
 	{
-		status.code = 400; status.info = "Bad Request";
+		status.set(400, status.info = "Bad Request");
 		cerr << "REQUEST_LINE_MAX_SIZE error to handle" << endl;
+		return (request);
 	}
 	vector<string> startLine = _split(line, ' ');
 	if (startLine.size() != 3)
 	{
-		status.code = 400; status.info = "Bad Request";
-
+		status.set(400, status.info = "Bad Request");
+		return (request);
 	}
 	cerr << line << endl;
-	return (request());
+	return (request);
 }
 
 vector<string>

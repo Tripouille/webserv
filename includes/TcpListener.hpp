@@ -46,7 +46,7 @@ class TcpListener
 		void run(void);
 
 	private:
-		struct request
+		struct s_request
 		{
 			string 				method, target, httpVersion;
 			map<string, string>	fields;
@@ -57,6 +57,7 @@ class TcpListener
 		{
 			int		code;
 			string	info;
+			void set(int c, string const & i) {code = c; info = i;}
 		};
 
 		in_addr_t		_ipAddress;
@@ -72,7 +73,7 @@ class TcpListener
 		void _disconnectClient(SOCKET client);
 		void _acceptNewClient(void);
 		void _receiveData(SOCKET client);
-		request _parseRequest(char * buffer, s_status & status) const;
+		s_request _parseRequest(char * buffer, s_status & status) const;
 		vector<string> _split(string & s, char delim) const;
 		void _sendStatus(SOCKET client, s_status const & status);
 };
