@@ -73,11 +73,12 @@ TcpListener::init(void)
 }
 
 void
-TcpListener::_killSocket(SOCKET sock)
+TcpListener::_disconnectClient(SOCKET client)
 {
-	cerr << "Killing socket " << sock << endl;
-	close(sock);
-	FD_CLR(sock, &_activeFdSet);
+	cerr << "Killing socket " << client << endl;
+	FD_CLR(client, &_activeFdSet);
+	close(client);
+	_clientNb--;
 }
 
 void
@@ -125,30 +126,83 @@ TcpListener::_acceptNewClient(void)
 }
 
 void
-TcpListener::_receiveData(SOCKET sock)
+TcpListener::_receiveData(SOCKET client)
 {
-	// Data arriving on an already-connected socket
-	cout << endl << "Data arriving on an already connected socket" << endl;
-	char buffer[MAXMSG + 1];
-	ssize_t nbytes;
+	cout << endl << "Data arriving from socket " << client << endl;
+	char		buffer[CLIENT_MAX_BODY_SIZE + 2];
+	ssize_t		nbytes;
+	s_status	status = {200, "OK"};
 
-	if ((nbytes = recv(sock, buffer, MAXMSG, 0)) < 0)
+	if ((nbytes = recv(client, buffer, CLIENT_MAX_BODY_SIZE + 1, 0)) < 0)
 	{
-		_killSocket(sock);
-		_clientNb--;
-		cerr << "Error in recv" << endl; // A GERER
+		_disconnectClient(client);
+		status.code = 500; status.info = "Internal Server Error (Cannot recv)";
+		// A GERER : fonction pour envoyer erreur
+	}
+	else if (nbytes == CLIENT_MAX_BODY_SIZE + 1)
+	{
+		_disconnectClient(client);
+		status.code = 413; status.info = "Entity Too Large";
+		// A GERER : fonction pour envoyer erreur
 	}
 	else if (nbytes == 0) // end of file
-	{
-		_killSocket(sock);
-		_clientNb--;
-		std::cerr << "nbytes = 0" << std::endl;
-	}
+		_disconnectClient(client);
 	else
 	{
-		std::cerr << "nbytes = " << nbytes << std::endl;
 		buffer[nbytes] = 0;
-		//read_data_and_answer(buffer, i);
-		cout << "buffer = " << buffer << endl;
+		//renverra structure allouée avec infos de la requête
+		request req = _parseRequest(buffer, status);
+		// appel de fonction pour répondre ou renvoyer une erreur
+		//cout << "buffer = " << buffer << endl;
 	}
+}
+
+		/*struct request
+		{
+			string 				method, filePath, httpVersion;
+			map<string, string>	fields;
+			string				body;
+		};*/
+TcpListener::request
+TcpListener::_parseRequest(char * buffer, s_status & status) const
+{
+	std::istringstream iss(buffer);
+	string line;
+	getline(iss, line); // max 1024
+	if (line.size() > REQUEST_LINE_MAX_SIZE)
+	{
+		status.code = 400; status.info = "Bad Request";
+		cerr << "REQUEST_LINE_MAX_SIZE error to handle" << endl;
+	}
+	vector<string> startLine = _split(line, ' ');
+	if (startLine.size() != 3)
+	{
+		status.code = 400; status.info = "Bad Request";
+
+	}
+	cerr << line << endl;
+	return (request());
+}
+
+vector<string>
+TcpListener::_split(string & s, char delim) const
+{
+	size_t			pos = 0;
+	vector<string>	res;
+	while ((pos = s.find(delim)) != string::npos && res.size() < 4)
+	{
+		res.push_back(s.substr(0, pos));
+		s.erase(0, pos + 1);
+	}
+	res.push_back(s.substr(0, pos));
+	return (res);
+}
+
+// verifier \r\n
+void
+TcpListener::_sendStatus(SOCKET client, s_status const & status)
+{
+	std::ostringstream oss;
+	oss << HTTP_VERSION << " " << status.code << " " << status.info << "\r\n";
+	send(client, oss.str().c_str(), oss.str().size(), 0);
 }
