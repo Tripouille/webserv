@@ -6,17 +6,25 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/11/27 16:39:19 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/11/27 16:57:56 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "ServerConfig.hpp"
+#include "../../includes/ServerConfig.hpp"
 
 /*
 ** ------------------------------- CONSTRUCTOR --------------------------------
 */
 
-ServerConfig::ServerConfig( std::string const & path = "server.conf" )
+ServerConfig::ServerConfig( std::string const & path = "server.conf" ) :
+	_user(""), _worker(""), _pid(getPid()), _pathModules(""), _workerConnections(0),
+	_multiAccept(false), _sendfile(false), _tcpNoPush(false), _tcpNoDelay(false),
+	_keepAliveTimeout(0), _typeHashMaxSize(0), _serverTokens(false), _serverNameHashBucketSize(0),
+	_serverNameInRedirect(false), _mimeType(map<string, string>()), _defaultType(""),
+	_pathAccessLog(""), _pathErrorLog(""), _gzip(false), _gzipVary(false), _gzipProxied(false),
+	_gzipCompLevel(0), _gzipBuffers(0), _gzipVersion(""), _gzipType(vector<string>()),
+	_portListen(vector<int>(80)), _pathRoot(""), _index(vector<string>()), _serverName(""),
+	_fastcgi(map<string, vector<string> >())
 {
 
 }
