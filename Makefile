@@ -1,9 +1,9 @@
 HEADERS_PATH			= includes/
-HEADERS_NAME			= TcpListener.hpp
+HEADERS_NAME			= TcpListener.hpp ServerConfig.hpp
 HEADERS					= $(addprefix $(HEADERS_PATH), $(HEADERS_NAME))
 
 SRCS_PATH				= srcs/
-SRCS_NAME				= main.cpp TcpListener.cpp
+SRCS_NAME				= main.cpp TcpListener.cpp ServerConfig.cpp
 SRCS					= $(addprefix $(SRCS_PATH), $(SRCS_NAME))
 
 OBJS_PATH				= objs/

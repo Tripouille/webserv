@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/11/27 16:41:32 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/11/27 17:27:43 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,8 @@
 # include <vector>
 # include <map>
 # include <sys/types.h>
+# include <cstring>
+# include <cerrno>
 
 using std::string;
 using std::vector;
@@ -30,38 +32,51 @@ class ServerConfig
 
 	public:
 
+		class tcpException : public std::exception
+		{
+			public:
+
+				tcpException(string str = "") throw();
+				virtual ~tcpException(void) throw() {}
+				virtual const char * what(void) const throw();
+
+			private:
+
+				string _str;
+		};
+
 		explicit ServerConfig( std::string const & path = "server.conf" );
 		~ServerConfig();
 
 
 		/* Accesseur */
-		string const &							getUser( void ) const;
-		string const &							getWorker( void ) const;
-		pid_t const 							getPid( void ) const;
-		string const &							getPathModules( void ) const;
-		short const								getWorkerConnections( void ) const;
-		bool const								getMultiAccept( void ) const;
-		bool const								getSendfile( void ) const;
-		bool const								getTcpNoPush( void ) const;
-		bool const								getTcpNoDelay( void ) const;
-		int const								getKeepAliveTimeout( void ) const;
-		int const								getTypeHashMaxSize( void ) const;
-		bool const								getServerTokens( void ) const;
-		int const								getServerNameHashBucketSize( void ) const;
-		bool const								getServerNameInRedirect( void ) const;
+		string const 							getUser( void ) const;
+		string const 							getWorker( void ) const;
+		pid_t		 							getPid( void ) const;
+		string const 							getPathModules( void ) const;
+		short									getWorkerConnections( void ) const;
+		bool									getMultiAccept( void ) const;
+		bool									getSendfile( void ) const;
+		bool									getTcpNoPush( void ) const;
+		bool									getTcpNoDelay( void ) const;
+		int										getKeepAliveTimeout( void ) const;
+		int										getTypeHashMaxSize( void ) const;
+		bool									getServerTokens( void ) const;
+		int										getServerNameHashBucketSize( void ) const;
+		bool									getServerNameInRedirect( void ) const;
 		map<string, string> const &				getMimeType( void ) const;
-		string const &							getDefaultType( void ) const;
-		bool const								getGzip( void ) const;
-		bool const								getGzipVary( void ) const;
-		string const &							getGzipProxied( void ) const;
-		int const								getGzipCompLevel( void ) const;
-		int const								getGzipBuffers( void ) const;
-		string const &							getGzipVersion( void ) const;
+		string const 							getDefaultType( void ) const;
+		bool									getGzip( void ) const;
+		bool									getGzipVary( void ) const;
+		string const 							getGzipProxied( void ) const;
+		int										getGzipCompLevel( void ) const;
+		int										getGzipBuffers( void ) const;
+		string const 							getGzipVersion( void ) const;
 		vector<string> const &					getGzipType( void ) const;
 		vector<int> const &						getPortListen( void ) const;
-		string const &							getPathRoot( void ) const;
+		string const 							getPathRoot( void ) const;
 		vector<string> const &					getIndex( void ) const;
-		string const &							getServerName( void ) const;
+		string const 							getServerName( void ) const;
 		map<string, vector<string> > const &	getFastcgi( void ) const;
 
 		ofstream &								getPathAccessLog( void ) const;
