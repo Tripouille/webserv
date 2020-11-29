@@ -130,7 +130,7 @@ TcpListener::run(void)
 }
 
 void
-TcpListener::_acceptNewClient(void)
+TcpListener::_acceptNewClient(void) throw(tcpException)
 {
 	cout << endl << "New connection to the server" << endl;
 	SOCKET client = accept(_socket, NULL, NULL);
@@ -191,7 +191,7 @@ TcpListener::_receiveData(SOCKET client)
 			string				body;
 		};*/
 TcpListener::s_request
-TcpListener::_parseRequest(char * buffer, s_status & status) const
+TcpListener::_parseRequest(char * buffer, s_status & status) const throw(parseException)
 {
 	std::istringstream	iss(buffer);
 	s_request			request;
@@ -201,7 +201,8 @@ TcpListener::_parseRequest(char * buffer, s_status & status) const
 }
 
 void
-TcpListener::_parseRequestLine(std::istringstream & iss, s_request & request, s_status & status) const
+TcpListener::_parseRequestLine(std::istringstream & iss, s_request & request,
+								s_status & status) const throw(parseException)
 {
 	string				line;
 
@@ -217,8 +218,41 @@ TcpListener::_parseRequestLine(std::istringstream & iss, s_request & request, s_
 		status.set(400, status.info = "Bad Request");
 		throw parseException("Bad Request : Invalid Request Line");
 	}
-	(void)request;
+	request.method = requestLine[0];
+	request.target = requestLine[1];
+	request.httpVersion = requestLine[2];
+	_checkMethod(request.method, status);
+	_checkTarget(request.target, status);
+	_checkHttpVersion(request.httpVersion, status);
 	cerr << "Request line : " << line << endl;
+}
+
+void
+TcpListener::_checkMethod(string const & method, s_status & status) const throw(parseException)
+{
+	if (method != "GET" && method != "HEAD")
+	{
+		status.set(501, status.info = "Not Implemented");
+		throw parseException("Not Implemented : Bad Method " + method);
+	}
+}
+
+void
+TcpListener::_checkTarget(string const & target, s_status & status) const throw(parseException)
+{
+	// 404 not found
+	(void)target;
+	(void)status;
+}
+
+void
+TcpListener::_checkHttpVersion(string const & httpVersion, s_status & status) const throw(parseException)
+{
+	if (httpVersion != "HTTP/1.0" && httpVersion != "HTTP/1.1")
+	{
+		status.set(505, status.info = "HTTP Version Not Supported");
+		throw parseException("HTTP Version Not Supported : " + httpVersion);
+	}
 }
 
 

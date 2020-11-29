@@ -80,12 +80,16 @@ class TcpListener
 		TcpListener(TcpListener const& other);
 		TcpListener& operator=(TcpListener const& other);
 		void _disconnectClient(SOCKET client);
-		void _acceptNewClient(void);
+		void _acceptNewClient(void) throw(tcpException);
 		void _receiveData(SOCKET client);
-		s_request _parseRequest(char * buffer, s_status & status) const;
+		s_request _parseRequest(char * buffer, s_status & status) const throw(parseException);
+		void _parseRequestLine(std::istringstream & iss, s_request & request,
+								s_status & status) const throw(parseException);
 		vector<string> _split(string s, char delim) const;
-		void _parseRequestLine(std::istringstream & iss, s_request & request, s_status & status) const;
 		void _sendStatus(SOCKET client, s_status const & status);
+		void _checkMethod(string const & method, s_status & status) const throw(parseException);
+		void _checkTarget(string const & target, s_status & status) const throw(parseException);
+		void _checkHttpVersion(string const & httpVersion, s_status & status) const throw(parseException);
 };
 
 #endif
