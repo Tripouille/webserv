@@ -1,14 +1,32 @@
 #include "TcpListener.hpp" 
 
-/* tcpException */
+/* Exceptions */
 
 TcpListener::tcpException::tcpException(string str) throw()
 						  : _str(str + " : " + strerror(errno))
 {
 }
 
+TcpListener::tcpException::~tcpException(void) throw()
+{
+}
+
 const char *
 TcpListener::tcpException::what(void) const throw()
+{
+	return (_str.c_str());
+}
+
+TcpListener::parseException::parseException(string str) throw() : _str(str)
+{
+}
+
+TcpListener::parseException::~parseException(void) throw()
+{
+}
+
+const char *
+TcpListener::parseException::what(void) const throw()
 {
 	return (_str.c_str());
 }
@@ -140,30 +158,31 @@ TcpListener::_receiveData(SOCKET client)
 		return ;
 	}
 	else if (nbytes < 0)
-	{
-		//_disconnectClient(client);
 		status.set(500, "Internal Server Error (Cannot recv)");
-		// A GERER : fonction pour envoyer erreur
-	}
 	else if (nbytes == CLIENT_MAX_BODY_SIZE + 1)
-	{
-		//_disconnectClient(client);
 		status.set(413, "Entity Too Large");
-		// A GERER : fonction pour envoyer erreur
-	}
 	else
 	{
 		buffer[nbytes] = 0;
-		//renverra structure allouée avec infos de la requête
-		s_request req = _parseRequest(buffer, status);
-		// appel de fonction pour répondre ou renvoyer une erreur
-		//cout << "buffer = " << buffer << endl;
+		try
+		{
+			s_request req = _parseRequest(buffer, status);
+		}
+		catch (parseException const & e)
+		{
+			cerr << e.what() << endl;
+		}
 	}
 	_sendStatus(client, status);
 	send(client, "\r\n", 2, 0);
 	if (status.info != "OK")
 		_disconnectClient(client);
+	else {//message
+	}
 }
+
+
+
 
 		/*struct request
 		{
@@ -175,32 +194,46 @@ TcpListener::s_request
 TcpListener::_parseRequest(char * buffer, s_status & status) const
 {
 	std::istringstream	iss(buffer);
-	string				line;
 	s_request			request;
 
-
-	getline(iss, line); // max 1024
-	if (line.size() > REQUEST_LINE_MAX_SIZE)
-	{
-		status.set(400, status.info = "Bad Request");
-		cerr << "REQUEST_LINE_MAX_SIZE error to handle" << endl;
-		return (request);
-	}
-	vector<string> startLine = _split(line, ' ');
-	if (startLine.size() != 3)
-	{
-		status.set(400, status.info = "Bad Request");
-		return (request);
-	}
-	cerr << line << endl;
+	_parseRequestLine(iss, request, status);
 	return (request);
 }
 
+void
+TcpListener::_parseRequestLine(std::istringstream & iss, s_request & request, s_status & status) const
+{
+	string				line;
+
+	getline(iss, line);
+	if (line.size() > REQUEST_LINE_MAX_SIZE)
+	{
+		status.set(400, status.info = "Bad Request");
+		throw parseException("Bad Request : Request Line Too Long");
+	}
+	vector<string> requestLine = _split(line, ' ');
+	if (requestLine.size() != 3)
+	{
+		status.set(400, status.info = "Bad Request");
+		throw parseException("Bad Request : Invalid Request Line");
+	}
+	(void)request;
+	cerr << "Request line : " << line << endl;
+}
+
+
+/*
+** This split only accepts one delimitor between each word.
+** If there are delimitors before the string or several delimitors between words,
+** it will return empty strings.
+*/
+
 vector<string>
-TcpListener::_split(string & s, char delim) const
+TcpListener::_split(string s, char delim) const
 {
 	size_t			pos = 0;
 	vector<string>	res;
+
 	while ((pos = s.find(delim)) != string::npos && res.size() < 4)
 	{
 		res.push_back(s.substr(0, pos));

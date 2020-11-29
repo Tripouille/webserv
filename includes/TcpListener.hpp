@@ -33,7 +33,16 @@ class TcpListener
 		{
 			public:
 				tcpException(string str = "") throw();
-				virtual ~tcpException(void) throw() {}
+				virtual ~tcpException(void) throw();
+				virtual const char * what(void) const throw();
+			private:
+				string _str;
+		};
+		class parseException : public std::exception
+		{
+			public:
+				parseException(string str = "") throw();
+				virtual ~parseException(void) throw();
 				virtual const char * what(void) const throw();
 			private:
 				string _str;
@@ -74,7 +83,8 @@ class TcpListener
 		void _acceptNewClient(void);
 		void _receiveData(SOCKET client);
 		s_request _parseRequest(char * buffer, s_status & status) const;
-		vector<string> _split(string & s, char delim) const;
+		vector<string> _split(string s, char delim) const;
+		void _parseRequestLine(std::istringstream & iss, s_request & request, s_status & status) const;
 		void _sendStatus(SOCKET client, s_status const & status);
 };
 
