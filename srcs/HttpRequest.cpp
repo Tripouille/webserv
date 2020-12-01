@@ -1,10 +1,13 @@
 #include "HttpRequest.hpp"
 #include <sys/socket.h>
 
-/* Exception */
+/* Exceptions */
 
-HttpRequest::parseException::parseException(string str) throw() : _str(str)
+HttpRequest::parseException::parseException(HttpRequest & request,
+					string errorMsg, int code, string const & info) throw()
+			: _str(info + " : " + errorMsg)
 {
+	request.setStatus(code, info);
 }
 
 HttpRequest::parseException::~parseException(void) throw()
@@ -17,12 +20,27 @@ HttpRequest::parseException::what(void) const throw()
 	return (_str.c_str());
 }
 
+
+HttpRequest::closeOrderException::closeOrderException(void) throw()
+{
+}
+
+HttpRequest::closeOrderException::~closeOrderException(void) throw()
+{
+}
+
+const char *
+HttpRequest::closeOrderException::what(void) const throw()
+{
+	return ("Client closed the connection");
+}
+
 /* HttpRequest */
 
 HttpRequest::HttpRequest(SOCKET client)
 			: _client(client)
 {
-	_setStatus(200, "OK");
+	setStatus(200, "OK");
 }
 
 HttpRequest::~HttpRequest(void)
@@ -45,8 +63,16 @@ HttpRequest::operator=(HttpRequest const & other)
 /* Public */
 
 void
+HttpRequest::setStatus(int c, string const & i)
+{
+	_status.code = c;
+	_status.info = i;
+}
+
+void
 HttpRequest::analyze(void) throw(parseException)
 {
+	_analyseRequestLine();
 }
 
 /* Private */
@@ -64,10 +90,18 @@ HttpRequest::_copy(HttpRequest const & other)
 }
 
 void
-HttpRequest::_setStatus(int c, string const & i)
+HttpRequest::_analyseRequestLine(void) throw(parseException)
 {
-	_status.code = c;
-	_status.info = i;
+	char	buffer[REQUEST_LINE_MAX_SIZE + 1];
+	ssize_t	lineSize;
+
+	lineSize = _getLine(buffer, REQUEST_LINE_MAX_SIZE + 1);
+	if (lineSize < 0)
+		throw(parseException(*this, "recv error", 500, "Internal Server Error"));
+	else if (lineSize == 0)
+		throw(closeOrderException());
+	
+	
 }
 
 ssize_t

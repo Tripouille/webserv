@@ -17,14 +17,22 @@ using std::string;
 class HttpRequest
 {
 	public:
+		/* Sets status on throw */
 		class parseException : public std::exception
 		{
 			public:
-				parseException(string str = "") throw();
+				parseException(HttpRequest & request, string str, int code, string const & info) throw();
 				virtual ~parseException(void) throw();
 				virtual const char * what(void) const throw();
 			private:
 				string _str;
+		};
+		class closeOrderException : public std::exception
+		{
+			public:
+				closeOrderException(void) throw();
+				virtual ~closeOrderException(void) throw();
+				virtual const char * what(void) const throw();
 		};
 
 		HttpRequest(SOCKET client);
@@ -32,6 +40,8 @@ class HttpRequest
 		HttpRequest(HttpRequest const & other);
 
 		HttpRequest & operator=(HttpRequest const & other);
+
+		void setStatus(int c, string const & i);
 
 		void analyze(void) throw(parseException);
 
@@ -44,7 +54,7 @@ class HttpRequest
 		};
 
 		void _copy(HttpRequest const & other);
-		void _setStatus(int c, string const & i);
+		void _analyseRequestLine(void) throw(parseException);
 		ssize_t _getLine(char * buffer, size_t limit) const;
 
 		SOCKET 					_client;

@@ -142,6 +142,11 @@ TcpListener::_receiveData(SOCKET client)
 	{
 		cerr << e.what() << endl;
 	}
+	catch(const HttpRequest::closeOrderException & e)
+	{
+		_disconnectClient(client);
+		return ;
+	}
 	
 
 
