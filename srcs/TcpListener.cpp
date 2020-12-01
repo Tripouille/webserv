@@ -1,4 +1,5 @@
-#include "TcpListener.hpp" 
+#include "TcpListener.hpp"
+#include <cstdio>
 
 /* Exceptions */
 
@@ -13,20 +14,6 @@ TcpListener::tcpException::~tcpException(void) throw()
 
 const char *
 TcpListener::tcpException::what(void) const throw()
-{
-	return (_str.c_str());
-}
-
-TcpListener::parseException::parseException(string str) throw() : _str(str)
-{
-}
-
-TcpListener::parseException::~parseException(void) throw()
-{
-}
-
-const char *
-TcpListener::parseException::what(void) const throw()
 {
 	return (_str.c_str());
 }
@@ -114,7 +101,6 @@ TcpListener::run(void)
 			close(_socket);
 			throw tcpException("Select failed");
 		}
-
 		// Service all the sockets with input pending
 		for (SOCKET sock = 0; sock < FD_SETSIZE; ++sock)
 		{
@@ -147,23 +133,41 @@ void
 TcpListener::_receiveData(SOCKET client)
 {
 	cout << endl << "Data arriving from socket " << client << endl;
-	char		buffer[CLIENT_MAX_BODY_SIZE + 2];
-	s_status	status = {200, "OK"};
-	ssize_t		nbytes;
+	HttpRequest request(client);
+	try
+	{
+		request.analyze();
+	}
+	catch(const HttpRequest::parseException & e)
+	{
+		cerr << e.what() << endl;
+	}
+	
 
-	nbytes = recv(client, buffer, CLIENT_MAX_BODY_SIZE + 1, 0);
-	if (nbytes == 0) // end of file
+
+
+
+
+
+
+
+
+
+
+	/*char		buffer[CLIENT_MAX_BODY_SIZE];
+	ssize_t		lineSize = _getLine(buffer, client);
+
+	if (lineSize == 0) // end of file
 	{
 		_disconnectClient(client);
 		return ;
 	}
-	else if (nbytes < 0)
+	else if (lineSize < 0)
 		status.set(500, "Internal Server Error (Cannot recv)");
-	else if (nbytes == CLIENT_MAX_BODY_SIZE + 1)
-		status.set(413, "Entity Too Large");
+	//else if (lineSize == CLIENT_MAX_BODY_SIZE + 1)
+		//status.set(413, "Entity Too Large");
 	else
 	{
-		buffer[nbytes] = 0;
 		try
 		{
 			s_request req = _parseRequest(buffer, status);
@@ -178,18 +182,17 @@ TcpListener::_receiveData(SOCKET client)
 	if (status.info != "OK")
 		_disconnectClient(client);
 	else {//message
-	}
+	}*/
 }
 
+size_t
+TcpListener::_getLine(char * buffer, SOCKET client) const
+{
+	size_t lineSize = 0;
+	recvBytes = recv(client, line, CLIENT_MAX_BODY_SIZE + 1, 0);
+	return (lineSize);
+}
 
-
-
-		/*struct request
-		{
-			string 				method, filePath, httpVersion;
-			map<string, string>	fields;
-			string				body;
-		};*/
 TcpListener::s_request
 TcpListener::_parseRequest(char * buffer, s_status & status) const throw(parseException)
 {

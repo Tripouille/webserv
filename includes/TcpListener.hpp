@@ -11,6 +11,8 @@
 # include <map>
 # include <sstream>
 
+# include "HttpRequest.hpp"
+
 # define BACKLOG 3
 # define CLIENT_MAX_BODY_SIZE 1000000
 # define REQUEST_LINE_MAX_SIZE 1024
@@ -38,15 +40,6 @@ class TcpListener
 			private:
 				string _str;
 		};
-		class parseException : public std::exception
-		{
-			public:
-				parseException(string str = "") throw();
-				virtual ~parseException(void) throw();
-				virtual const char * what(void) const throw();
-			private:
-				string _str;
-		};
 
 		TcpListener(in_addr_t const & ipAddress, uint16_t port);
 		virtual ~TcpListener();
@@ -55,20 +48,6 @@ class TcpListener
 		void run(void);
 
 	private:
-		struct s_request
-		{
-			string 				method, target, httpVersion;
-			map<string, string>	fields;
-			string				body;
-		};
-
-		struct s_status
-		{
-			int		code;
-			string	info;
-			void set(int c, string const & i) {code = c; info = i;}
-		};
-
 		in_addr_t		_ipAddress;
 		const uint16_t	_port;
 		int				_socket;
