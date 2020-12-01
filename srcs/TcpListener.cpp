@@ -190,7 +190,7 @@ TcpListener::_receiveData(SOCKET client)
 	}*/
 }
 
-TcpListener::s_request
+/*TcpListener::s_request
 TcpListener::_parseRequest(char * buffer, s_status & status) const throw(parseException)
 {
 	std::istringstream	iss(buffer);
@@ -253,7 +253,7 @@ TcpListener::_checkHttpVersion(string const & httpVersion, s_status & status) co
 		status.set(505, status.info = "HTTP Version Not Supported");
 		throw parseException("HTTP Version Not Supported : " + httpVersion);
 	}
-}
+}*/
 
 
 /*
@@ -262,7 +262,7 @@ TcpListener::_checkHttpVersion(string const & httpVersion, s_status & status) co
 ** it will return empty strings.
 */
 
-vector<string>
+/*vector<string>
 TcpListener::_split(string s, char delim) const
 {
 					pos = 0;
@@ -284,4 +284,4 @@ TcpListener::_sendStatus(SOCKET client, s_status const & status)
 	std::ostringstream oss;
 	oss << HTTP_VERSION << " " << status.code << " " << status.info << "\r\n";
 	send(client, oss.str().c_str(), oss.str().size(), 0);
-}
+}*/

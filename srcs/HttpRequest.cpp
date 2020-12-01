@@ -105,10 +105,10 @@ HttpRequest::_analyseRequestLine(void) throw(parseException)
 }
 
 ssize_t
-HttpRequest::_getLine(char * buffer, size_t limit) const
+HttpRequest::_getLine(char * buffer, ssize_t limit) const
 {
 	ssize_t lineSize = 1;
-	int		recvReturn = recv(_client, buffer, 1, 0);
+	ssize_t	recvReturn = recv(_client, buffer, 1, 0);
 
 	if (recvReturn <= 0)
 		return (recvReturn);

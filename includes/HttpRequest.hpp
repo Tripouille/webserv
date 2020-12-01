@@ -55,7 +55,7 @@ class HttpRequest
 
 		void _copy(HttpRequest const & other);
 		void _analyseRequestLine(void) throw(parseException);
-		ssize_t _getLine(char * buffer, size_t limit) const;
+		ssize_t _getLine(char * buffer, ssize_t limit) const;
 
 		SOCKET 					_client;
 		string 					_method, _target, _httpVersion;
