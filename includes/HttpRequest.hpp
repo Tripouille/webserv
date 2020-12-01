@@ -2,12 +2,17 @@
 # define HTTPREQUEST_HPP
 # include <string>
 # include <map>
-# include <cstdio>
+# include <sys/types.h>
+# include <iostream>
+
+# define CLIENT_MAX_BODY_SIZE 1000000
+# define REQUEST_LINE_MAX_SIZE 1024
+# define HEADER_MAX_SIZE 8000
+
+typedef int SOCKET;
 
 using std::map;
 using std::string;
-
-typedef int SOCKET;
 
 class HttpRequest
 {
@@ -40,7 +45,7 @@ class HttpRequest
 
 		void _copy(HttpRequest const & other);
 		void _setStatus(int c, string const & i);
-		ssize_t _getLine(char * buffer);
+		ssize_t _getLine(char * buffer, size_t limit) const;
 
 		SOCKET 					_client;
 		string 					_method, _target, _httpVersion;

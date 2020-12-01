@@ -14,9 +14,6 @@
 # include "HttpRequest.hpp"
 
 # define BACKLOG 3
-# define CLIENT_MAX_BODY_SIZE 1000000
-# define REQUEST_LINE_MAX_SIZE 1024
-# define HEADER_MAX_SIZE 8000
 # define HTTP_VERSION "HTTP/1.1"
 
 typedef int SOCKET;

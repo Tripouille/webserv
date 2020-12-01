@@ -185,14 +185,6 @@ TcpListener::_receiveData(SOCKET client)
 	}*/
 }
 
-size_t
-TcpListener::_getLine(char * buffer, SOCKET client) const
-{
-	size_t lineSize = 0;
-	recvBytes = recv(client, line, CLIENT_MAX_BODY_SIZE + 1, 0);
-	return (lineSize);
-}
-
 TcpListener::s_request
 TcpListener::_parseRequest(char * buffer, s_status & status) const throw(parseException)
 {
@@ -268,7 +260,7 @@ TcpListener::_checkHttpVersion(string const & httpVersion, s_status & status) co
 vector<string>
 TcpListener::_split(string s, char delim) const
 {
-	size_t			pos = 0;
+					pos = 0;
 	vector<string>	res;
 
 	while ((pos = s.find(delim)) != string::npos && res.size() < 4)

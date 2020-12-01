@@ -1,4 +1,5 @@
-#include "HttpRequest.hpp" 
+#include "HttpRequest.hpp"
+#include <sys/socket.h>
 
 /* Exception */
 
@@ -70,6 +71,19 @@ HttpRequest::_setStatus(int c, string const & i)
 }
 
 ssize_t
-HttpRequest::_getLine(char * buffer)
+HttpRequest::_getLine(char * buffer, size_t limit) const
 {
+	ssize_t lineSize = 1;
+	int		recvReturn = recv(_client, buffer, 1, 0);
+
+	if (recvReturn <= 0)
+		return (recvReturn);
+	while (buffer[lineSize - 1] != '\n'
+	&& lineSize < limit
+	&& (recvReturn = recv(_client, buffer + lineSize, 1, 0)) == 1)
+		++lineSize;
+	if (recvReturn <= 0)
+		return (recvReturn);
+	buffer[lineSize - 1] = 0;
+	return (lineSize);
 }
