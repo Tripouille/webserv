@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/11/27 17:28:40 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/01 15:12:05 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,22 +32,16 @@ const char *	ServerConfig::tcpException::what(void) const throw()
 */
 
 ServerConfig::ServerConfig( std::string const & path ) :
-	_user(""), _worker(""), _pid(getPid()), _pathModules(""), _workerConnections(0),
-	_multiAccept(false), _sendfile(false), _tcpNoPush(false), _tcpNoDelay(false),
-	_keepAliveTimeout(0), _typeHashMaxSize(0), _serverTokens(false), _serverNameHashBucketSize(0),
-	_serverNameInRedirect(false), _mimeType(map<string, string>()), _defaultType(""),
-	_pathAccessLog(""), _pathErrorLog(""), _gzip(false), _gzipVary(false), _gzipProxied(""),
-	_gzipCompLevel(0), _gzipBuffers(0), _gzipVersion(""), _gzipType(vector<string>()),
-	_portListen(vector<int>(80)), _pathRoot(""), _index(vector<string>()), _serverName(""),
+	_pathConfFile(path), _user(""), _worker(""), _pid(getPid()), _pathModules(""),
+	_workerConnections(0), _multiAccept(false), _sendfile(false), _tcpNoPush(false),
+	_tcpNoDelay(false), _keepAliveTimeout(0), _typeHashMaxSize(0), _serverTokens(false),
+	_serverNameHashBucketSize(0), _serverNameInRedirect(false),
+	_mimeType(map<string, string>()), _defaultType(""), _pathAccessLog(""),
+	_pathErrorLog(""), _gzip(false), _gzipVary(false), _gzipProxied(""), _gzipCompLevel(0),
+	_gzipBuffers(0), _gzipVersion(""), _gzipType(vector<string>()),
+	_portListen(vector<int>(80)), _pathRoot(""), _index(vector<string>()), _serverName("_"),
 	_fastcgi(map<string, vector<string> >())
 {
-	ofstream configFile(path.c_str());
-	if (configFile)
-	{
-
-	} else {
-		throw tcpException("Open config file failed");
-	}
 }
 
 
@@ -67,6 +61,21 @@ ServerConfig::~ServerConfig()
 
 /*
 ** --------------------------------- METHODS ----------------------------------
+*/
+
+void									ServerConfig::init( void )
+{
+	ifstream configFile(_pathConfFile.c_str());
+	if (configFile)
+	{
+		
+	} else {
+		throw tcpException("Error with config file");
+	}
+}
+
+/*
+** -------------------------------- ACCESSEUR ---------------------------------
 */
 
 string const 							ServerConfig::getUser( void ) const { return string("www-data"); }
