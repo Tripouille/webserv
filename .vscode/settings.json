@@ -1,22 +1,37 @@
 {
 	"files.associations": {
+		"*.tpp": "cpp",
 		"cstdio": "cpp",
 		"*.tcc": "cpp",
 		"streambuf": "cpp",
+<<<<<<< Updated upstream
 		"array": "cpp",
 		"atomic": "cpp",
 		"cctype": "cpp",
 		"chrono": "cpp",
+=======
+		"cctype": "cpp",
+>>>>>>> Stashed changes
 		"clocale": "cpp",
 		"cmath": "cpp",
 		"cstdarg": "cpp",
 		"cstddef": "cpp",
+<<<<<<< Updated upstream
 		"cstdint": "cpp",
+=======
+>>>>>>> Stashed changes
 		"cstdlib": "cpp",
 		"cstring": "cpp",
 		"ctime": "cpp",
 		"cwchar": "cpp",
 		"cwctype": "cpp",
+<<<<<<< Updated upstream
+=======
+		"array": "cpp",
+		"atomic": "cpp",
+		"chrono": "cpp",
+		"cstdint": "cpp",
+>>>>>>> Stashed changes
 		"deque": "cpp",
 		"unordered_map": "cpp",
 		"vector": "cpp",
