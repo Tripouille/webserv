@@ -78,8 +78,10 @@ HttpRequest::setStatus(int c, string const & i)
 void
 HttpRequest::analyze(void) throw(parseException, closeOrderException)
 {
-	_analyseRequestLine();
-	_analyseHeader();
+	size_t headerSize = 0;
+	
+	_analyseRequestLine(headerSize);
+	_analyseHeader(headerSize);
 }
 
 /* Private */
@@ -97,19 +99,18 @@ HttpRequest::_copy(HttpRequest const & other)
 }
 
 void
-HttpRequest::_analyseRequestLine(void) throw(parseException, closeOrderException)
+HttpRequest::_analyseRequestLine(size_t & headerSize) throw(parseException, closeOrderException)
 {
 	//+1 pour pouvoir lire un char supplémentaire et dépasser la limite
 	char			buffer[REQUEST_LINE_MAX_SIZE + 1];
-	ssize_t			lineSize;
 	vector<string>	requestLine;
 
-	lineSize = _getLine(buffer, REQUEST_LINE_MAX_SIZE);
-	if (lineSize < 0)
+	headerSize = _getLine(buffer, REQUEST_LINE_MAX_SIZE);
+	if (headerSize < 0)
 		throw(parseException(*this, "recv error", 500, "Internal Server Error"));
-	else if (lineSize == 0)
+	else if (headerSize == 0)
 		throw(closeOrderException());
-	else if (lineSize > REQUEST_LINE_MAX_SIZE)
+	else if (headerSize > REQUEST_LINE_MAX_SIZE)
 		throw(parseException(*this, "request line too long", 431, "Request Line Too Long"));
 
 	requestLine = _split(buffer, ' ');
@@ -138,10 +139,9 @@ HttpRequest::_getLine(char * buffer, ssize_t limit) const throw(parseException)
 	else if (lineSize > limit)
 		return (lineSize);
 
-	--lineSize;
-	buffer[lineSize] = 0;
-	if (lineSize && buffer[lineSize - 1] == '\r')
-		buffer[--lineSize] = 0;
+	buffer[lineSize - 1] = 0;
+	if (lineSize >= 2 && buffer[lineSize - 2] == '\r')
+		buffer[lineSize - 2] = 0;
 	return (lineSize);
 }
 
@@ -205,7 +205,21 @@ HttpRequest::_checkHttpVersion(void) const throw(parseException)
 }
 
 void
-HttpRequest::_analyseHeader(void) throw(parseException)
+HttpRequest::_analyseHeader(size_t & headerSize) throw(parseException)
 {
+	//+1 pour pouvoir lire un char supplémentaire et dépasser la limite
+	char			buffer[HEADER_MAX_SIZE + 1];
+	ssize_t			lineSize;
 
+	while (headerSize <= HEADER_MAX_SIZE
+	&& (lineSize = _getLine(buffer, HEADER_MAX_SIZE)) > 0
+	&& strcmp(buffer, "\n") && strcmp(buffer, "\r\n"))
+	{
+		headerSize += lineSize;
+
+	}
+	if (lineSize < 0)
+		throw(parseException(*this, "recv error", 500, "Internal Server Error"));
+	else if (headerSize > HEADER_MAX_SIZE)
+		throw(parseException(*this, "header too large", 431, "Request Header Fields Too Large"));
 }
