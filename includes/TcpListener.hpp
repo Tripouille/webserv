@@ -58,11 +58,7 @@ class TcpListener
 		void _disconnectClient(SOCKET client);
 		void _acceptNewClient(void) throw(tcpException);
 		void _receiveData(SOCKET client);
-		vector<string> _split(string s, char delim) const;
-		//void _sendStatus(SOCKET client, s_status const & status);
-		//void _checkMethod(string const & method, s_status & status) const throw(parseException);
-		//void _checkTarget(string const & target, s_status & status) const throw(parseException);
-		//void _checkHttpVersion(string const & httpVersion, s_status & status) const throw(parseException);
+		void _sendStatus(SOCKET client, HttpRequest const & request);
 };
 
 #endif

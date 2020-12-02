@@ -2,6 +2,7 @@
 # define HTTPREQUEST_HPP
 # include <string>
 # include <map>
+# include <vector>
 # include <sys/types.h>
 # include <iostream>
 
@@ -11,8 +12,12 @@
 
 typedef int SOCKET;
 
-using std::map;
 using std::string;
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::map;
+using std::vector;
 
 class HttpRequest
 {
@@ -41,9 +46,11 @@ class HttpRequest
 
 		HttpRequest & operator=(HttpRequest const & other);
 
+		int getStatusCode(void) const;
+		string const & getStatusInfo(void) const;
 		void setStatus(int c, string const & i);
 
-		void analyze(void) throw(parseException);
+		void analyze(void) throw(parseException, closeOrderException);
 
 	private:
 		HttpRequest(void);
@@ -54,8 +61,12 @@ class HttpRequest
 		};
 
 		void _copy(HttpRequest const & other);
-		void _analyseRequestLine(void) throw(parseException);
-		ssize_t _getLine(char * buffer, ssize_t limit) const;
+		void _analyseRequestLine(void) throw(parseException, closeOrderException);
+		ssize_t _getLine(char * buffer, ssize_t limit) throw(parseException);
+		vector<string> _split(string s, char delim) const;
+		void _checkMethod(void) throw(parseException);
+		void _checkTarget(void) throw(parseException);
+		void _checkHttpVersion(void) throw(parseException);
 
 		SOCKET 					_client;
 		string 					_method, _target, _httpVersion;
