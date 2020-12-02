@@ -22,11 +22,17 @@ using std::vector;
 class HttpRequest
 {
 	public:
+		struct s_status
+		{
+			int		code;
+			string	info;
+		};
+		
 		/* Sets status on throw */
 		class parseException : public std::exception
 		{
 			public:
-				parseException(HttpRequest & request, string str, int code, string const & info) throw();
+				parseException(HttpRequest const & request, string str, int code, string const & info) throw();
 				virtual ~parseException(void) throw();
 				virtual const char * what(void) const throw();
 			private:
@@ -46,27 +52,21 @@ class HttpRequest
 
 		HttpRequest & operator=(HttpRequest const & other);
 
-		int getStatusCode(void) const;
-		string const & getStatusInfo(void) const;
+		s_status const & getStatus(void) const;
 		void setStatus(int c, string const & i);
 
 		void analyze(void) throw(parseException, closeOrderException);
 
 	private:
 		HttpRequest(void);
-		struct s_status
-		{
-			int		code;
-			string	info;
-		};
 
 		void _copy(HttpRequest const & other);
 		void _analyseRequestLine(void) throw(parseException, closeOrderException);
-		ssize_t _getLine(char * buffer, ssize_t limit) throw(parseException);
+		ssize_t _getLine(char * buffer, ssize_t limit) const throw(parseException);
 		vector<string> _split(string s, char delim) const;
-		void _checkMethod(void) throw(parseException);
-		void _checkTarget(void) throw(parseException);
-		void _checkHttpVersion(void) throw(parseException);
+		void _checkMethod(void) const throw(parseException);
+		void _checkTarget(void) const throw(parseException);
+		void _checkHttpVersion(void) const throw(parseException);
 
 		SOCKET 					_client;
 		string 					_method, _target, _httpVersion;

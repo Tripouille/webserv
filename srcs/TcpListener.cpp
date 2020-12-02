@@ -147,9 +147,9 @@ TcpListener::_receiveData(SOCKET client)
 		_disconnectClient(client);
 		return ;
 	}
-	_sendStatus(client, request);
+	_sendStatus(client, request.getStatus());
 	send(client, "\r\n", 2, 0);
-	if (request.getStatusInfo() != "OK")
+	if (request.getStatus().info != "OK")
 		_disconnectClient(client);
 	else
 	{
@@ -158,9 +158,9 @@ TcpListener::_receiveData(SOCKET client)
 }
 
 void
-TcpListener::_sendStatus(SOCKET client, HttpRequest const & request)
+TcpListener::_sendStatus(SOCKET client, HttpRequest::s_status const & status)
 {
 	std::ostringstream oss;
-	oss << HTTP_VERSION << " " << request.getStatusCode() << " " << request.getStatusInfo() << "\r\n";
+	oss << HTTP_VERSION << " " << status.code << " " << status.info << "\r\n";
 	send(client, oss.str().c_str(), oss.str().size(), 0);
 }

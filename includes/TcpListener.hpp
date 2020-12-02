@@ -58,7 +58,7 @@ class TcpListener
 		void _disconnectClient(SOCKET client);
 		void _acceptNewClient(void) throw(tcpException);
 		void _receiveData(SOCKET client);
-		void _sendStatus(SOCKET client, HttpRequest const & request);
+		void _sendStatus(SOCKET client, HttpRequest::s_status const & status);
 };
 
 #endif

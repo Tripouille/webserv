@@ -3,11 +3,11 @@
 
 /* Exceptions */
 
-HttpRequest::parseException::parseException(HttpRequest & request,
+HttpRequest::parseException::parseException(HttpRequest const & request,
 					string errorMsg, int code, string const & info) throw()
 			: _str(info + " : " + errorMsg)
 {
-	request.setStatus(code, info);
+	const_cast<HttpRequest &>(request).setStatus(code, info);
 }
 
 HttpRequest::parseException::~parseException(void) throw()
@@ -62,16 +62,10 @@ HttpRequest::operator=(HttpRequest const & other)
 
 /* Public */
 
-int
-HttpRequest::getStatusCode(void) const
+HttpRequest::s_status const &
+HttpRequest::getStatus(void) const
 {
-	return (_status.code);
-}
-
-string const &
-HttpRequest::getStatusInfo(void) const
-{
-	return (_status.info);
+	return (_status);
 }
 
 void
@@ -104,16 +98,17 @@ HttpRequest::_copy(HttpRequest const & other)
 void
 HttpRequest::_analyseRequestLine(void) throw(parseException, closeOrderException)
 {
+	//+1 pour pouvoir lire un char supplémentaire et dépasser la limite
 	char	buffer[REQUEST_LINE_MAX_SIZE + 1];
 	ssize_t	lineSize;
 
-	lineSize = _getLine(buffer, REQUEST_LINE_MAX_SIZE + 1);
+	lineSize = _getLine(buffer, REQUEST_LINE_MAX_SIZE);
 	if (lineSize < 0)
 		throw(parseException(*this, "recv error", 500, "Internal Server Error"));
 	else if (lineSize == 0)
 		throw(closeOrderException());
 	else if (lineSize > REQUEST_LINE_MAX_SIZE)
-		throw(parseException(*this, "request line too long", 431, "Request Header Fields Too Large"));
+		throw(parseException(*this, "request line too long", 431, "Request Line Too Long"));
 	vector<string> requestLine = _split(buffer, ' ');
 	if (requestLine.size() != 3)
 		throw parseException(*this, "invalid request line : " + string(buffer), 400, "Bad Request");
@@ -127,7 +122,7 @@ HttpRequest::_analyseRequestLine(void) throw(parseException, closeOrderException
 }
 
 ssize_t
-HttpRequest::_getLine(char * buffer, ssize_t limit) throw(parseException)
+HttpRequest::_getLine(char * buffer, ssize_t limit) const throw(parseException)
 {
 	ssize_t lineSize = 1;
 	ssize_t	recvReturn = recv(_client, buffer, 1, 0);
@@ -135,16 +130,17 @@ HttpRequest::_getLine(char * buffer, ssize_t limit) throw(parseException)
 	if (recvReturn <= 0)
 		return (recvReturn);
 	while (buffer[lineSize - 1] != '\n'
-	&& lineSize < limit
+	&& lineSize <= limit
 	&& (recvReturn = recv(_client, buffer + lineSize, 1, 0)) == 1)
 		++lineSize;
 	if (recvReturn <= 0)
 		return (recvReturn);
-	else if (lineSize >= limit)
+	else if (lineSize > limit)
 		return (lineSize);
-	buffer[lineSize - 1] = 0;
-	if (buffer[lineSize - 2] == '\r')
-		buffer[--lineSize - 1] = 0;
+	--lineSize;
+	buffer[lineSize] = 0;
+	if (lineSize && buffer[lineSize - 1] == '\r')
+		buffer[--lineSize] = 0;
 	return (lineSize);
 }
 
@@ -170,20 +166,20 @@ HttpRequest::_split(string s, char delim) const
 }
 
 void
-HttpRequest::_checkMethod(void) throw(parseException)
+HttpRequest::_checkMethod(void) const throw(parseException)
 {
 	if (_method != "GET" && _method != "HEAD")
 		throw parseException(*this, "bad method : " + _method, 501, "Not Implemented");
 }
 
 void
-HttpRequest::_checkTarget(void) throw(parseException)
+HttpRequest::_checkTarget(void) const throw(parseException)
 {
 	// 404 not found
 }
 
 void
-HttpRequest::_checkHttpVersion(void) throw(parseException)
+HttpRequest::_checkHttpVersion(void) const throw(parseException)
 {
 	if (_httpVersion != "HTTP/1.0" && _httpVersion != "HTTP/1.1")
 		throw parseException(*this, "version [" + _httpVersion + "]", 505, "HTTP Version Not Supported");
