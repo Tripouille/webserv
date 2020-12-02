@@ -6,11 +6,12 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/01 15:12:05 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/02 19:27:15 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/ServerConfig.hpp"
+#include <cerrno>
 
 
 /*
@@ -68,7 +69,7 @@ void									ServerConfig::init( void )
 	ifstream configFile(_pathConfFile.c_str());
 	if (configFile)
 	{
-		
+
 	} else {
 		throw tcpException("Error with config file");
 	}
