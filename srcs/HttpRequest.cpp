@@ -175,7 +175,11 @@ HttpRequest::_checkMethod(void) const throw(parseException)
 void
 HttpRequest::_checkTarget(void) const throw(parseException)
 {
-	// 404 not found
+	if (_target.size() > URI_MAX_SIZE)
+	{
+		std::ostringstream oss; oss << _target.size();
+		throw parseException(*this, oss.str(), 414, "URI Too Long");
+	}
 }
 
 void

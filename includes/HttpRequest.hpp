@@ -5,9 +5,11 @@
 # include <vector>
 # include <sys/types.h>
 # include <iostream>
+# include <sstream>
 
 # define CLIENT_MAX_BODY_SIZE 1000000
 # define REQUEST_LINE_MAX_SIZE 1024
+# define URI_MAX_SIZE 512
 # define HEADER_MAX_SIZE 8000
 
 typedef int SOCKET;
@@ -27,7 +29,7 @@ class HttpRequest
 			int		code;
 			string	info;
 		};
-		
+
 		/* Sets status on throw */
 		class parseException : public std::exception
 		{
