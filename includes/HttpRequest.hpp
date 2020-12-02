@@ -6,6 +6,7 @@
 # include <sys/types.h>
 # include <iostream>
 # include <sstream>
+# include <sys/stat.h>
 
 # define CLIENT_MAX_BODY_SIZE 1000000
 # define REQUEST_LINE_MAX_SIZE 1024

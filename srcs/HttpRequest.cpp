@@ -79,6 +79,7 @@ void
 HttpRequest::analyze(void) throw(parseException, closeOrderException)
 {
 	_analyseRequestLine();
+
 }
 
 /* Private */
@@ -180,6 +181,9 @@ HttpRequest::_checkTarget(void) const throw(parseException)
 		std::ostringstream oss; oss << _target.size();
 		throw parseException(*this, oss.str(), 414, "URI Too Long");
 	}
+	struct stat fileInfos;
+	if (stat(_target.c_str(), &fileInfos) != 0)
+		throw parseException(*this, _target, 404, "Not Found");
 }
 
 void
