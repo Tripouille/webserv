@@ -67,9 +67,11 @@ class HttpRequest
 		void _analyseRequestLine(void) throw(parseException, closeOrderException);
 		ssize_t _getLine(char * buffer, ssize_t limit) const throw(parseException);
 		vector<string> _split(string s, char delim) const;
+		void _fillAndCheckRequestLine(vector<string> const & requestLine) throw(parseException);
 		void _checkMethod(void) const throw(parseException);
 		void _checkTarget(void) const throw(parseException);
 		void _checkHttpVersion(void) const throw(parseException);
+		void _analyseHeader(void) throw(parseException);
 
 		SOCKET 					_client;
 		string 					_method, _target, _httpVersion;

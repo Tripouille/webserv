@@ -79,7 +79,7 @@ void
 HttpRequest::analyze(void) throw(parseException, closeOrderException)
 {
 	_analyseRequestLine();
-
+	_analyseHeader();
 }
 
 /* Private */
@@ -100,8 +100,9 @@ void
 HttpRequest::_analyseRequestLine(void) throw(parseException, closeOrderException)
 {
 	//+1 pour pouvoir lire un char supplémentaire et dépasser la limite
-	char	buffer[REQUEST_LINE_MAX_SIZE + 1];
-	ssize_t	lineSize;
+	char			buffer[REQUEST_LINE_MAX_SIZE + 1];
+	ssize_t			lineSize;
+	vector<string>	requestLine;
 
 	lineSize = _getLine(buffer, REQUEST_LINE_MAX_SIZE);
 	if (lineSize < 0)
@@ -110,15 +111,12 @@ HttpRequest::_analyseRequestLine(void) throw(parseException, closeOrderException
 		throw(closeOrderException());
 	else if (lineSize > REQUEST_LINE_MAX_SIZE)
 		throw(parseException(*this, "request line too long", 431, "Request Line Too Long"));
-	vector<string> requestLine = _split(buffer, ' ');
+
+	requestLine = _split(buffer, ' ');
 	if (requestLine.size() != 3)
 		throw parseException(*this, "invalid request line : " + string(buffer), 400, "Bad Request");
-	_method = requestLine[0];
-	_target = requestLine[1];
-	_httpVersion = requestLine[2];
-	_checkMethod();
-	_checkTarget();
-	_checkHttpVersion();
+	_fillAndCheckRequestLine(requestLine);
+
 	cerr << "Request line : " << buffer << endl;
 }
 
@@ -134,10 +132,12 @@ HttpRequest::_getLine(char * buffer, ssize_t limit) const throw(parseException)
 	&& lineSize <= limit
 	&& (recvReturn = recv(_client, buffer + lineSize, 1, 0)) == 1)
 		++lineSize;
+
 	if (recvReturn <= 0)
 		return (recvReturn);
 	else if (lineSize > limit)
 		return (lineSize);
+
 	--lineSize;
 	buffer[lineSize] = 0;
 	if (lineSize && buffer[lineSize - 1] == '\r')
@@ -167,6 +167,17 @@ HttpRequest::_split(string s, char delim) const
 }
 
 void
+HttpRequest::_fillAndCheckRequestLine(vector<string> const & requestLine) throw(parseException)
+{
+	_method = requestLine[0];
+	_target = requestLine[1];
+	_httpVersion = requestLine[2];
+	_checkMethod();
+	_checkTarget();
+	_checkHttpVersion();
+}
+
+void
 HttpRequest::_checkMethod(void) const throw(parseException)
 {
 	if (_method != "GET" && _method != "HEAD")
@@ -191,4 +202,10 @@ HttpRequest::_checkHttpVersion(void) const throw(parseException)
 {
 	if (_httpVersion != "HTTP/1.0" && _httpVersion != "HTTP/1.1")
 		throw parseException(*this, "version [" + _httpVersion + "]", 505, "HTTP Version Not Supported");
+}
+
+void
+HttpRequest::_analyseHeader(void) throw(parseException)
+{
+
 }

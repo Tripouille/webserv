@@ -134,19 +134,12 @@ TcpListener::_receiveData(SOCKET client)
 {
 	cout << endl << "Data arriving from socket " << client << endl;
 	HttpRequest request(client);
-	try
-	{
-		request.analyze();
-	}
+	try { request.analyze(); }
 	catch(const HttpRequest::parseException & e)
-	{
-		cerr << e.what() << endl;
-	}
+	{ cerr << e.what() << endl; }
 	catch(const HttpRequest::closeOrderException & e)
-	{
-		_disconnectClient(client);
-		return ;
-	}
+	{ _disconnectClient(client); return ; }
+	// temporary
 	_sendStatus(client, request.getStatus());
 	send(client, "\r\n", 2, 0);
 	if (request.getStatus().info != "OK")
