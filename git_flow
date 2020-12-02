@@ -1,0 +1,28 @@
+Memo git flow :
+master, develop, feature/XXXX
+realease/XXXX = lien entre feature et develop
+
+git flow init (puis laisser valeurs par défaut)
+- git flow feature start [myfeature]
+(crée et passe sur la branche)
+- git flow feature finish [myfeature]
+(fusionne dans develop, supprime la branche)
+
+- git flow feature publish [myfeature]
+(push)
+- git flow feature pull origin [myfeature]
+(pull)
+- git flow feature track [myfeature]
+(fetch)
+
+- git flow release start [release] (base)
+(entre le start et le publish, les developpeurs commit dessus)
+- git flow release publish
+- git flow release track [release]
+- git flow release finish [release]
+
+N'empêche pas d'utiliser git normalement.
+
+Commandes lancées ici :
+git flow init
+git flow feature start HttpRequestParsing
