@@ -1,6 +1,7 @@
 #ifndef HTTPREQUEST_HPP
 # define HTTPREQUEST_HPP
 # include <string>
+# include <string.h>
 # include <map>
 # include <vector>
 # include <sys/types.h>
@@ -35,7 +36,7 @@ class HttpRequest
 		class parseException : public std::exception
 		{
 			public:
-				parseException(HttpRequest const & request, string str, int code, string const & info) throw();
+				parseException(HttpRequest const & request, int code, string const & info, string str) throw();
 				virtual ~parseException(void) throw();
 				virtual const char * what(void) const throw();
 			private:
@@ -64,14 +65,15 @@ class HttpRequest
 		HttpRequest(void);
 
 		void _copy(HttpRequest const & other);
-		void _analyseRequestLine(size_t & headerSize) throw(parseException, closeOrderException);
+		void _analyseRequestLine(ssize_t & headerSize) throw(parseException, closeOrderException);
 		ssize_t _getLine(char * buffer, ssize_t limit) const throw(parseException);
 		vector<string> _split(string s, char delim) const;
 		void _fillAndCheckRequestLine(vector<string> const & requestLine) throw(parseException);
 		void _checkMethod(void) const throw(parseException);
 		void _checkTarget(void) const throw(parseException);
 		void _checkHttpVersion(void) const throw(parseException);
-		void _analyseHeader(size_t & headerSize) throw(parseException);
+		void _analyseHeader(ssize_t & headerSize) throw(parseException);
+		void _parseHeaderLine(string line) throw(parseException);
 
 		SOCKET 					_client;
 		string 					_method, _target, _httpVersion;

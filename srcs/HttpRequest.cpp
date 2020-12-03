@@ -4,7 +4,7 @@
 /* Exceptions */
 
 HttpRequest::parseException::parseException(HttpRequest const & request,
-					string errorMsg, int code, string const & info) throw()
+				 int code, string const & info, string errorMsg) throw()
 			: _str(info + " : " + errorMsg)
 {
 	const_cast<HttpRequest &>(request).setStatus(code, info);
@@ -78,7 +78,7 @@ HttpRequest::setStatus(int c, string const & i)
 void
 HttpRequest::analyze(void) throw(parseException, closeOrderException)
 {
-	size_t headerSize = 0;
+	ssize_t headerSize = 0;
 	
 	_analyseRequestLine(headerSize);
 	_analyseHeader(headerSize);
@@ -99,7 +99,7 @@ HttpRequest::_copy(HttpRequest const & other)
 }
 
 void
-HttpRequest::_analyseRequestLine(size_t & headerSize) throw(parseException, closeOrderException)
+HttpRequest::_analyseRequestLine(ssize_t & headerSize) throw(parseException, closeOrderException)
 {
 	//+1 pour pouvoir lire un char supplémentaire et dépasser la limite
 	char			buffer[REQUEST_LINE_MAX_SIZE + 1];
@@ -107,15 +107,15 @@ HttpRequest::_analyseRequestLine(size_t & headerSize) throw(parseException, clos
 
 	headerSize = _getLine(buffer, REQUEST_LINE_MAX_SIZE);
 	if (headerSize < 0)
-		throw(parseException(*this, "recv error", 500, "Internal Server Error"));
+		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
 	else if (headerSize == 0)
 		throw(closeOrderException());
 	else if (headerSize > REQUEST_LINE_MAX_SIZE)
-		throw(parseException(*this, "request line too long", 431, "Request Line Too Long"));
+		throw(parseException(*this, 431, "Request Line Too Long", "request line too long"));
 
 	requestLine = _split(buffer, ' ');
 	if (requestLine.size() != 3)
-		throw parseException(*this, "invalid request line : " + string(buffer), 400, "Bad Request");
+		throw parseException(*this, 400, "Bad Request", "invalid request line : " + string(buffer));
 	_fillAndCheckRequestLine(requestLine);
 
 	cerr << "Request line : " << buffer << endl;
@@ -181,7 +181,7 @@ void
 HttpRequest::_checkMethod(void) const throw(parseException)
 {
 	if (_method != "GET" && _method != "HEAD")
-		throw parseException(*this, "bad method : " + _method, 501, "Not Implemented");
+		throw parseException(*this, 501, "Not Implemented", "bad method : " + _method);
 }
 
 void
@@ -190,36 +190,45 @@ HttpRequest::_checkTarget(void) const throw(parseException)
 	if (_target.size() > URI_MAX_SIZE)
 	{
 		std::ostringstream oss; oss << _target.size();
-		throw parseException(*this, oss.str(), 414, "URI Too Long");
+		throw parseException(*this, 414, "URI Too Long", oss.str());
 	}
 	struct stat fileInfos;
 	if (stat(_target.c_str(), &fileInfos) != 0)
-		throw parseException(*this, _target, 404, "Not Found");
+		throw parseException(*this, 404, "Not Found", _target);
 }
 
 void
 HttpRequest::_checkHttpVersion(void) const throw(parseException)
 {
 	if (_httpVersion != "HTTP/1.0" && _httpVersion != "HTTP/1.1")
-		throw parseException(*this, "version [" + _httpVersion + "]", 505, "HTTP Version Not Supported");
+		throw parseException(*this, 505, "HTTP Version Not Supported", "version [" + _httpVersion + "]");
 }
 
 void
-HttpRequest::_analyseHeader(size_t & headerSize) throw(parseException)
+HttpRequest::_analyseHeader(ssize_t & headerSize) throw(parseException)
 {
 	//+1 pour pouvoir lire un char supplémentaire et dépasser la limite
-	char			buffer[HEADER_MAX_SIZE + 1];
+	char			line[HEADER_MAX_SIZE + 1];
 	ssize_t			lineSize;
 
 	while (headerSize <= HEADER_MAX_SIZE
-	&& (lineSize = _getLine(buffer, HEADER_MAX_SIZE)) > 0
-	&& strcmp(buffer, "\n") && strcmp(buffer, "\r\n"))
+	&& (lineSize = _getLine(line, HEADER_MAX_SIZE)) > 0
+	&& strcmp(line, "\n") && strcmp(line, "\r\n"))
 	{
 		headerSize += lineSize;
-
+		_parseHeaderLine(line);
 	}
 	if (lineSize < 0)
-		throw(parseException(*this, "recv error", 500, "Internal Server Error"));
+		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
 	else if (headerSize > HEADER_MAX_SIZE)
-		throw(parseException(*this, "header too large", 431, "Request Header Fields Too Large"));
+		throw(parseException(*this, 431, "Request Header Fields Too Large", "header too large"));
+}
+
+void
+HttpRequest::_parseHeaderLine(string line) throw(parseException)
+{
+	string name = line.substr(0, line.find(':', 0));
+	if (name.find(' ', 0) != std::string::npos)
+		throw(parseException(*this, 400, "Bad Request", "space before :"));
+
 }
