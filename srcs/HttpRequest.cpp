@@ -113,7 +113,7 @@ HttpRequest::_analyseRequestLine(ssize_t & headerSize) throw(parseException, clo
 	else if (headerSize > REQUEST_LINE_MAX_SIZE)
 		throw(parseException(*this, 431, "Request Line Too Long", "request line too long"));
 
-	requestLine = _split(buffer, ' ');
+	requestLine = _splitRequestLine(buffer);
 	if (requestLine.size() != 3)
 		throw parseException(*this, 400, "Bad Request", "invalid request line : " + string(buffer));
 	_fillAndCheckRequestLine(requestLine);
@@ -152,12 +152,12 @@ HttpRequest::_getLine(char * buffer, ssize_t limit) const throw(parseException)
 */
 
 vector<string>
-HttpRequest::_split(string s, char delim) const
+HttpRequest::_splitRequestLine(string s) const
 {
 	size_t			pos = 0;
 	vector<string>	res;
 
-	while ((pos = s.find(delim)) != string::npos && res.size() < 4)
+	while ((pos = s.find(' ')) != string::npos && res.size() < 4)
 	{
 		res.push_back(s.substr(0, pos));
 		s.erase(0, pos + 1);
@@ -216,7 +216,7 @@ HttpRequest::_analyseHeader(ssize_t & headerSize) throw(parseException)
 	&& line[0])
 	{
 		headerSize += lineSize;
-		cerr << "line = " << line << endl;
+		//cerr << "line = " << line << endl;
 		_parseHeaderLine(line);
 	}
 	if (lineSize < 0)
@@ -235,7 +235,29 @@ HttpRequest::_parseHeaderLine(string line) throw(parseException)
 	if (name.find(' ', 0) != string::npos)
 		throw(parseException(*this, 400, "Bad Request", "space before :"));
 	string value = line.substr(colonPos + 1, string::npos);
+	_splitHeaderField(value, _fields[name]);
+	/*cerr << "name = " << name << ", value = " << value << endl;
+	for (size_t i = 0; i < _fields[name].size(); ++i)
+		cerr << _fields[name][i] << "|||";
+	cerr << endl;*/
+}
+
+void
+HttpRequest::_splitHeaderField(string s, vector<string> & fieldValue) const
+{
+	size_t			pos = 0;
+	string			value;
+
+	while ((pos = s.find(',')) != string::npos)
+	{
+		value = s.substr(0, pos);
+		value.erase(0, value.find_first_not_of(" "));
+		value.erase(value.find_last_not_of(" ") + 1);
+		fieldValue.push_back(value);
+		s.erase(0, pos + 1);
+	}
+	value = s.substr(0, pos);
 	value.erase(0, value.find_first_not_of(" "));
 	value.erase(value.find_last_not_of(" ") + 1);
-	cerr << "name = " << name << ", value = " << value << endl;
+	fieldValue.push_back(value);
 }

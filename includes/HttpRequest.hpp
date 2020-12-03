@@ -67,19 +67,20 @@ class HttpRequest
 		void _copy(HttpRequest const & other);
 		void _analyseRequestLine(ssize_t & headerSize) throw(parseException, closeOrderException);
 		ssize_t _getLine(char * buffer, ssize_t limit) const throw(parseException);
-		vector<string> _split(string s, char delim) const;
+		vector<string> _splitRequestLine(string s) const;
 		void _fillAndCheckRequestLine(vector<string> const & requestLine) throw(parseException);
 		void _checkMethod(void) const throw(parseException);
 		void _checkTarget(void) const throw(parseException);
 		void _checkHttpVersion(void) const throw(parseException);
 		void _analyseHeader(ssize_t & headerSize) throw(parseException);
 		void _parseHeaderLine(string line) throw(parseException);
+		void _splitHeaderField(string s, vector<string> & fieldValue) const;
 
-		SOCKET 					_client;
-		string 					_method, _target, _httpVersion;
-		map<string, string>		_fields;
-		string					_body;
-		s_status				_status;
+		SOCKET 							_client;
+		string 							_method, _target, _httpVersion;
+		map<string, vector<string> >	_fields;
+		string							_body;
+		s_status						_status;
 };
 
 #endif
