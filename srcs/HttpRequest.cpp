@@ -213,9 +213,10 @@ HttpRequest::_analyseHeader(ssize_t & headerSize) throw(parseException)
 
 	while (headerSize <= HEADER_MAX_SIZE
 	&& (lineSize = _getLine(line, HEADER_MAX_SIZE)) > 0
-	&& strcmp(line, "\n") && strcmp(line, "\r\n"))
+	&& line[0])
 	{
 		headerSize += lineSize;
+		cerr << "line = " << line << endl;
 		_parseHeaderLine(line);
 	}
 	if (lineSize < 0)
@@ -227,8 +228,14 @@ HttpRequest::_analyseHeader(ssize_t & headerSize) throw(parseException)
 void
 HttpRequest::_parseHeaderLine(string line) throw(parseException)
 {
-	string name = line.substr(0, line.find(':', 0));
-	if (name.find(' ', 0) != std::string::npos)
+	size_t colonPos = line.find(':', 0);
+	if (colonPos == string::npos)
+		throw(parseException(*this, 400, "Bad Request", "no :"));
+	string name = line.substr(0, colonPos);
+	if (name.find(' ', 0) != string::npos)
 		throw(parseException(*this, 400, "Bad Request", "space before :"));
-
+	string value = line.substr(colonPos + 1, string::npos);
+	value.erase(0, value.find_first_not_of(" "));
+	value.erase(value.find_last_not_of(" ") + 1);
+	cerr << "name = " << name << ", value = " << value << endl;
 }
