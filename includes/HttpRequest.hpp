@@ -79,7 +79,7 @@ class HttpRequest
 		SOCKET 							_client;
 		string 							_method, _target, _httpVersion;
 		map<string, vector<string> >	_fields;
-		string							_body;
+		char							_body[CLIENT_MAX_BODY_SIZE + 1];
 		s_status						_status;
 };
 

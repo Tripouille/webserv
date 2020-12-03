@@ -82,6 +82,8 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException)
 	
 	_analyseRequestLine(headerSize);
 	_analyseHeader(headerSize);
+	if (_fields["Content-Length"] )
+		_analyseBody();
 }
 
 /* Private */
