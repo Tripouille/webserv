@@ -82,8 +82,7 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException)
 	
 	_analyseRequestLine(headerSize);
 	_analyseHeader(headerSize);
-	if (_fields["Content-Length"] )
-		_analyseBody();
+	_analyseBody();
 }
 
 /* Private */
@@ -96,7 +95,7 @@ HttpRequest::_copy(HttpRequest const & other)
 	_target = other._target;
 	_httpVersion = other._httpVersion;
 	_fields = other._fields;
-	_body = other._body;
+	memcpy(_body, other._body, CLIENT_MAX_BODY_SIZE + 1);
 	_status = other._status;
 }
 
@@ -262,4 +261,42 @@ HttpRequest::_splitHeaderField(string s, vector<string> & fieldValue) const
 	value.erase(0, value.find_first_not_of(" "));
 	value.erase(value.find_last_not_of(" ") + 1);
 	fieldValue.push_back(value);
+}
+
+// Tous les tests ont l'air bon, sauf que si on saute une ligne dans le body, ça arrête le recv ??
+// Petit doute avec le close connection : les octets de la prochaine requête sont perdus ; et je suis pas sûre que le client attende la réponse avant d'envoyer la prochaine requête (voir chrome et sa requête pour favicon)
+
+void
+HttpRequest::_analyseBody(void)
+{
+	_body[0] = 0;
+	unsigned int contentLength = _getContentLength();
+	if (contentLength == 0)
+		return ;
+	cerr << "contentLength = " << contentLength << endl;
+	ssize_t recvRet = recv(_client, _body, contentLength, 0);
+	if (recvRet < 0)
+		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
+	else if (recvRet < contentLength)
+		throw(parseException(*this, 500, "Internal Server Error", "body smaller than given content length"));
+	_body[contentLength] = 0;
+	cerr << "Body : " << _body << endl;
+}
+
+unsigned int
+HttpRequest::_getContentLength(void)
+{
+	if (_fields[string("Content-Length")].size() == 0)
+		return (0);
+	else if (_fields["Content-Length"].size() > 1)
+		throw(parseException(*this, 400, "Bad Request", "Mutiple Content-Length fields"));
+	else if (_fields["Content-Length"][0].size() > 9)
+		throw(parseException(*this, 400, "Bad Request", "Content-Length field is too long"));
+	else if (_fields["Content-Length"][0].find_first_not_of("0123456789") != string::npos)
+		throw(parseException(*this, 400, "Bad Request", "Content-Length is not a number"));
+	unsigned int contentLength;
+	std::istringstream(_fields["Content-Length"][0]) >> contentLength;
+	if (contentLength > CLIENT_MAX_BODY_SIZE)
+		throw(parseException(*this, 413, "Payload Too Large", "Content-Length too high"));
+	return (contentLength);
 }

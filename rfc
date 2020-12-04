@@ -65,13 +65,20 @@ sauf set-cookie
 CONTENT-LENGTH
 seulement si pas de transfer-encoding
 que des digits
-0 = body vide
-pas de content-length = pas de body
+pas de content-length = content-length 0 = pas de body
 attention à la longueur du nombre (overflow)
 si plusieurs content-length, 400 (Bad Request)
 si recv s'arrête avant, rejeter
 voir plus tard pour timeout
-rendus à 6. dans 3.3.3.
+
+si connexion s'arrête ou décodage fail avant d'avoir eu tout, on peut renvoyer une erreur avant de fermer la connexion
+
+on devrait ignorer au moins une ligne vide (\r\n) avant de recevoir la request line
+--> décision prise : define pour limite de lignes vides, while (nb_ligne_vide < limit)
+
+pour réponse : on pourrait envoyer une 411 (Length Required) en cas de body sans Content-Length
+
+bien penser aux limites de taille partout (failles de sécurité)
 
 (4. Transfer Codings : A retourner voir)
 

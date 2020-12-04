@@ -75,6 +75,8 @@ class HttpRequest
 		void _analyseHeader(ssize_t & headerSize) throw(parseException);
 		void _parseHeaderLine(string line) throw(parseException);
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
+		void _analyseBody(void);
+		unsigned int _getContentLength(void);
 
 		SOCKET 							_client;
 		string 							_method, _target, _httpVersion;
