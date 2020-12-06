@@ -106,7 +106,12 @@ HttpRequest::_analyseRequestLine(ssize_t & headerSize) throw(parseException, clo
 	char			buffer[REQUEST_LINE_MAX_SIZE + 1];
 	vector<string>	requestLine;
 
-	headerSize = _getLine(buffer, REQUEST_LINE_MAX_SIZE);
+	for (int i = 0; i <= MAX_EMPTY_LINE_BEFORE_REQUEST
+	&& (headerSize = _getLine(buffer, REQUEST_LINE_MAX_SIZE)) == 2
+	&& !strcmp(buffer, "\r\n"); ++i)
+		;
+	if (headerSize == 2 && !strcmp(buffer, "\r\n"))
+		throw(parseException(*this, 400, "Bad Request", "Too many empty lines before request"));
 	if (headerSize < 0)
 		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
 	else if (headerSize == 0)

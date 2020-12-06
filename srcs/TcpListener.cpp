@@ -141,13 +141,18 @@ TcpListener::_receiveData(SOCKET client)
 	{ _disconnectClient(client); return ; }
 	// temporary
 	_sendStatus(client, request.getStatus());
-	send(client, "\r\nprout", 7, 0);
 	if (request.getStatus().info != "OK")
+	{
+		send(client, "\r\n", 2, 0);
 		_disconnectClient(client);
+	}
 	else
 	{
+		string message = "Content-Length: 5\r\n\r\nprout";
+		send(client, message.c_str(), message.size(), 0);
 		//message
-		_disconnectClient(client);
+		//send(client, oss.str().c_str(), oss.str().size(), 0);
+		//_disconnectClient(client);
 	}
 }
 
