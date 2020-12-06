@@ -267,36 +267,35 @@ HttpRequest::_splitHeaderField(string s, vector<string> & fieldValue) const
 // Petit doute avec le close connection : les octets de la prochaine requête sont perdus ; et je suis pas sûre que le client attende la réponse avant d'envoyer la prochaine requête (voir chrome et sa requête pour favicon)
 
 void
-HttpRequest::_analyseBody(void)
+HttpRequest::_analyseBody(void) throw(parseException)
 {
+	//test nginx with "Content-Length:" (no value)
 	_body[0] = 0;
-	unsigned int contentLength = _getContentLength();
-	if (contentLength == 0)
+	if (_fields["Content-Length"].size() == 0)
 		return ;
-	cerr << "contentLength = " << contentLength << endl;
-	ssize_t recvRet = recv(_client, _body, contentLength, 0);
+	_checkContentLength(_fields["Content-Length"]);
+	std::istringstream(_fields["Content-Length"][0]) >> _bodySize;
+	if (_bodySize > CLIENT_MAX_BODY_SIZE)
+		throw(parseException(*this, 413, "Payload Too Large", "Content-Length too high"));
+	else if (_bodySize == 0)
+		return ;
+	cerr << "_bodySize = " << _bodySize << endl;
+	ssize_t recvRet = recv(_client, _body, _bodySize, 0);
 	if (recvRet < 0)
 		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
-	else if (recvRet < contentLength)
+	else if (static_cast<size_t>(recvRet) < _bodySize)
 		throw(parseException(*this, 500, "Internal Server Error", "body smaller than given content length"));
-	_body[contentLength] = 0;
+	_body[_bodySize] = 0;
 	cerr << "Body : " << _body << endl;
 }
 
-unsigned int
-HttpRequest::_getContentLength(void)
+void
+HttpRequest::_checkContentLength(vector<string> const & contentLengthField) const throw(parseException)
 {
-	if (_fields[string("Content-Length")].size() == 0)
-		return (0);
-	else if (_fields["Content-Length"].size() > 1)
+	if (contentLengthField.size() > 1)
 		throw(parseException(*this, 400, "Bad Request", "Mutiple Content-Length fields"));
-	else if (_fields["Content-Length"][0].size() > 9)
+	else if (contentLengthField[0].size() > 9)
 		throw(parseException(*this, 400, "Bad Request", "Content-Length field is too long"));
-	else if (_fields["Content-Length"][0].find_first_not_of("0123456789") != string::npos)
+	else if (contentLengthField[0].find_first_not_of("0123456789") != string::npos)
 		throw(parseException(*this, 400, "Bad Request", "Content-Length is not a number"));
-	unsigned int contentLength;
-	std::istringstream(_fields["Content-Length"][0]) >> contentLength;
-	if (contentLength > CLIENT_MAX_BODY_SIZE)
-		throw(parseException(*this, 413, "Payload Too Large", "Content-Length too high"));
-	return (contentLength);
 }

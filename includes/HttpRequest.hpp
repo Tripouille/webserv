@@ -75,13 +75,14 @@ class HttpRequest
 		void _analyseHeader(ssize_t & headerSize) throw(parseException);
 		void _parseHeaderLine(string line) throw(parseException);
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
-		void _analyseBody(void);
-		unsigned int _getContentLength(void);
+		void _analyseBody(void) throw(parseException);
+		void _checkContentLength(vector<string> const & contentLengthField) const throw(parseException);
 
 		SOCKET 							_client;
 		string 							_method, _target, _httpVersion;
 		map<string, vector<string> >	_fields;
 		char							_body[CLIENT_MAX_BODY_SIZE + 1];
+		size_t							_bodySize;
 		s_status						_status;
 };
 
