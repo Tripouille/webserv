@@ -1,3 +1,6 @@
+Todo list :
+test nginx with "Content-Length:" (no value)
+
 Autres trouvailles :
 HTTP/1.1 defines the sequence CR LF as the end-of-line marker for all protocol elements except the entity-body.
 Although the line terminator for the start-line and header fields is the sequence CRLF, a recipient MAY recognize a single LF as a line terminator and ignore any preceding CR.

@@ -107,10 +107,11 @@ HttpRequest::_analyseRequestLine(ssize_t & headerSize) throw(parseException, clo
 	vector<string>	requestLine;
 
 	for (int i = 0; i <= MAX_EMPTY_LINE_BEFORE_REQUEST
-	&& (headerSize = _getLine(buffer, REQUEST_LINE_MAX_SIZE)) == 2
-	&& !strcmp(buffer, "\r\n"); ++i)
+	&& (((headerSize = _getLine(buffer, REQUEST_LINE_MAX_SIZE)) == 2 && buffer[0] == 0)
+	|| headerSize == 1); ++i)
 		;
-	if (headerSize == 2 && !strcmp(buffer, "\r\n"))
+	if ((headerSize == 2 && buffer[0] == 0)
+	|| headerSize == 1)
 		throw(parseException(*this, 400, "Bad Request", "Too many empty lines before request"));
 	if (headerSize < 0)
 		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
@@ -222,7 +223,6 @@ HttpRequest::_analyseHeader(ssize_t & headerSize) throw(parseException)
 	&& line[0])
 	{
 		headerSize += lineSize;
-		//cerr << "line = " << line << endl;
 		_parseHeaderLine(line);
 	}
 	if (lineSize < 0)
@@ -242,10 +242,6 @@ HttpRequest::_parseHeaderLine(string line) throw(parseException)
 		throw(parseException(*this, 400, "Bad Request", "space before :"));
 	string value = line.substr(colonPos + 1, string::npos);
 	_splitHeaderField(value, _fields[name]);
-	/*cerr << "name = " << name << ", value = " << value << endl;
-	for (size_t i = 0; i < _fields[name].size(); ++i)
-		cerr << _fields[name][i] << "|||";
-	cerr << endl;*/
 }
 
 void
@@ -268,13 +264,9 @@ HttpRequest::_splitHeaderField(string s, vector<string> & fieldValue) const
 	fieldValue.push_back(value);
 }
 
-// Tous les tests ont l'air bon, sauf que si on saute une ligne dans le body, ça arrête le recv ??
-// Petit doute avec le close connection : les octets de la prochaine requête sont perdus ; et je suis pas sûre que le client attende la réponse avant d'envoyer la prochaine requête (voir chrome et sa requête pour favicon)
-
 void
 HttpRequest::_analyseBody(void) throw(parseException)
 {
-	//test nginx with "Content-Length:" (no value)
 	_body[0] = 0;
 	if (_fields["Content-Length"].size() == 0)
 		return ;
