@@ -1,14 +1,19 @@
 #ifndef HTTPREQUEST_HPP
 # define HTTPREQUEST_HPP
 # include <string>
+# include <string.h>
 # include <map>
 # include <vector>
 # include <sys/types.h>
 # include <iostream>
+# include <sstream>
+# include <sys/stat.h>
 
 # define CLIENT_MAX_BODY_SIZE 1000000
 # define REQUEST_LINE_MAX_SIZE 1024
+# define URI_MAX_SIZE 512
 # define HEADER_MAX_SIZE 8000
+# define MAX_EMPTY_LINE_BEFORE_REQUEST 3
 
 typedef int SOCKET;
 
@@ -27,12 +32,12 @@ class HttpRequest
 			int		code;
 			string	info;
 		};
-		
+
 		/* Sets status on throw */
 		class parseException : public std::exception
 		{
 			public:
-				parseException(HttpRequest const & request, string str, int code, string const & info) throw();
+				parseException(HttpRequest const & request, int code, string const & info, string str) throw();
 				virtual ~parseException(void) throw();
 				virtual const char * what(void) const throw();
 			private:
@@ -61,18 +66,25 @@ class HttpRequest
 		HttpRequest(void);
 
 		void _copy(HttpRequest const & other);
-		void _analyseRequestLine(void) throw(parseException, closeOrderException);
+		void _analyseRequestLine(ssize_t & headerSize) throw(parseException, closeOrderException);
 		ssize_t _getLine(char * buffer, ssize_t limit) const throw(parseException);
-		vector<string> _split(string s, char delim) const;
+		vector<string> _splitRequestLine(string s) const;
+		void _fillAndCheckRequestLine(vector<string> const & requestLine) throw(parseException);
 		void _checkMethod(void) const throw(parseException);
 		void _checkTarget(void) const throw(parseException);
 		void _checkHttpVersion(void) const throw(parseException);
+		void _analyseHeader(ssize_t & headerSize) throw(parseException);
+		void _parseHeaderLine(string line) throw(parseException);
+		void _splitHeaderField(string s, vector<string> & fieldValue) const;
+		void _analyseBody(void) throw(parseException);
+		void _checkContentLength(vector<string> const & contentLengthField) const throw(parseException);
 
-		SOCKET 					_client;
-		string 					_method, _target, _httpVersion;
-		map<string, string>		_fields;
-		string					_body;
-		s_status				_status;
+		SOCKET 							_client;
+		string 							_method, _target, _httpVersion;
+		map<string, vector<string> >	_fields;
+		char							_body[CLIENT_MAX_BODY_SIZE + 1];
+		size_t							_bodySize;
+		s_status						_status;
 };
 
 #endif
