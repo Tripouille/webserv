@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/08 15:39:51 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/08 16:19:05 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,12 +72,15 @@ void									ServerConfig::readFile( ifstream & file )
 
 	while (getline(file, line))
 	{
-		_nbLine++;
 		std::stringstream	str(line);
+		_nbLine++;
+
 		str >> word;
-		if (word.at(0) == '#')
+		if (str.eof())
 			continue;
-		std::cout << word << std::endl;
+		if (word.at(0) == '#' || word.at(0) == '}')
+			continue;
+		std::cout << "Line: " << _nbLine << " " << word << std::endl;
 	}
 }
 
