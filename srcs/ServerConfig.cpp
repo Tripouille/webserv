@@ -6,12 +6,14 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/08 16:20:13 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/09 12:59:31 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/ServerConfig.hpp"
 #include <sstream>
+#include <unistd.h>
+#include <sys/types.h>
 
 
 /*
@@ -68,19 +70,30 @@ ServerConfig::~ServerConfig()
 void									ServerConfig::readFile( ifstream & file )
 {
 	string				line;
-	string				word;
+	string				key;
+	string				arg;
+	std::map<string, string>::iterator		it = _http.begin();
 
 	while (getline(file, line))
 	{
 		std::stringstream	str(line);
 		_nbLine++;
 
-		str >> word;
+		str >> key;
 		if (str.eof())
 			continue;
-		if (word.at(0) == '#' || word.at(0) == '}')
+		if (key.at(0) == '#' || key.at(0) == '}')
 			continue;
-		std::cout << "Line: " << _nbLine << " " << word << std::endl;
+		getline(str, arg);
+		arg.find_first_of(';');
+		_http.insert(it, std::pair<string, string>(key, arg));
+		//std::cout << "Line: " << _nbLine << " " << key << " : " << arg << std::endl;
+	}
+
+	for (std::map<string, string>::iterator i = _http.begin(); i != _http.end(); ++i)
+	{
+		std::cout << i->first << " : ";
+		std::cout << i->second << std::endl;
 	}
 }
 

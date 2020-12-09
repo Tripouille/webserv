@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/08 15:47:57 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/09 10:27:44 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -135,9 +135,10 @@ class ServerConfig
 		// map<string, vector<string> >			_fastcgi;
 
 		string									_pathConfFile;
-		map<string, string>						_configMap;
+		map<string, string>						_http;
+		map<string, string>						_Server;
 		int										_nbLine;
-		
+
 /*
 ** ----------------------------- PRIVATE METHODS ------------------------------
 */
