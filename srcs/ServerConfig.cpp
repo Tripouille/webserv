@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/09 12:59:31 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/09 15:03:07 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include <sstream>
 #include <unistd.h>
 #include <sys/types.h>
+#include <algorithm>
 
 
 /*
@@ -85,7 +86,10 @@ void									ServerConfig::readFile( ifstream & file )
 		if (key.at(0) == '#' || key.at(0) == '}')
 			continue;
 		getline(str, arg);
-		arg.find_first_of(';');
+		if (arg.find_first_of(';') != string::npos)
+			arg.erase(arg.find_first_of(';'), arg.size());
+		if (arg.find_first_not_of(' ') != string::npos)
+			arg.erase(0, arg.find_first_not_of(' '));
 		_http.insert(it, std::pair<string, string>(key, arg));
 		//std::cout << "Line: " << _nbLine << " " << key << " : " << arg << std::endl;
 	}
