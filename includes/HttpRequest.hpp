@@ -26,6 +26,7 @@ using std::vector;
 
 class HttpRequest
 {
+	friend class TcpListener;
 	public:
 		struct s_status
 		{

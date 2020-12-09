@@ -1,5 +1,7 @@
 #include "TcpListener.hpp"
 #include <cstdio>
+#include <fstream>
+#include <limits>
 
 /* Exceptions */
 
@@ -168,19 +170,37 @@ TcpListener::_handleRequest(SOCKET client)
 void
 TcpListener::_answerToClient(SOCKET client, HttpRequest const & request) throw(sendException)
 {
-	try { _sendStatus(client, request.getStatus()); }
-	catch (sendException const & e)
-	{
-		cerr << e.what() << endl;
-		return (_disconnectClient(client));
-	}
+	_sendStatus(client, request.getStatus());
 	if (request.getStatus().info != "OK")
 	{
-		try { _sendEndOfHeader(client); }
-		catch (sendException const & e) { cerr << e.what() << endl; }
-		return (_disconnectClient(client));
+		_sendEndOfHeader(client);
+		return ;
 	}
-	
+	std::ostringstream answerStream;
+	if (request._target == "/")
+	{
+		// A wrap dans une fonction pour les index
+		// Appelle une fonction qui envoie un fichier
+		answerStream << "Content-Type: text/html\r\n";
+		answerStream << "Content-Length: ";
+		std::ifstream indexFile("index.html");
+		if (!indexFile.is_open()) //pas forcément déconnecter si not found alors ?
+			{}//Fonction notfound
+		//... fileBuffer = _getFile(indexFile);
+
+		// temporaire :
+		std::ostringstream fileBuffer;
+		fileBuffer << indexFile.rdbuf();
+		answerStream << fileBuffer.str().size() << "\r\n";
+		string answer = answerStream.str();
+
+		_sendToClient(client, answer.c_str(), answer.size());
+		_sendEndOfHeader(client);
+
+		_sendToClient(client, fileBuffer.str().c_str(), fileBuffer.str().size());
+	}
+	else
+		cerr << "not asking for root" << endl;
 }
 
 void
