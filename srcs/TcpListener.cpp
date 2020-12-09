@@ -18,6 +18,21 @@ TcpListener::tcpException::what(void) const throw()
 	return (_str.c_str());
 }
 
+TcpListener::sendException::sendException(string str) throw()
+						  : _str(str + " : " + strerror(errno))
+{
+}
+
+TcpListener::sendException::~sendException(void) throw()
+{
+}
+
+const char *
+TcpListener::sendException::what(void) const throw()
+{
+	return (_str.c_str());
+}
+
 /* Constructors and destructor */
 
 TcpListener::TcpListener(in_addr_t const & ipAddress, uint16_t port)
@@ -38,7 +53,7 @@ TcpListener::~TcpListener()
 
 
 /* Member functions */
-
+/* Public */
 void
 TcpListener::init(void)
 {
@@ -78,15 +93,6 @@ TcpListener::init(void)
 }
 
 void
-TcpListener::_disconnectClient(SOCKET client)
-{
-	cerr << "Killing socket " << client << endl;
-	FD_CLR(client, &_activeFdSet);
-	close(client);
-	_clientNb--;
-}
-
-void
 TcpListener::run(void)
 {
 	fd_set setCopy;
@@ -109,12 +115,13 @@ TcpListener::run(void)
 				if (sock == _socket)
 					_acceptNewClient();
 				else
-					_receiveData(sock);
+					_handleRequest(sock);
 			}
 		}
 	}
 }
 
+/* Private */
 void
 TcpListener::_acceptNewClient(void) throw(tcpException)
 {
@@ -130,36 +137,69 @@ TcpListener::_acceptNewClient(void) throw(tcpException)
 }
 
 void
-TcpListener::_receiveData(SOCKET client)
+TcpListener::_disconnectClient(SOCKET client)
+{
+	cerr << "Killing socket " << client << endl;
+	FD_CLR(client, &_activeFdSet);
+	close(client);
+	_clientNb--;
+}
+
+void
+TcpListener::_handleRequest(SOCKET client)
 {
 	cout << endl << "Data arriving from socket " << client << endl;
 	HttpRequest request(client);
 	try { request.analyze(); }
-	catch(const HttpRequest::parseException & e)
+	catch(HttpRequest::parseException const & e)
 	{ cerr << e.what() << endl; }
-	catch(const HttpRequest::closeOrderException & e)
+	catch(HttpRequest::closeOrderException const & e)
 	{ _disconnectClient(client); return ; }
-	// temporary
-	_sendStatus(client, request.getStatus());
-	if (request.getStatus().info != "OK")
+
+	// Request is valid, no close order
+	try { _answerToClient(client, request); }
+	catch (sendException const & e)
 	{
-		send(client, "\r\n", 2, 0);
+		cerr << e.what() << endl;
 		_disconnectClient(client);
-	}
-	else
-	{
-		string message = "Content-Length: 5\r\n\r\nprout";
-		send(client, message.c_str(), message.size(), 0);
-		//message
-		//send(client, oss.str().c_str(), oss.str().size(), 0);
-		//_disconnectClient(client);
 	}
 }
 
 void
-TcpListener::_sendStatus(SOCKET client, HttpRequest::s_status const & status)
+TcpListener::_answerToClient(SOCKET client, HttpRequest const & request) throw(sendException)
+{
+	try { _sendStatus(client, request.getStatus()); }
+	catch (sendException const & e)
+	{
+		cerr << e.what() << endl;
+		return (_disconnectClient(client));
+	}
+	if (request.getStatus().info != "OK")
+	{
+		try { _sendEndOfHeader(client); }
+		catch (sendException const & e) { cerr << e.what() << endl; }
+		return (_disconnectClient(client));
+	}
+	
+}
+
+void
+TcpListener::_sendToClient(SOCKET client, char const * msg, size_t size) const throw(sendException)
+{
+	if (send(client, msg, size, 0) == -1)
+		throw(sendException("Could not send to client"));
+}
+
+void
+TcpListener::_sendStatus(SOCKET client, HttpRequest::s_status const & status) const throw(sendException)
 {
 	std::ostringstream oss;
 	oss << HTTP_VERSION << " " << status.code << " " << status.info << "\r\n";
-	send(client, oss.str().c_str(), oss.str().size(), 0);
+	_sendToClient(client, oss.str().c_str(), oss.str().size());
+}
+
+void
+TcpListener::_sendEndOfHeader(SOCKET client) const throw(sendException)
+{
+	_sendToClient(client, "\r\n", 2);
 }

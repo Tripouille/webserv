@@ -37,6 +37,15 @@ class TcpListener
 			private:
 				string _str;
 		};
+		class sendException : public std::exception
+		{
+			public:
+				sendException(string str = "") throw();
+				virtual ~sendException(void) throw();
+				virtual const char * what(void) const throw();
+			private:
+				string _str;
+		};
 
 		TcpListener(in_addr_t const & ipAddress, uint16_t port);
 		virtual ~TcpListener();
@@ -53,12 +62,16 @@ class TcpListener
 		int				_clientNb;
 
 		TcpListener(void);
-		TcpListener(TcpListener const& other);
-		TcpListener& operator=(TcpListener const& other);
-		void _disconnectClient(SOCKET client);
+		TcpListener(TcpListener const & other);
+		TcpListener & operator=(TcpListener const & other);
+
 		void _acceptNewClient(void) throw(tcpException);
-		void _receiveData(SOCKET client);
-		void _sendStatus(SOCKET client, HttpRequest::s_status const & status);
+		void _disconnectClient(SOCKET client);
+		void _handleRequest(SOCKET client);
+		void _answerToClient(SOCKET client, HttpRequest const & request) throw(sendException);
+		void _sendToClient(SOCKET client, char const * msg, size_t size) const throw(sendException);
+		void _sendStatus(SOCKET client, HttpRequest::s_status const & status) const throw(sendException);
+		void _sendEndOfHeader(SOCKET client) const throw(sendException);
 };
 
 #endif

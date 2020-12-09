@@ -24,7 +24,7 @@ git flow init (puis laisser valeurs par défaut)
 N'empêche pas d'utiliser git normalement.
 
 Commandes lancées ici :
-git flow init
+git flow init (à refaire sur chaque repo local)
 git flow feature start HttpRequestParsing
 git push -u origin develop
 git push -u origin HttpRequestParsing
