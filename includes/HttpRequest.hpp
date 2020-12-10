@@ -28,7 +28,7 @@ class HttpRequest
 {
 	friend class TcpListener;
 	public:
-		struct s_status
+		struct s_status //déplacer dans private puisque friend ?
 		{
 			int		code;
 			string	info;

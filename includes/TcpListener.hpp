@@ -9,12 +9,15 @@
 # include <cerrno>
 # include <vector>
 # include <map>
+# include <queue>
+# include <list>
 # include <sstream>
 
 # include "HttpRequest.hpp"
 
 # define BACKLOG 3
 # define HTTP_VERSION "HTTP/1.1"
+# define BUFFER_SIZE 1024
 
 typedef int SOCKET;
 
@@ -23,7 +26,10 @@ using std::cerr;
 using std::cout;
 using std::endl;
 using std::vector;
+using std::queue;
+using std::list;
 using std::map;
+using std::streamsize;
 
 class TcpListener
 {
@@ -54,6 +60,19 @@ class TcpListener
 		void run(void);
 
 	private:
+		struct s_buffer
+		{
+			char *		b;
+			streamsize	size;
+			streamsize	occupiedSize;
+			s_buffer(streamsize s) : b(new char[s]), size(s) {}
+			s_buffer(s_buffer const & other) {b = other.b; size = other.size;}
+			~s_buffer() {delete[] b;}
+			private:
+				s_buffer & operator=(s_buffer const &);
+		};
+		typedef queue<s_buffer *, list<s_buffer *> > t_bufferQ;
+
 		in_addr_t		_ipAddress;
 		const uint16_t	_port;
 		int				_socket;
@@ -72,6 +91,9 @@ class TcpListener
 		void _sendToClient(SOCKET client, char const * msg, size_t size) const throw(sendException);
 		void _sendStatus(SOCKET client, HttpRequest::s_status const & status) const throw(sendException);
 		void _sendEndOfHeader(SOCKET client) const throw(sendException);
+		void _sendIndex(SOCKET client) const throw(sendException);
+		t_bufferQ _getFile(std::ifstream & file) const;
+		void _sendBody(SOCKET client, t_bufferQ & bufferQ) const throw(sendException);
 };
 
 #endif

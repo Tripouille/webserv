@@ -171,36 +171,19 @@ void
 TcpListener::_answerToClient(SOCKET client, HttpRequest const & request) throw(sendException)
 {
 	_sendStatus(client, request.getStatus());
-	if (request.getStatus().info != "OK")
+	if (request._status.info != "OK")
 	{
 		_sendEndOfHeader(client);
-		return ;
+		return (_disconnectClient(client));
 	}
-	std::ostringstream answerStream;
+
 	if (request._target == "/")
-	{
-		// A wrap dans une fonction pour les index
-		// Appelle une fonction qui envoie un fichier
-		answerStream << "Content-Type: text/html\r\n";
-		answerStream << "Content-Length: ";
-		std::ifstream indexFile("index.html");
-		if (!indexFile.is_open()) //pas forcément déconnecter si not found alors ?
-			{}//Fonction notfound
-		//... fileBuffer = _getFile(indexFile);
-
-		// temporaire :
-		std::ostringstream fileBuffer;
-		fileBuffer << indexFile.rdbuf();
-		answerStream << fileBuffer.str().size() << "\r\n";
-		string answer = answerStream.str();
-
-		_sendToClient(client, answer.c_str(), answer.size());
-		_sendEndOfHeader(client);
-
-		_sendToClient(client, fileBuffer.str().c_str(), fileBuffer.str().size());
-	}
+		_sendIndex(client);
 	else
+	{
 		cerr << "not asking for root" << endl;
+		//check cgi, sinon le mime type du fichier avec la map
+	}
 }
 
 void
@@ -222,4 +205,51 @@ void
 TcpListener::_sendEndOfHeader(SOCKET client) const throw(sendException)
 {
 	_sendToClient(client, "\r\n", 2);
+}
+
+void
+TcpListener::_sendIndex(SOCKET client) const throw(sendException)
+{
+	std::ostringstream headerStream;
+
+	headerStream << "Content-Type: text/html\r\n";
+	std::ifstream indexFile("index.html");
+	//if (!indexFile.is_open()) //à gérer
+	t_bufferQ bufferQ = _getFile(indexFile); //penser à delete
+	indexFile.close();
+	streamsize fileSize = static_cast<streamsize>(bufferQ.size() - 1) * bufferQ.back()->size
+							+ bufferQ.back()->occupiedSize;
+	headerStream << "Content-Length: " << fileSize << "\r\n";
+	string header = headerStream.str();
+	_sendToClient(client, header.c_str(), header.size());
+	_sendEndOfHeader(client);
+	_sendBody(client, bufferQ);
+}
+
+TcpListener::t_bufferQ
+TcpListener::_getFile(std::ifstream & file) const
+{
+	t_bufferQ	bufferQ;
+	s_buffer *	buffer;
+
+	do
+	{
+		buffer = new s_buffer(BUFFER_SIZE);
+		file.read(buffer->b, buffer->size); //throw
+		bufferQ.push(buffer);
+		buffer->occupiedSize = file.gcount();
+	} while (buffer->occupiedSize == buffer->size && !file.eof());
+
+	return (bufferQ);
+}
+
+void
+TcpListener::_sendBody(SOCKET client, t_bufferQ & bufferQ) const throw(sendException)
+{
+	while (!bufferQ.empty())
+	{
+		_sendToClient(client, bufferQ.front()->b, static_cast<size_t>(bufferQ.front()->occupiedSize));
+		delete bufferQ.front();
+		bufferQ.pop();
+	}
 }
