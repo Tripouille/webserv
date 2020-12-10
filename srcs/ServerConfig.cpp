@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/10 14:23:45 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/10 14:55:53 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,11 +61,11 @@ ServerConfig::~ServerConfig()
 
 void									ServerConfig::initConf( void )
 {
-	ofstream			pid;
-	string				line;
-	string				key;
-	string				arg;
-	ifstream 			mimeFile(_http.at("include").c_str());
+	ofstream								pid;
+	string									line;
+	string									key;
+	string									arg;
+	ifstream 								mimeFile(_http.at("type_file").c_str());
 	std::map<string, string>::iterator		it = _mimeType.begin();
 
 	/* Save PID program on file */
@@ -100,6 +100,7 @@ void									ServerConfig::readFile( ifstream & file )
 	string				line;
 	string				key;
 	string				arg;
+	size_t					nb(0);
 	std::map<string, string>::iterator		it = _http.begin();
 
 	while (getline(file, line))
@@ -112,6 +113,8 @@ void									ServerConfig::readFile( ifstream & file )
 			continue;
 		if (key.at(0) == '#' || key.at(0) == '}')
 			continue;
+		if ((nb = key.find_first_of(':') != string::npos))
+			key.erase(key.find_first_of(':'), nb + 1);
 		getline(str, arg);
 		if (arg.find_first_of(';') != string::npos)
 			arg.erase(arg.find_first_of(';'), arg.size());
@@ -120,11 +123,11 @@ void									ServerConfig::readFile( ifstream & file )
 		_http.insert(it, std::pair<string, string>(key, arg));
 	}
 
-	// for (std::map<string, string>::iterator i = _http.begin(); i != _http.end(); ++i)
-	// {
-	// 	std::cout << i->first << " : ";
-	// 	std::cout << i->second << std::endl;
-	// }
+	for (std::map<string, string>::iterator i = _http.begin(); i != _http.end(); ++i)
+	{
+		std::cout << i->first << " : ";
+		std::cout << i->second << std::endl;
+	}
 }
 
 void									ServerConfig::init( void )
