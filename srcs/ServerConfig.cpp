@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/09 15:19:03 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/10 14:23:45 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,13 +59,48 @@ ServerConfig::~ServerConfig()
 ** --------------------------------- METHODS ----------------------------------
 */
 
+void									ServerConfig::initConf( void )
+{
+	ofstream			pid;
+	string				line;
+	string				key;
+	string				arg;
+	ifstream 			mimeFile(_http.at("include").c_str());
+	std::map<string, string>::iterator		it = _mimeType.begin();
+
+	/* Save PID program on file */
+	pid.open(_http.at("pid").c_str());
+	pid << getpid() << std::endl;
+	pid.close();
+
+	/* Charg mime.type on map */
+	if (mimeFile)
+	{
+		while (getline(mimeFile, line))
+		{
+			std::stringstream str(line);
+			str >> arg;
+			if (arg == "types" || arg == "}")
+				continue;
+			while (!str.eof())
+			{
+				str >> key;
+				if (key.find_first_of(';') != string::npos)
+					key.erase(key.find_first_of(';'), key.size());
+				_mimeType.insert(it, std::pair<string, string>(key, arg));
+			}
+		}
+	} else {
+		throw tcpException("Error with mime.types file");
+	}
+}
+
 void									ServerConfig::readFile( ifstream & file )
 {
 	string				line;
 	string				key;
 	string				arg;
 	std::map<string, string>::iterator		it = _http.begin();
-	ofstream			pid;
 
 	while (getline(file, line))
 	{
@@ -85,15 +120,11 @@ void									ServerConfig::readFile( ifstream & file )
 		_http.insert(it, std::pair<string, string>(key, arg));
 	}
 
-	/* Save PID program on file */
-	pid.open(_http.at("pid").c_str());
-	pid << getpid() << std::endl;
-	pid.close();
-	for (std::map<string, string>::iterator i = _http.begin(); i != _http.end(); ++i)
-	{
-		std::cout << i->first << " : ";
-		std::cout << i->second << std::endl;
-	}
+	// for (std::map<string, string>::iterator i = _http.begin(); i != _http.end(); ++i)
+	// {
+	// 	std::cout << i->first << " : ";
+	// 	std::cout << i->second << std::endl;
+	// }
 }
 
 void									ServerConfig::init( void )
@@ -102,6 +133,7 @@ void									ServerConfig::init( void )
 	if (configFile)
 	{
 		this->readFile(configFile);
+		this->initConf();
 	} else {
 		throw tcpException("Error with config file");
 	}

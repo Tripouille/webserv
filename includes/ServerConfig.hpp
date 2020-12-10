@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/09 15:07:45 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/10 14:06:10 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,7 @@ class ServerConfig
 
 		string									_pathConfFile;
 		map<string, string>						_http;
-		map<string, string>						_Server;
+		map<string, string>						_mimeType;
 		int										_nbLine;
 
 /*
@@ -72,6 +72,7 @@ class ServerConfig
 		ServerConfig( ServerConfig const & src );
 		ServerConfig &		operator=( ServerConfig const & rhs );
 		void				readFile( ifstream & file );
+		void				initConf( void );
 
 };
 
