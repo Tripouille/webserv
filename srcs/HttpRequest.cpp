@@ -229,6 +229,7 @@ HttpRequest::_analyseHeader(ssize_t & headerSize) throw(parseException)
 		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
 	else if (headerSize > HEADER_MAX_SIZE)
 		throw(parseException(*this, 431, "Request Header Fields Too Large", "header too large"));
+	_checkHeader();
 }
 
 void
@@ -236,7 +237,7 @@ HttpRequest::_parseHeaderLine(string line) throw(parseException)
 {
 	size_t colonPos = line.find(':', 0);
 	if (colonPos == string::npos)
-		throw(parseException(*this, 400, "Bad Request", "no :"));
+		throw(parseException(*this, 400, "Bad Request", "no ':'"));
 	string name = line.substr(0, colonPos);
 	if (name.find(' ', 0) != string::npos)
 		throw(parseException(*this, 400, "Bad Request", "space before :"));
@@ -262,6 +263,13 @@ HttpRequest::_splitHeaderField(string s, vector<string> & fieldValue) const
 	value.erase(0, value.find_first_not_of(" "));
 	value.erase(value.find_last_not_of(" ") + 1);
 	fieldValue.push_back(value);
+}
+
+void
+HttpRequest::_checkHeader(void) throw(parseException)
+{
+	if (_fields["Host"].size() == 0)
+		throw(parseException(*this, 400, "Bad Request", "no Host header field"));
 }
 
 void

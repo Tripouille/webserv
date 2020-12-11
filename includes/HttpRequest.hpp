@@ -64,8 +64,14 @@ class HttpRequest
 		void analyze(void) throw(parseException, closeOrderException);
 
 	private:
-		HttpRequest(void);
+		SOCKET 							_client;
+		string 							_method, _target, _httpVersion;
+		map<string, vector<string> >	_fields;
+		char							_body[CLIENT_MAX_BODY_SIZE + 1];
+		size_t							_bodySize;
+		s_status						_status;
 
+		HttpRequest(void);
 		void _copy(HttpRequest const & other);
 		void _analyseRequestLine(ssize_t & headerSize) throw(parseException, closeOrderException);
 		ssize_t _getLine(char * buffer, ssize_t limit) const throw(parseException);
@@ -77,15 +83,9 @@ class HttpRequest
 		void _analyseHeader(ssize_t & headerSize) throw(parseException);
 		void _parseHeaderLine(string line) throw(parseException);
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
+		void _checkHeader(void) throw(parseException);
 		void _analyseBody(void) throw(parseException);
 		void _checkContentLength(vector<string> const & contentLengthField) const throw(parseException);
-
-		SOCKET 							_client;
-		string 							_method, _target, _httpVersion;
-		map<string, vector<string> >	_fields;
-		char							_body[CLIENT_MAX_BODY_SIZE + 1];
-		size_t							_bodySize;
-		s_status						_status;
 };
 
 #endif

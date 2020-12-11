@@ -171,4 +171,67 @@ Si PUT crée une ressource : 201 (Created), sinon la ressource a déjà une repr
 5. Request Header Fields
 
 6.
-prout
+
+7. Response Header Fields
+
+7.1.  Control Data
+Seulement ceux qui sont dans le sujet :
+Date              | Section 7.1.1.2          | SUJET
+Location          | Section 7.1.2            | SUJET
+Retry-After       | Section 7.1.3            | SUJET
+
+HTTP-Date : 3 formats possibles à recevoir, meilleur = IMF-fixdate, à renvoyer
+Rare de le recevoir
+Sun, 06 Nov 1994 08:49:37 GMT    ; IMF-fixdate
+case-sensitive
+si on utilise heure locale (et non UTC = GMT) : utiliser NTP ([RFC5905]) pour synchroniser avec UTC
+Header Date = juste avant que le payload (body?) soit généré, mais ok n'importe quand
+Possible de renvoyer Date tout le temps, obligatoire sauf pour les 1xx et 5xx
+notre code n'affiche la date correctement en anglais que parce qu'on a une locale anglaise (hébergé sur un PC français, notre serveur renverrait une mauvaise date)
+
+Location = URI-reference
+201 > Location = ressource crée
+3xx > Location = ressource vers laquelle on a été redirigé (absolu ou relatif, exemple "Location: http://www.example.org/People.html#tim" ou "Location: /People.html#tim")
+nginx ne semble pas en mettre ni sur un 200 ni 404
+
+Retry-After :
+Indique combien de temps l'utilisateur doit attendre avant de faire la requête suivante
+Quand on envoie une réponse 503 (Service Unavailable), temps d'attente estimé
+Quand on envoie une réponse 3xx (Redirection), indique le temps minimum à attendre avant de faire la requête redirigée
+Retry-After = HTTP-date / delay-seconds
+delay-seconds  = 1*DIGIT
+Exemples :
+Retry-After: Fri, 31 Dec 1999 23:59:59 GMT
+Retry-After: 120
+
+7.2.  Validator Header Fields
+Dans réponse réussie
+-> RFC 7232 2.Validators, servent notamment à invalider le cache
+2.2. Last-Modified : même format que Date
+A envoyer autant que possible, dès qu'on connaît la date de dernière modification
+Est le plus récent si la représentation est issue de différentes parties
+Déterminer cette date au plus proche de celle du header field "Date", et le "Last-Modified" doit bien être plus tôt que ou égal à "Date"
+
+7.3 Authentication Challenges
+WWW-Authenticate (Section 4.1 of [RFC7235]) :
+Si on envoie une réponse 401 (Unauthorized), on doit envoyer ce header field contenant au moins un challenge
+On peut aussi l'envoyer dans d'autres cas pour indiquer que d'autres identifiants(credentials, une autre identité) pouvait affecter la réponse
+Exemple : WWW-Authenticate: Newauth realm="apps", type=1, title="Login to \"apps\"", Basic realm="simple"
+
+7.4 Response Context
+Allow :
+Liste les méthodes suportées
+Exemple : Allow: GET, HEAD, PUT
+Doit être présent en cas de réponse 405 (Method Not Allowed) (différence avec 501 Not Implemented : dans la 405, la méthode est connue du serveur mais non supportée par la ressource ciblée)
+Allow peut aussi être vide si aucune méthode n'est autorisée, par exemple si la ressource a été temporairement désactivée
+
+Server :
+Information à propos du logiciel utilisé par le serveur
+Utilisé par les clients par exemplepour identifier les problèmes de compatibilité
+Pas obligatoire
+Server = product *( RWS ( product / comment ) )
+Exemple: Server: CERN/3.0 libwww/2.17
+Exemple (de nginx) : Server: nginx/1.14.0 (Ubuntu)
+Pour sécurité : ne pas envoyer trop d'infos
+
+Authorization en section 4.2 de RFC7235

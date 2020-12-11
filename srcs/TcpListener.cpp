@@ -213,13 +213,31 @@ TcpListener::_sendIndex(SOCKET client) const throw(sendException)
 	std::ostringstream headerStream;
 
 	headerStream << "Content-Type: text/html\r\n";
+
 	std::ifstream indexFile("index.html");
-	//if (!indexFile.is_open()) //à gérer
-	t_bufferQ bufferQ = _getFile(indexFile); //penser à delete
+	if (!indexFile.is_open())
+		throw(tcpException("Could not open file index.html"));
+	t_bufferQ bufferQ = _getFile(indexFile);
 	indexFile.close();
 	streamsize fileSize = static_cast<streamsize>(bufferQ.size() - 1) * bufferQ.back()->size
 							+ bufferQ.back()->occupiedSize;
 	headerStream << "Content-Length: " << fileSize << "\r\n";
+
+	char date[50]; 
+	time_t now = time(0);
+	struct tm tm = *gmtime(&now);
+	cerr << "size of date : " << sizeof(date) << endl;
+	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
+	headerStream << "Date: " << date << "\r\n";
+
+	struct stat indexStat;
+	stat("index.html", &indexStat); // cas != 0 à gérer
+	time_t lastModified = indexStat.st_mtime;
+	cerr << "lastModified = " << lastModified << endl;
+	tm = *gmtime(&lastModified);
+	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
+	headerStream << "Last-Modified: " << date << "\r\n";
+
 	string header = headerStream.str();
 	_sendToClient(client, header.c_str(), header.size());
 	_sendEndOfHeader(client);
