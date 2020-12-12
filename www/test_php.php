@@ -14,6 +14,5 @@
 		{ ?>
 			<p>Bonjour ! (pas 1)</p>
 <?php	} ?>
-		?>
 	</body>
 </html>
