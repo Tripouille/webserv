@@ -1,5 +1,6 @@
 Todo list :
 test nginx with "Content-Length:" (no value)
+détecter un ctrl+C (ou le signal ?) pour fermer la connexion
 
 Autres trouvailles :
 HTTP/1.1 defines the sequence CR LF as the end-of-line marker for all protocol elements except the entity-body.

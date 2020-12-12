@@ -178,9 +178,10 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest const & request) throw(s
 	}
 
 	if (request._target == "/")
-		_sendIndex(client);
+		_sendFile(client, "index.html");
 	else
 	{
+		
 		cerr << "not asking for root" << endl;
 		//check cgi, sinon le mime type du fichier avec la map
 	}
@@ -208,60 +209,18 @@ TcpListener::_sendEndOfHeader(SOCKET client) const throw(sendException)
 }
 
 void
-TcpListener::_sendIndex(SOCKET client) const throw(sendException)
+TcpListener::_sendFile(SOCKET client, char const * fileName) const throw(sendException)
 {
 	std::ostringstream headerStream;
 
-	headerStream << "Server: webserv" << "\r\n";
-
-	char date[50]; 
-	time_t now = time(0);
-	struct tm tm = *gmtime(&now);
-	cerr << "size of date : " << sizeof(date) << endl;
-	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
-	headerStream << "Date: " << date << "\r\n";
-
-	headerStream << "Content-Type: text/html\r\n";
-
-	std::ifstream indexFile("index.html");
-	if (!indexFile.is_open())
-		throw(tcpException("Could not open file index.html"));
-	t_bufferQ bufferQ = _getFile(indexFile);
-	indexFile.close();
-	streamsize fileSize = static_cast<streamsize>(bufferQ.size() - 1) * bufferQ.back()->size
-							+ bufferQ.back()->occupiedSize;
-	headerStream << "Content-Length: " << fileSize << "\r\n";
-
-	struct stat indexStat;
-	if (stat("index.html", &indexStat) != 0)
-		throw (tcpException("Could not execute stat() on file index.html"));
-	time_t lastModified = indexStat.st_mtime;
-	cerr << "lastModified = " << lastModified << endl;
-	tm = *gmtime(&lastModified);
-	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
-	headerStream << "Last-Modified: " << date << "\r\n";
-
+	_writeServerField(headerStream);
+	_writeDateField(headerStream);
+	t_bufferQ bufferQ = _getFile(fileName);
+	_writeContentFields(headerStream, fileName, bufferQ);
 	string header = headerStream.str();
 	_sendToClient(client, header.c_str(), header.size());
 	_sendEndOfHeader(client);
 	_sendBody(client, bufferQ);
-}
-
-TcpListener::t_bufferQ
-TcpListener::_getFile(std::ifstream & file) const
-{
-	t_bufferQ	bufferQ;
-	s_buffer *	buffer;
-
-	do
-	{
-		buffer = new s_buffer(BUFFER_SIZE);
-		file.read(buffer->b, buffer->size); //throw
-		bufferQ.push(buffer);
-		buffer->occupiedSize = file.gcount();
-	} while (buffer->occupiedSize == buffer->size && !file.eof());
-
-	return (bufferQ);
 }
 
 void
@@ -273,4 +232,62 @@ TcpListener::_sendBody(SOCKET client, t_bufferQ & bufferQ) const throw(sendExcep
 		delete bufferQ.front();
 		bufferQ.pop();
 	}
+}
+
+void
+TcpListener::_writeServerField(std::ostringstream & headerStream) const
+{
+	headerStream << "Server: webserv" << "\r\n";
+}
+
+void
+TcpListener::_writeDateField(std::ostringstream & headerStream) const
+{
+	char date[50]; 
+	time_t now = time(0);
+	struct tm tm = *gmtime(&now);
+	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
+	headerStream << "Date: " << date << "\r\n";
+}
+
+void
+TcpListener::_writeContentFields(std::ostringstream & headerStream,
+									char const * fileName,
+									t_bufferQ const & bufferQ) const
+{
+	headerStream << "Content-Type: text/html\r\n";
+
+	streamsize fileSize = static_cast<streamsize>(bufferQ.size() - 1)
+							* bufferQ.back()->size + bufferQ.back()->occupiedSize;
+	headerStream << "Content-Length: " << fileSize << "\r\n";
+
+	struct stat fileStats;
+	if (stat(fileName, &fileStats) != 0)
+		throw (tcpException("Could not execute stat() on file index.html"));
+	time_t lastModified = fileStats.st_mtime;
+	struct tm tm = *gmtime(&lastModified);
+	char date[50];
+	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
+	headerStream << "Last-Modified: " << date << "\r\n";
+}
+
+TcpListener::t_bufferQ
+TcpListener::_getFile(char const * fileName) const
+{
+	t_bufferQ	bufferQ;
+	s_buffer *	buffer;
+
+	std::ifstream indexFile(fileName);
+	if (!indexFile.is_open())
+		throw(tcpException("Could not open file " + string(fileName)));
+	do
+	{
+		buffer = new s_buffer(BUFFER_SIZE);
+		indexFile.read(buffer->b, buffer->size); //throw
+		bufferQ.push(buffer);
+		buffer->occupiedSize = indexFile.gcount();
+	} while (buffer->occupiedSize == buffer->size && !indexFile.eof());
+	indexFile.close();
+
+	return (bufferQ);
 }
