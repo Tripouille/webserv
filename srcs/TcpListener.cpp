@@ -170,6 +170,7 @@ TcpListener::_handleRequest(SOCKET client)
 void
 TcpListener::_answerToClient(SOCKET client, HttpRequest const & request) throw(sendException)
 {
+	bool requiredFileNeedCGI = false;
 	_sendStatus(client, request.getStatus());
 	if (request._status.info != "OK")
 	{
@@ -177,14 +178,11 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest const & request) throw(s
 		return (_disconnectClient(client));
 	}
 
-	if (request._target == "/")
-		_sendFile(client, "index.html");
+	char * requiredFile = (char*)"index.html";
+	if (requiredFileNeedCGI)
+		return;
 	else
-	{
-		
-		cerr << "not asking for root" << endl;
-		//check cgi, sinon le mime type du fichier avec la map
-	}
+		_sendFile(client, requiredFile);
 }
 
 void
