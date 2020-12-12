@@ -233,5 +233,3 @@ Server = product *( RWS ( product / comment ) )
 Exemple: Server: CERN/3.0 libwww/2.17
 Exemple (de nginx) : Server: nginx/1.14.0 (Ubuntu)
 Pour sécurité : ne pas envoyer trop d'infos
-
-Authorization en section 4.2 de RFC7235

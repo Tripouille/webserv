@@ -212,6 +212,15 @@ TcpListener::_sendIndex(SOCKET client) const throw(sendException)
 {
 	std::ostringstream headerStream;
 
+	headerStream << "Server: webserv" << "\r\n";
+
+	char date[50]; 
+	time_t now = time(0);
+	struct tm tm = *gmtime(&now);
+	cerr << "size of date : " << sizeof(date) << endl;
+	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
+	headerStream << "Date: " << date << "\r\n";
+
 	headerStream << "Content-Type: text/html\r\n";
 
 	std::ifstream indexFile("index.html");
@@ -223,15 +232,9 @@ TcpListener::_sendIndex(SOCKET client) const throw(sendException)
 							+ bufferQ.back()->occupiedSize;
 	headerStream << "Content-Length: " << fileSize << "\r\n";
 
-	char date[50]; 
-	time_t now = time(0);
-	struct tm tm = *gmtime(&now);
-	cerr << "size of date : " << sizeof(date) << endl;
-	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
-	headerStream << "Date: " << date << "\r\n";
-
 	struct stat indexStat;
-	stat("index.html", &indexStat); // cas != 0 à gérer
+	if (stat("index.html", &indexStat) != 0)
+		throw (tcpException("Could not execute stat() on file index.html"));
 	time_t lastModified = indexStat.st_mtime;
 	cerr << "lastModified = " << lastModified << endl;
 	tm = *gmtime(&lastModified);
