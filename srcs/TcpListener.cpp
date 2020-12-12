@@ -178,7 +178,7 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest const & request) throw(s
 		return (_disconnectClient(client));
 	}
 
-	char * requiredFile = (char*)"index.html";
+	char * requiredFile = (char*)"www/index.html";
 	if (requiredFileNeedCGI)
 		return;
 	else

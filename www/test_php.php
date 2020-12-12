@@ -6,7 +6,7 @@
     </head>
     
     <body>
-<?php	if ($_GET['var'] == '1')
+<?php	if (isset($_GET['var']) AND $_GET['var'] == '1')
 		{ ?>
 			<p>Bonjour ! (1)</p>
 <?php	}
