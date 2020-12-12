@@ -201,8 +201,10 @@ TcpListener::_getRequiredFile(HttpRequest const & request)
 {
 	if (request._target == "/")
 		return (ROOT_DIRECTORY + string("/index.html"));
-	else
+	else if (request._target[0] == '/')
 		return (ROOT_DIRECTORY + request._target);
+	else
+		return (ROOT_DIRECTORY + string("/") + request._target);
 }
 
 void

@@ -265,7 +265,8 @@ HttpRequest::_splitHeaderField(string s, vector<string> & fieldValue) const
 void
 HttpRequest::_checkHeader(void) throw(parseException)
 {
-	if (_fields["Host"].size() == 0)
+	if (_fields["Host"].size() == 0
+	|| (_fields["Host"].size() == 1 && _fields["Host"][0] == ""))
 		throw(parseException(*this, 400, "Bad Request", "no Host header field"));
 }
 
