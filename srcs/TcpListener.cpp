@@ -168,21 +168,41 @@ TcpListener::_handleRequest(SOCKET client)
 }
 
 void
-TcpListener::_answerToClient(SOCKET client, HttpRequest const & request) throw(sendException)
+TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
+									throw(sendException, tcpException)
 {
-	bool requiredFileNeedCGI = false;
-	_sendStatus(client, request.getStatus());
-	if (request._status.info != "OK")
+	if (request._status.info != "OK" && request._status.code != 404)
 	{
-		_sendEndOfHeader(client);
-		return (_disconnectClient(client));
+		_sendStatus(client, request.getStatus());
+		return (_sendEndOfHeader(client));
 	}
-
-	char * requiredFile = (char*)"www/index.html";
+	string requiredFile = _getRequiredFile(request);
+	struct stat fileInfos;
+	if (stat(requiredFile.c_str(), &fileInfos) != 0)
+	{
+		request.setStatus(404, "Not Found");
+		requiredFile = ROOT_DIRECTORY + string("/404.html");
+	}
+	_sendStatus(client, request.getStatus());
+	bool requiredFileNeedCGI = false;
 	if (requiredFileNeedCGI)
-		return;
+		return ;
+	else if (stat(requiredFile.c_str(), &fileInfos) == 0)
+		_sendFile(client, requiredFile.c_str(), fileInfos);
 	else
-		_sendFile(client, requiredFile);
+	{
+		cerr << "404.html not found" << endl;
+		_sendEndOfHeader(client);
+	}
+}
+
+string const
+TcpListener::_getRequiredFile(HttpRequest const & request)
+{
+	if (request._target == "/")
+		return (ROOT_DIRECTORY + string("/index.html"));
+	else
+		return (ROOT_DIRECTORY + request._target);
 }
 
 void
@@ -207,14 +227,16 @@ TcpListener::_sendEndOfHeader(SOCKET client) const throw(sendException)
 }
 
 void
-TcpListener::_sendFile(SOCKET client, char const * fileName) const throw(sendException)
+TcpListener::_sendFile(SOCKET client, char const * fileName,
+						struct stat const & fileInfos)
+						const throw(sendException, tcpException)
 {
 	std::ostringstream headerStream;
 
 	_writeServerField(headerStream);
 	_writeDateField(headerStream);
 	t_bufferQ bufferQ = _getFile(fileName);
-	_writeContentFields(headerStream, fileName, bufferQ);
+	_writeContentFields(headerStream, fileName, fileInfos, bufferQ);
 	string header = headerStream.str();
 	_sendToClient(client, header.c_str(), header.size());
 	_sendEndOfHeader(client);
@@ -251,18 +273,21 @@ TcpListener::_writeDateField(std::ostringstream & headerStream) const
 void
 TcpListener::_writeContentFields(std::ostringstream & headerStream,
 									char const * fileName,
+									struct stat const & fileInfos,
 									t_bufferQ const & bufferQ) const
 {
-	headerStream << "Content-Type: text/html\r\n";
+	map<string, string> mimeTypes;
+	mimeTypes["html"] = "text/html";
+	mimeTypes["jpg"] = "image/jpeg";
+	string extension = string(fileName).substr(string(fileName).find_last_of('.') + 1, string::npos);
+	if (mimeTypes.count(extension))
+		headerStream << "Content-Type: " << mimeTypes[extension] <<"\r\n";
 
 	streamsize fileSize = static_cast<streamsize>(bufferQ.size() - 1)
 							* bufferQ.back()->size + bufferQ.back()->occupiedSize;
 	headerStream << "Content-Length: " << fileSize << "\r\n";
 
-	struct stat fileStats;
-	if (stat(fileName, &fileStats) != 0)
-		throw (tcpException("Could not execute stat() on file index.html"));
-	time_t lastModified = fileStats.st_mtime;
+	time_t lastModified = fileInfos.st_mtime;
 	struct tm tm = *gmtime(&lastModified);
 	char date[50];
 	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);

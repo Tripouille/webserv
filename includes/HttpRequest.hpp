@@ -15,6 +15,8 @@
 # define HEADER_MAX_SIZE 8000
 # define MAX_EMPTY_LINE_BEFORE_REQUEST 3
 
+# define ROOT_DIRECTORY "www"
+
 typedef int SOCKET;
 
 using std::string;

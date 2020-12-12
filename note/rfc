@@ -140,7 +140,7 @@ text/html; charset="utf-8"
 
 - Il existe des "multipart types" qui permettent d'encapsuler plusieurs représentations dans un seul body.
 
-- Si pas de Content-Type : le bénéficiaire (recipient) peut assumer un media type "application/octet-stream" ou déterminer son type lui-même.
+- Si pas de Content-Type : le bénéficiaire (recipient) peut assumer un media type "application/octet-stream" ou déterminer son type lui-même. (bref, nous on envoie pas de content-type si type inconnu)
 
 - Pour Accept-Language et Content-Language : https://tools.ietf.org/html/rfc5646#section-2.1
 Généralement : un language très courant, "-", une sous-catégorie (en-US, en-CA...).

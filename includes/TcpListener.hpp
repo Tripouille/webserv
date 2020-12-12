@@ -87,17 +87,25 @@ class TcpListener
 		void _acceptNewClient(void) throw(tcpException);
 		void _disconnectClient(SOCKET client);
 		void _handleRequest(SOCKET client);
-		void _answerToClient(SOCKET client, HttpRequest const & request) throw(sendException);
-		void _sendToClient(SOCKET client, char const * msg, size_t size) const throw(sendException);
+		void _answerToClient(SOCKET client, HttpRequest & request)
+			throw(sendException, tcpException);
+		string const _getRequiredFile(HttpRequest const & request);
+		void _sendToClient(SOCKET client, char const * msg, size_t size)
+			const throw(sendException);
 		void _sendStatus(SOCKET client,
-			HttpRequest::s_status const & status) const throw(sendException);
+			HttpRequest::s_status const & status)
+			const throw(sendException);
 		void _sendEndOfHeader(SOCKET client) const throw(sendException);
-		void _sendFile(SOCKET client, char const * fileName) const throw(sendException);
-		void _sendBody(SOCKET client, t_bufferQ & bufferQ) const throw(sendException);
+		void _sendFile(SOCKET client, char const * fileName,
+			struct stat const & fileInfos)
+			const throw(sendException, tcpException);
+		void _sendBody(SOCKET client, t_bufferQ & bufferQ)
+			const throw(sendException);
 		void _writeServerField(std::ostringstream & headerStream) const;
 		void _writeDateField(std::ostringstream & headerStream) const;
 		void _writeContentFields(std::ostringstream & headerStream,
-			char const * fileName, t_bufferQ const & bufferQ) const;
+			char const * fileName, struct stat const & fileInfos,
+			t_bufferQ const & bufferQ) const;
 		t_bufferQ _getFile(char const * fileName) const;
 };
 

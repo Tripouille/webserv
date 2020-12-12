@@ -199,9 +199,6 @@ HttpRequest::_checkTarget(void) const throw(parseException)
 		std::ostringstream oss; oss << _target.size();
 		throw parseException(*this, 414, "URI Too Long", oss.str());
 	}
-	struct stat fileInfos;
-	if (stat(_target.c_str(), &fileInfos) != 0)
-		throw parseException(*this, 404, "Not Found", _target);
 }
 
 void
