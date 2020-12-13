@@ -99,10 +99,14 @@ HttpRequest::_copy(HttpRequest const & other)
 	_status = other._status;
 }
 
+/*
+** The buffer is one character longer to be able to read one more
+** and detect the limit was passed.
+*/
+
 void
 HttpRequest::_analyseRequestLine(ssize_t & headerSize) throw(parseException, closeOrderException)
 {
-	//+1 pour pouvoir lire un char supplémentaire et dépasser la limite
 	char			buffer[REQUEST_LINE_MAX_SIZE + 1];
 	vector<string>	requestLine;
 
@@ -121,8 +125,10 @@ HttpRequest::_analyseRequestLine(ssize_t & headerSize) throw(parseException, clo
 		throw(parseException(*this, 431, "Request Line Too Long", "request line too long"));
 
 	requestLine = _splitRequestLine(buffer);
+	std::ostringstream debug; debug << (int)*buffer;
 	if (requestLine.size() != 3)
-		throw parseException(*this, 400, "Bad Request", "invalid request line : " + string(buffer));
+		throw parseException(*this, 400, "Bad Request", "invalid request line : "
+		+ string(buffer) + " / " + debug.str());
 	_fillAndCheckRequestLine(requestLine);
 
 	cerr << "Request line : " << buffer << endl;
@@ -137,12 +143,15 @@ HttpRequest::_getLine(char * buffer, ssize_t limit) const throw(parseException)
 	if (recvReturn <= 0)
 		return (recvReturn);
 	while (buffer[lineSize - 1] != '\n'
+	&& buffer[lineSize - 1] != -1
 	&& lineSize <= limit
 	&& (recvReturn = recv(_client, buffer + lineSize, 1, 0)) == 1)
 		++lineSize;
 
 	if (recvReturn <= 0)
 		return (recvReturn);
+	else if (buffer[lineSize - 1] == -1)
+		return (0);
 	else if (lineSize > limit)
 		return (lineSize);
 
