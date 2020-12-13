@@ -86,10 +86,10 @@ class TcpListener
 
 		void _acceptNewClient(void) throw(tcpException);
 		void _disconnectClient(SOCKET client);
-		void _handleRequest(SOCKET client);
+		void _handleRequest(SOCKET client) throw(tcpException);
 		void _answerToClient(SOCKET client, HttpRequest & request)
-			throw(sendException, tcpException);
-		string const _getRequiredFile(HttpRequest const & request);
+			const throw(sendException, tcpException);
+		string const _getRequiredFile(HttpRequest const & request) const;
 		void _sendToClient(SOCKET client, char const * msg, size_t size)
 			const throw(sendException);
 		void _sendStatus(SOCKET client,
@@ -106,7 +106,8 @@ class TcpListener
 		void _writeContentFields(std::ostringstream & headerStream,
 			char const * fileName, struct stat const & fileInfos,
 			t_bufferQ const & bufferQ) const;
-		t_bufferQ _getFile(char const * fileName) const;
+		t_bufferQ _getFile(char const * fileName)
+			const throw(tcpException);
 };
 
 #endif

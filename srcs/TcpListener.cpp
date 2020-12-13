@@ -21,7 +21,7 @@ TcpListener::tcpException::what(void) const throw()
 }
 
 TcpListener::sendException::sendException(string str) throw()
-						  : _str(str + " : " + strerror(errno))
+						   : _str(str + " : " + strerror(errno))
 {
 }
 
@@ -148,7 +148,7 @@ TcpListener::_disconnectClient(SOCKET client)
 }
 
 void
-TcpListener::_handleRequest(SOCKET client)
+TcpListener::_handleRequest(SOCKET client) throw(tcpException)
 {
 	cout << endl << "Data arriving from socket " << client << endl;
 	HttpRequest request(client);
@@ -169,7 +169,7 @@ TcpListener::_handleRequest(SOCKET client)
 
 void
 TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
-									throw(sendException, tcpException)
+	const throw(sendException, tcpException)
 {
 	if (request._status.info != "OK" && request._status.code != 404)
 	{
@@ -197,7 +197,7 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 }
 
 string const
-TcpListener::_getRequiredFile(HttpRequest const & request)
+TcpListener::_getRequiredFile(HttpRequest const & request) const
 {
 	if (request._target == "/")
 		return (ROOT_DIRECTORY + string("/index.html"));
@@ -208,14 +208,16 @@ TcpListener::_getRequiredFile(HttpRequest const & request)
 }
 
 void
-TcpListener::_sendToClient(SOCKET client, char const * msg, size_t size) const throw(sendException)
+TcpListener::_sendToClient(SOCKET client, char const * msg, size_t size) 	const throw(sendException)
 {
 	if (send(client, msg, size, 0) == -1)
 		throw(sendException("Could not send to client"));
 }
 
 void
-TcpListener::_sendStatus(SOCKET client, HttpRequest::s_status const & status) const throw(sendException)
+TcpListener::_sendStatus(SOCKET client,
+	HttpRequest::s_status const & status)
+	const throw(sendException)
 {
 	std::ostringstream oss;
 	oss << HTTP_VERSION << " " << status.code << " " << status.info << "\r\n";
@@ -230,8 +232,8 @@ TcpListener::_sendEndOfHeader(SOCKET client) const throw(sendException)
 
 void
 TcpListener::_sendFile(SOCKET client, char const * fileName,
-						struct stat const & fileInfos)
-						const throw(sendException, tcpException)
+	struct stat const & fileInfos)
+	const throw(sendException, tcpException)
 {
 	std::ostringstream headerStream;
 
@@ -246,7 +248,8 @@ TcpListener::_sendFile(SOCKET client, char const * fileName,
 }
 
 void
-TcpListener::_sendBody(SOCKET client, t_bufferQ & bufferQ) const throw(sendException)
+TcpListener::_sendBody(SOCKET client, t_bufferQ & bufferQ)
+	const throw(sendException)
 {
 	while (!bufferQ.empty())
 	{
@@ -297,7 +300,7 @@ TcpListener::_writeContentFields(std::ostringstream & headerStream,
 }
 
 TcpListener::t_bufferQ
-TcpListener::_getFile(char const * fileName) const
+TcpListener::_getFile(char const * fileName) const throw(tcpException)
 {
 	t_bufferQ	bufferQ;
 	s_buffer *	buffer;
@@ -308,7 +311,9 @@ TcpListener::_getFile(char const * fileName) const
 	do
 	{
 		buffer = new s_buffer(BUFFER_SIZE);
-		indexFile.read(buffer->b, buffer->size); //throw
+		try {indexFile.read(buffer->b, buffer->size);}
+		catch (std::exception const &)
+		{throw(tcpException("Coud not read file " + string(fileName)));}
 		bufferQ.push(buffer);
 		buffer->occupiedSize = indexFile.gcount();
 	} while (buffer->occupiedSize == buffer->size && !indexFile.eof());
