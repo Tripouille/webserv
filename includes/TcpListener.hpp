@@ -88,7 +88,7 @@ class TcpListener
 		void _disconnectClient(SOCKET client);
 		void _handleRequest(SOCKET client) throw(tcpException);
 		void _answerToClient(SOCKET client, HttpRequest & request)
-			const throw(sendException, tcpException);
+			throw(sendException, tcpException);
 		string const _getRequiredFile(HttpRequest const & request) const;
 		void _sendToClient(SOCKET client, char const * msg, size_t size)
 			const throw(sendException);

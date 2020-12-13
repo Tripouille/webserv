@@ -169,12 +169,13 @@ TcpListener::_handleRequest(SOCKET client) throw(tcpException)
 
 void
 TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
-	const throw(sendException, tcpException)
+	throw(sendException, tcpException)
 {
 	if (request._status.info != "OK" && request._status.code != 404)
 	{
 		_sendStatus(client, request.getStatus());
-		return (_sendEndOfHeader(client));
+		_sendEndOfHeader(client);
+		return (_disconnectClient(client));
 	}
 	string requiredFile = _getRequiredFile(request);
 	struct stat fileInfos;
