@@ -188,7 +188,9 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 	bool requiredFileNeedCGI = true;
 	if (requiredFileNeedCGI)
 	{
-		CgiRequest cgiRequest;
+		CgiRequest cgiRequest("", "", "", "CGI/1.1", "./cgitest/test.php",
+		"localhost:8080/cgitest/test.php", "", "127.0.0.1", "localhost", "localhost", "GET", "./cgitest/test.php",
+		"./cgitest/test.php", "webser", "8080", "HTTP/1.1", "webserv/1.1");
 		cgiRequest.doRequest();
 		t_bufferQ const & answer = cgiRequest.getAnswer();
 		cout << answer.front()->b << endl;

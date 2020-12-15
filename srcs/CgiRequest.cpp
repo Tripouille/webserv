@@ -20,18 +20,39 @@ CgiRequest::cgiException::what(void) const throw()
 /* CgiRequest */
 CgiRequest::CgiRequest(void)
 {
-	_env[0] = const_cast<char *>("GATEWAY_INTERFACE=CGI/1.1");
-	_env[1] = const_cast<char *>("SERVER_PROTOCOL=HTTP/1.1");
-	_env[2] = const_cast<char *>("SCRIPT_FILENAME=./cgitest/test.php");
-	_env[3] = const_cast<char *>("SCRIPT_NAME=./cgitest/test.php");
-	_env[4] = const_cast<char *>("REDIRECT_STATUS=200");
-	_env[5] = NULL;
+}
 
+CgiRequest::CgiRequest(string auth_type, string content_length, string content_type, string gateway_interface,
+					string path_info, string path_translated, string query_string, string remote_addr,
+					string remote_ident, string remote_user, string request_method, string request_uri,
+					string script_name, string server_name, string server_port, string server_protocol,
+					string server_software)
+{
+	_setEnv(0, auth_type.insert(0, "AUTH_TYPE="));
+	_setEnv(1, content_length.insert(0, "CONTENT_LENGTH="));
+	_setEnv(2, content_type.insert(0, "CONTENT_TYPE="));
+	_setEnv(3, gateway_interface.insert(0, "GATEWAY_INTERFACE="));
+	_setEnv(4, path_info.insert(0, "PATH_INFO="));
+	_setEnv(5, path_translated.insert(0, "PATH_TRANSLATED="));
+	_setEnv(6, query_string.insert(0, "QUERY_STRING="));
+	_setEnv(7, remote_addr.insert(0, "REMOTE_ADDR="));
+	_setEnv(8, remote_ident.insert(0, "REMOTE_IDENT="));
+	_setEnv(9, remote_user.insert(0, "REMOTE_USER="));
+	_setEnv(10, request_method.insert(0, "REQUEST_METHOD="));
+	_setEnv(11, request_uri.insert(0, "REQUEST_URI="));
+	_setEnv(12, script_name.insert(0, "SCRIPT_NAME="));
+	_setEnv(13, server_name.insert(0, "SERVER_NAME="));
+	_setEnv(14, server_port.insert(0, "SERVER_PORT="));
+	_setEnv(15, server_protocol.insert(0, "SERVER_PROTOCOL="));
+	_setEnv(16, server_software.insert(0, "SERVER_SOFTWARE="));
+	_env[17] = NULL;
 	_av[0] = NULL;
 }
 
 CgiRequest::~CgiRequest(void)
 {
+	for (int i = 0; _env[i] != NULL; ++i)
+		delete _env[i];
 }
 
 CgiRequest::CgiRequest(CgiRequest const & other)
@@ -57,6 +78,7 @@ CgiRequest::doRequest(void)
 	if (child == 0)
 	{
 		dup2(p[1], STDOUT);
+		//if (execve("./cgitest/printenv", _av, _env) == -1)
 		if (execve("/usr/bin/php-cgi", _av, _env) == -1)
 			exit(EXIT_FAILURE);
 	}
@@ -94,4 +116,12 @@ void
 CgiRequest::_copy(CgiRequest const & other)
 {
 	static_cast<void>(other);
+}
+
+void
+CgiRequest::_setEnv(int pos, string const & value)
+{
+	_env[pos] = new char[value.size() + 1];
+	std::copy(value.begin(), value.end(), _env[pos]);
+	_env[value.size()] = 0;
 }
