@@ -185,9 +185,13 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 		requiredFile = ROOT_DIRECTORY + string("/404.html");
 	}
 	_sendStatus(client, request.getStatus());
-	bool requiredFileNeedCGI = false;
+	bool requiredFileNeedCGI = true;
 	if (requiredFileNeedCGI)
-		return ;
+	{
+		CgiRequest cgiRequest;
+		cgiRequest.doRequest();
+		//CgiReques
+	}
 	else if (stat(requiredFile.c_str(), &fileInfos) == 0)
 		_sendFile(client, requiredFile.c_str(), fileInfos);
 	else
@@ -300,7 +304,7 @@ TcpListener::_writeContentFields(std::ostringstream & headerStream,
 	headerStream << "Last-Modified: " << date << "\r\n";
 }
 
-TcpListener::t_bufferQ
+t_bufferQ
 TcpListener::_getFile(char const * fileName) const throw(tcpException)
 {
 	t_bufferQ	bufferQ;
