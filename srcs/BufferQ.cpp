@@ -20,3 +20,12 @@ s_buffer::operator=(s_buffer const & other)
 	static_cast<void>(other);
 	return (*this);
 }
+
+void deleteQ(t_bufferQ & q)
+{
+	while (!q.empty())
+	{
+		delete q.front();
+		q.pop();
+	}
+}

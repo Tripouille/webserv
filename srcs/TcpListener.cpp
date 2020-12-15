@@ -190,7 +190,8 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 	{
 		CgiRequest cgiRequest;
 		cgiRequest.doRequest();
-		//CgiReques
+		t_bufferQ const & answer = cgiRequest.getAnswer();
+		cout << answer.front()->b << endl;
 	}
 	else if (stat(requiredFile.c_str(), &fileInfos) == 0)
 		_sendFile(client, requiredFile.c_str(), fileInfos);

@@ -21,4 +21,6 @@ struct s_buffer
 
 typedef queue<s_buffer *, list<s_buffer *> > t_bufferQ;
 
+void deleteQ(t_bufferQ & q);
+
 #endif
