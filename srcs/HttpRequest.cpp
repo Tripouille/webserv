@@ -277,6 +277,8 @@ HttpRequest::_checkHeader(void) throw(parseException)
 	if (_fields["Host"].size() == 0
 	|| (_fields["Host"].size() == 1 && _fields["Host"][0] == ""))
 		throw(parseException(*this, 400, "Bad Request", "no Host header field"));
+	if (_fields["Host"].size() > 1)
+		throw(parseException(*this, 400, "Bad Request", "too many Host header fields"));
 }
 
 void

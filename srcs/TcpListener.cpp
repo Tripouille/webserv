@@ -171,7 +171,7 @@ void
 TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 	throw(sendException, tcpException)
 {
-	if (request._status.info != "OK" && request._status.code != 404)
+	if (request._status.info != "OK")
 	{
 		_sendStatus(client, request.getStatus());
 		_sendEndOfHeader(client);
