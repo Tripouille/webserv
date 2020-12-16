@@ -185,9 +185,16 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 		requiredFile = ROOT_DIRECTORY + string("/404.html");
 	}
 	_sendStatus(client, request.getStatus());
-	bool requiredFileNeedCGI = false;
+	bool requiredFileNeedCGI = true;
 	if (requiredFileNeedCGI)
-		return ;
+	{
+		CgiRequest cgiRequest("", "", "", "CGI/1.1", "./cgitest/test.php",
+		"localhost:8080/cgitest/test.php", "", "127.0.0.1", "localhost", "localhost", "GET", "./cgitest/test.php",
+		"./cgitest/test.php", "webser", "8080", "HTTP/1.1", "webserv/1.1");
+		cgiRequest.doRequest();
+		t_bufferQ const & answer = cgiRequest.getAnswer();
+		cout << answer.front()->b << endl;
+	}
 	else if (stat(requiredFile.c_str(), &fileInfos) == 0)
 		_sendFile(client, requiredFile.c_str(), fileInfos);
 	else
@@ -300,7 +307,7 @@ TcpListener::_writeContentFields(std::ostringstream & headerStream,
 	headerStream << "Last-Modified: " << date << "\r\n";
 }
 
-TcpListener::t_bufferQ
+t_bufferQ
 TcpListener::_getFile(char const * fileName) const throw(tcpException)
 {
 	t_bufferQ	bufferQ;
