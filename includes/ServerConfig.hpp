@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/10 14:06:10 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/16 17:09:07 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,8 @@
 # include <sys/types.h>
 # include <cstring>
 # include <cerrno>
+# include <dirent.h>
+# include "Host.hpp"
 
 using std::string;
 using std::vector;
@@ -53,17 +55,20 @@ class ServerConfig
 ** --------------------------------- METHODS ----------------------------------
 */
 		void									init(void);
+		void									chargeHost( ifstream & p_file );
 
 /*
 ** -------------------------------- ACCESSEUR ---------------------------------
 */
 
-	private:
 
 		string									_pathConfFile;
 		map<string, string>						_http;
 		map<string, string>						_mimeType;
+		vector<Host>							_host;
 		int										_nbLine;
+
+	private:
 
 /*
 ** ----------------------------- PRIVATE METHODS ------------------------------
@@ -73,6 +78,8 @@ class ServerConfig
 		ServerConfig &		operator=( ServerConfig const & rhs );
 		void				readFile( ifstream & file );
 		void				initConf( void );
+		void				initHost( void );
+		DIR *				directoryPath( void );
 
 };
 
