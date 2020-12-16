@@ -20,6 +20,7 @@
 # define BACKLOG 3
 # define HTTP_VERSION "HTTP/1.1"
 # define BUFFER_SIZE 1024
+# define RCV_TIMEOUT 3000
 
 typedef int SOCKET;
 

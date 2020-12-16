@@ -71,8 +71,9 @@ TcpListener::init(void)
 		throw tcpException("Socket creation failed");
 
 	// Flag SO_REUSEADDR pour éviter l'erreur "bind failed: Address already in use"
-	int n = 1;
-	if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) < 0)
+	int n = 1; struct timeval tv = {0, RCV_TIMEOUT};
+	if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) < 0
+	|| setsockopt(_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
 	{
 		close(_socket);
 		throw tcpException("Setting socket option failed");
@@ -102,7 +103,7 @@ TcpListener::run(void)
 	while (running)
 	{
 		setCopy = _activeFdSet;
-		timeval timeout = {10, 0}; //sec, usec
+		timeval timeout = {60, 0}; // 60 seconds
 		int socketCount = select(FD_SETSIZE, &setCopy, NULL, NULL, &timeout);
 		if (socketCount < 0)
 		{
@@ -185,7 +186,7 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 		requiredFile = ROOT_DIRECTORY + string("/404.html");
 	}
 	_sendStatus(client, request.getStatus());
-	bool requiredFileNeedCGI = true;
+	bool requiredFileNeedCGI = false;
 	if (requiredFileNeedCGI)
 	{
 		CgiRequest cgiRequest("", "", "", "CGI/1.1", "./cgitest/test.php",

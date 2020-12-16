@@ -118,7 +118,7 @@ HttpRequest::_analyseRequestLine(ssize_t & headerSize) throw(parseException, clo
 	|| headerSize == 1)
 		throw(parseException(*this, 400, "Bad Request", "Too many empty lines before request"));
 	if (headerSize < 0)
-		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
+		throw(parseException(*this, 500, "Internal Server Error", "recv error (may have timeout)"));
 	else if (headerSize == 0)
 		throw(closeOrderException());
 	else if (headerSize > REQUEST_LINE_MAX_SIZE)
