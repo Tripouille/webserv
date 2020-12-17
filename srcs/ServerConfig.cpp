@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/16 19:11:09 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/17 16:36:04 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,15 +66,51 @@ DIR *									ServerConfig::directoryPath( void )
 	return opendir(name.c_str());
 }
 
-void									ServerConfig::initHost( void )
+void									ServerConfig::initHost( vector<string> & p_filname )
+{
+	string				line;
+	string				key;
+	string				arg;
+	size_t				nb(0);
+
+	for (size_t i = 0; i < p_filname.size(); i++)
+	{
+		string fileName(_http.at("host"));
+		fileName += p_filname[i];
+		ifstream  hostFile(fileName.c_str());
+		if (hostFile)
+		{
+			while (getline(hostFile, line))
+			{
+				map<string, string>	tmp;
+				std::map<string, string>::iterator		it = tmp.begin();
+				std::stringstream	str(line);
+
+				str >> key;
+				if (str.eof())
+					continue;
+				if (key.at(0) == '#')
+					continue;
+				if ((nb = key.find_first_of(':') != string::npos))
+					key.erase(key.find_first_of(':'), nb + 1);
+				getline(str, arg);
+				if (arg.find_first_of(';') != string::npos)
+					arg.erase(arg.find_first_of(';'), arg.size());
+				if (arg.find_first_not_of(' ') != string::npos)
+					arg.erase(0, arg.find_first_not_of(' '));
+				tmp.insert(it, std::pair<string, string>(key, arg));
+			}
+		} else {
+			throw tcpException("Error with file in folder host");
+		}
+	}
+}
+
+void									ServerConfig::readFolderHost( void )
 {
 
 	DIR *				dir = NULL;
 	struct dirent *		ent = NULL;
-	string				line;
-	string				key;
-	string				arg;
-	//size_t				nb(0);
 	vector<string>		fileName;
 
 	dir = this->directoryPath();
@@ -86,45 +122,12 @@ void									ServerConfig::initHost( void )
                 continue;
 			std::cout << ent->d_name << std::endl;
 			fileName.push_back(string(ent->d_name));
-			// ifstream  hostFile(ent->d_name);
-			// if (hostFile)
-			// {
-			// 	while (getline(hostFile, line))
-			// 	{
-			// 		map<string, string>	tmp;
-			// 		std::map<string, string>::iterator		it = tmp.begin();
-			// 		std::stringstream	str(line);
-
-			// 		str >> key;
-			// 		if (str.eof())
-			// 			continue;
-			// 		if (key.at(0) == '#')
-			// 			continue;
-			// 		if ((nb = key.find_first_of(':') != string::npos))
-			// 			key.erase(key.find_first_of(':'), nb + 1);
-			// 		getline(str, arg);
-			// 		if (arg.find_first_of(';') != string::npos)
-			// 			arg.erase(arg.find_first_of(';'), arg.size());
-			// 		if (arg.find_first_not_of(' ') != string::npos)
-			// 			arg.erase(0, arg.find_first_not_of(' '));
-			// 		tmp.insert(it, std::pair<string, string>(key, arg));
-
-			// 		for (std::map<string, string>::iterator i = tmp.begin(); i != tmp.end(); ++i)
-			// 		{
-			// 			std::cout << i->first << " : ";
-			// 			std::cout << i->second << std::endl;
-			// 		}
-			// 	}
-			// } else {
-			// 	throw tcpException("Error with file in folder host");
-			// }
 		}
 		closedir(dir);
 	} else {
 		throw tcpException("Error with folder host");
 	}
-	for(size_t i = 0; i < fileName.size(); i++)
-		std::cout << "Name File" << i << ": " << fileName[i] << std::endl;
+	this->initHost(fileName);
 }
 
 void									ServerConfig::initConf( void )
@@ -205,7 +208,7 @@ void									ServerConfig::init( void )
 	{
 		this->readFile(configFile);
 		this->initConf();
-		this->initHost();
+		this->readFolderHost();
 	} else {
 		throw tcpException("Error with config file");
 	}

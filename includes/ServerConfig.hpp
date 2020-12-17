@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/16 17:09:07 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/17 15:47:45 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,7 +78,8 @@ class ServerConfig
 		ServerConfig &		operator=( ServerConfig const & rhs );
 		void				readFile( ifstream & file );
 		void				initConf( void );
-		void				initHost( void );
+		void				readFolderHost( void );
+		void				initHost( vector<string> & p_filname );
 		DIR *				directoryPath( void );
 
 };
