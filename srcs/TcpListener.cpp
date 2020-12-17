@@ -174,18 +174,13 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 {
 	if (request._status.info != "OK")
 	{
-		_sendStatus(client, request.getStatus());
+		_sendStatus(client, request._status);
 		_sendEndOfHeader(client);
 		return (_disconnectClient(client));
 	}
-	string requiredFile = _getRequiredFile(request);
 	struct stat fileInfos;
-	if (stat(requiredFile.c_str(), &fileInfos) != 0)
-	{
-		request.setStatus(404, "Not Found");
-		requiredFile = ROOT_DIRECTORY + string("/404.html");
-	}
-	_sendStatus(client, request.getStatus());
+	string requiredFile = _getRequiredFile(client, request, fileInfos);
+	_sendStatus(client, request._status);
 	bool requiredFileNeedCGI = false;
 	if (requiredFileNeedCGI)
 	{
@@ -196,24 +191,33 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 		t_bufferQ const & answer = cgiRequest.getAnswer();
 		cout << answer.front()->b << endl;
 	}
-	else if (stat(requiredFile.c_str(), &fileInfos) == 0)
-		_sendFile(client, requiredFile.c_str(), fileInfos);
-	else
-	{
-		cerr << "404.html not found" << endl;
-		_sendEndOfHeader(client);
-	}
+	if (stat(requiredFile.c_str(), &fileInfos) == 0)
+		_sendAnswer(client, requiredFile.c_str(), fileInfos);
 }
 
 string const
-TcpListener::_getRequiredFile(HttpRequest const & request) const
+TcpListener::_getRequiredFile(SOCKET client, HttpRequest & request,
+	struct stat & fileInfos) const
 {
+	string requiredFile;
 	if (request._target == "/")
-		return (ROOT_DIRECTORY + string("/index.html"));
+		requiredFile = ROOT_DIRECTORY + string("/index.html");
 	else if (request._target[0] == '/')
-		return (ROOT_DIRECTORY + request._target);
+		requiredFile = ROOT_DIRECTORY + request._target;
 	else
-		return (ROOT_DIRECTORY + string("/") + request._target);
+		requiredFile = ROOT_DIRECTORY + string("/") + request._target;
+	if (stat(requiredFile.c_str(), &fileInfos) != 0)
+	{
+		request.setStatus(404, "Not Found");
+		requiredFile = ROOT_DIRECTORY + string("/404.html");
+		if (stat(requiredFile.c_str(), &fileInfos) != 0)
+		{
+			cerr << "File 404.html not found" << endl;
+			_sendEndOfHeader(client);
+			return ("");
+		}
+	}
+	return (requiredFile);
 }
 
 void
@@ -240,7 +244,7 @@ TcpListener::_sendEndOfHeader(SOCKET client) const throw(sendException)
 }
 
 void
-TcpListener::_sendFile(SOCKET client, char const * fileName,
+TcpListener::_sendAnswer(SOCKET client, char const * fileName,
 	struct stat const & fileInfos)
 	const throw(sendException, tcpException)
 {

@@ -79,14 +79,15 @@ class TcpListener
 		void _handleRequest(SOCKET client) throw(tcpException);
 		void _answerToClient(SOCKET client, HttpRequest & request)
 			throw(sendException, tcpException);
-		string const _getRequiredFile(HttpRequest const & request) const;
+		string const _getRequiredFile(SOCKET client, HttpRequest & request,
+			struct stat & fileInfos) const;
 		void _sendToClient(SOCKET client, char const * msg, size_t size)
 			const throw(sendException);
 		void _sendStatus(SOCKET client,
 			HttpRequest::s_status const & status)
 			const throw(sendException);
 		void _sendEndOfHeader(SOCKET client) const throw(sendException);
-		void _sendFile(SOCKET client, char const * fileName,
+		void _sendAnswer(SOCKET client, char const * fileName,
 			struct stat const & fileInfos)
 			const throw(sendException, tcpException);
 		void _sendBody(SOCKET client, t_bufferQ & bufferQ)
