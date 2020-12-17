@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/17 16:36:04 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/17 17:36:51 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,25 @@ DIR *									ServerConfig::directoryPath( void )
 	return opendir(name.c_str());
 }
 
+vector<string>							ServerConfig::convertIndex( map<string, string> & p_map )
+{
+	std::string			word;
+	vector<string>		tmp;
+
+	if (p_map.find("index") == p_map.end())
+	{
+		errno = 22;
+		throw tcpException("Error index not found in server conf");
+	}
+	std::stringstream	line(p_map.at("index"));
+	while(line)
+	{
+		line >> word;
+		tmp.push_back(word);
+	}
+	return tmp;
+}
+
 void									ServerConfig::initHost( vector<string> & p_filname )
 {
 	string				line;
@@ -80,10 +99,11 @@ void									ServerConfig::initHost( vector<string> & p_filname )
 		ifstream  hostFile(fileName.c_str());
 		if (hostFile)
 		{
+			map<string, string>	tmp;
+			std::map<string, string>::iterator		it = tmp.begin();
+			vector<int> port;
 			while (getline(hostFile, line))
 			{
-				map<string, string>	tmp;
-				std::map<string, string>::iterator		it = tmp.begin();
 				std::stringstream	str(line);
 
 				str >> key;
@@ -98,8 +118,19 @@ void									ServerConfig::initHost( vector<string> & p_filname )
 					arg.erase(arg.find_first_of(';'), arg.size());
 				if (arg.find_first_not_of(' ') != string::npos)
 					arg.erase(0, arg.find_first_not_of(' '));
-				tmp.insert(it, std::pair<string, string>(key, arg));
+				if (key == "port")
+					port.push_back(atoi(arg.c_str()));
+				else
+					tmp.insert(it, std::pair<string, string>(key, arg));
 			}
+			Host temp_host = {
+				port,
+				string(tmp.at("root")),
+				this->convertIndex(tmp),
+				string(tmp.at("server_name")),
+				vector<string>()
+			};
+			_host.push_back(temp_host);
 		} else {
 			throw tcpException("Error with file in folder host");
 		}
@@ -120,7 +151,6 @@ void									ServerConfig::readFolderHost( void )
 		{
 			if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
                 continue;
-			std::cout << ent->d_name << std::endl;
 			fileName.push_back(string(ent->d_name));
 		}
 		closedir(dir);

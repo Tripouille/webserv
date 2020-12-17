@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/17 15:47:45 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/17 17:29:23 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,13 +22,21 @@
 # include <cstring>
 # include <cerrno>
 # include <dirent.h>
-# include "Host.hpp"
 
 using std::string;
 using std::vector;
 using std::map;
 using std::ofstream;
 using std::ifstream;
+
+struct Host
+{
+	vector<int>			port;
+	string				root;
+	vector<string>		index;
+	string				serverName;
+	vector<string>		cgi;
+};
 
 class ServerConfig
 {
@@ -81,6 +89,7 @@ class ServerConfig
 		void				readFolderHost( void );
 		void				initHost( vector<string> & p_filname );
 		DIR *				directoryPath( void );
+		vector<string>		convertIndex( map<string, string> & p_map );
 
 };
 
