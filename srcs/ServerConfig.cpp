@@ -6,14 +6,13 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/17 17:36:51 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/17 17:39:22 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ServerConfig.hpp"
 #include <sstream>
 #include <unistd.h>
-#include <sys/types.h>
 #include <algorithm>
 
 
