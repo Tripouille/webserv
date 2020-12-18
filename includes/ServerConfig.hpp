@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/18 10:23:00 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/18 10:27:42 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,13 +70,15 @@ class ServerConfig
 */
 
 
-		string									_pathConfFile;
+
 		map<string, string>						_http;
 		map<string, string>						_mimeType;
 		vector<Host>							_host;
-		int										_nbLine;
 
 	private:
+
+		string									_pathConfFile;
+		int										_nbLine;
 
 /*
 ** ----------------------------- PRIVATE METHODS ------------------------------
