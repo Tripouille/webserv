@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/18 10:49:30 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/18 14:14:31 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ const char *			ServerConfig::configException::what(void) const throw()
 */
 
 ServerConfig::ServerConfig( std::string const & path ) :
-	_pathConfFile(path), _nbLine(0)
+	_pathConfFile(path)
 {
 }
 
@@ -264,7 +264,6 @@ void					ServerConfig::readFile( ifstream & file )
 	while (getline(file, line))
 	{
 		std::stringstream	str(line);
-		_nbLine++;
 
 		str >> key;
 		if (str.eof())
@@ -296,8 +295,35 @@ void					ServerConfig::init( void )
 		this->readFile(configFile);
 		this->initConf();
 		this->readFolderHost();
+		configFile.close();
 	} else {
 		throw configException("Error with config file", _pathConfFile);
+	}
+}
+
+void					ServerConfig::checkConfigFile( void )
+{
+	ifstream	configFile(_pathConfFile.c_str());
+	string		line;
+	string		params;
+
+	if (configFile)
+	{
+		while(getline(configFile, line))
+		{
+			std::stringstream	str(line);
+			str >> params;
+			if (str.eof())
+				continue;
+			if (params.at(0) == '#')
+				continue;
+			if (line.find_last_of(';') == string::npos)
+			{
+				errno = 22;
+				throw configException("Error in config file with params :", params);
+			}
+		}
+		configFile.close();
 	}
 }
 

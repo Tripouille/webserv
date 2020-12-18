@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/18 10:27:42 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/18 10:58:01 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,8 +62,9 @@ class ServerConfig
 /*
 ** --------------------------------- METHODS ----------------------------------
 */
-		void									init(void);
+		void									init( void );
 		void									chargeHost( ifstream & p_file );
+		void									checkConfigFile( void );
 
 /*
 ** -------------------------------- ACCESSEUR ---------------------------------
@@ -78,7 +79,6 @@ class ServerConfig
 	private:
 
 		string									_pathConfFile;
-		int										_nbLine;
 
 /*
 ** ----------------------------- PRIVATE METHODS ------------------------------
