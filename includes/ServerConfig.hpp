@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/17 17:29:23 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/18 10:23:00 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,12 +43,12 @@ class ServerConfig
 
 	public:
 
-		class tcpException : public std::exception
+		class configException : public std::exception
 		{
 			public:
 
-				tcpException(string str = "") throw();
-				virtual ~tcpException(void) throw() {}
+				configException(string str = "", string arg = "") throw();
+				virtual ~configException(void) throw() {}
 				virtual const char * what(void) const throw();
 
 			private:
@@ -89,7 +89,10 @@ class ServerConfig
 		void				readFolderHost( void );
 		void				initHost( vector<string> & p_filname );
 		DIR *				directoryPath( void );
-		vector<string>		convertIndex( map<string, string> & p_map );
+		vector<string>		convertIndex( map<string, string> & p_map, string & p_fileName );
+		string				checkRoot( map<string, string> & p_map, string & p_fileName );
+		string				checkServerName( map<string, string> & p_map, string & p_fileName );
+		vector<int> &		checkPort( vector<int> & p_vector, string & p_fileName );
 
 };
 

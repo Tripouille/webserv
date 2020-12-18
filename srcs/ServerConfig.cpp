@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/17 17:39:22 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2020/12/18 10:24:30 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,12 +20,12 @@
 ** -------------------------------- Exception ---------------------------------
 */
 
-ServerConfig::tcpException::tcpException(string str) throw()
-	: _str(str + " : " + strerror(errno))
+ServerConfig::configException::configException(string str, string arg) throw()
+	: _str(str + " " + arg + " : " + strerror(errno))
 {
 }
 
-const char *	ServerConfig::tcpException::what(void) const throw()
+const char *	ServerConfig::configException::what(void) const throw()
 {
 	return (_str.c_str());
 }
@@ -58,14 +58,49 @@ ServerConfig::~ServerConfig()
 ** --------------------------------- METHODS ----------------------------------
 */
 
-DIR *									ServerConfig::directoryPath( void )
+DIR *					ServerConfig::directoryPath( void )
 {
+	if (_http.find("host") == _http.end())
+	{
+		errno = 113;
+		throw configException("Error path \"host\" does not exist on conf file");
+	}
 	string name(_http.at("host").c_str());
 	name.erase(name.find_last_of('/'), name.size());
 	return opendir(name.c_str());
 }
 
-vector<string>							ServerConfig::convertIndex( map<string, string> & p_map )
+vector<int> &			ServerConfig::checkPort( vector<int> & p_vector, string & p_fileName )
+{
+	if (p_vector.empty())
+	{
+		errno = 22;
+		throw configException("Error params \"server_name:\" not found in file ", p_fileName);
+	}
+	return p_vector;
+}
+
+string					ServerConfig::checkServerName( map<string, string> & p_map, string & p_fileName )
+{
+	if (p_map.find("server_name") == p_map.end())
+	{
+		errno = 22;
+		throw configException("Error params \"server_name:\" not found in file ", p_fileName);
+	}
+	return string(p_map.at("server_name"));
+}
+
+string					ServerConfig::checkRoot( map<string, string> & p_map, string & p_fileName )
+{
+	if (p_map.find("root") == p_map.end())
+	{
+		errno = 22;
+		throw configException("Error params \"root:\" not found in file ", p_fileName);
+	}
+	return string(p_map.at("root"));
+}
+
+vector<string>			ServerConfig::convertIndex( map<string, string> & p_map, string & p_fileName )
 {
 	std::string			word;
 	vector<string>		tmp;
@@ -73,7 +108,7 @@ vector<string>							ServerConfig::convertIndex( map<string, string> & p_map )
 	if (p_map.find("index") == p_map.end())
 	{
 		errno = 22;
-		throw tcpException("Error index not found in server conf");
+		throw configException("Error params \"index:\" not found in file ", p_fileName);
 	}
 	std::stringstream	line(p_map.at("index"));
 	while(line)
@@ -84,7 +119,7 @@ vector<string>							ServerConfig::convertIndex( map<string, string> & p_map )
 	return tmp;
 }
 
-void									ServerConfig::initHost( vector<string> & p_filname )
+void					ServerConfig::initHost( vector<string> & p_filname )
 {
 	string				line;
 	string				key;
@@ -123,20 +158,20 @@ void									ServerConfig::initHost( vector<string> & p_filname )
 					tmp.insert(it, std::pair<string, string>(key, arg));
 			}
 			Host temp_host = {
-				port,
-				string(tmp.at("root")),
-				this->convertIndex(tmp),
-				string(tmp.at("server_name")),
+				this->checkPort(port, p_filname[i]),
+				this->checkRoot(tmp, p_filname[i]),
+				this->convertIndex(tmp, p_filname[i]),
+				this->checkServerName(tmp, p_filname[i]),
 				vector<string>()
 			};
 			_host.push_back(temp_host);
 		} else {
-			throw tcpException("Error with file in folder host");
+			throw configException("Error with file", p_filname[i]);
 		}
 	}
 }
 
-void									ServerConfig::readFolderHost( void )
+void					ServerConfig::readFolderHost( void )
 {
 
 	DIR *				dir = NULL;
@@ -154,19 +189,26 @@ void									ServerConfig::readFolderHost( void )
 		}
 		closedir(dir);
 	} else {
-		throw tcpException("Error with folder host");
+		throw configException("Error with folder ", _http.at("host"));
 	}
 	this->initHost(fileName);
 }
 
-void									ServerConfig::initConf( void )
+void					ServerConfig::initConf( void )
 {
 	ofstream								pid;
 	string									line;
 	string									key;
 	string									arg;
-	ifstream 								mimeFile(_http.at("type_file").c_str());
 	std::map<string, string>::iterator		it = _mimeType.begin();
+
+	/* Check if params Type_file exist */
+	if (_http.find("type_file") == _http.end())
+	{
+		errno = 22;
+		throw configException("Error params type_file does not exist on conf file");
+	}
+	ifstream 								mimeFile(_http.at("type_file").c_str());
 
 	/* Save PID program on file */
 	pid.open(_http.at("pid").c_str());
@@ -191,11 +233,11 @@ void									ServerConfig::initConf( void )
 			}
 		}
 	} else {
-		throw tcpException("Error with mime.types file");
+		throw configException("Error with path ", _http.at("type_file"));
 	}
 }
 
-void									ServerConfig::readFile( ifstream & file )
+void					ServerConfig::readFile( ifstream & file )
 {
 	string				line;
 	string				key;
@@ -230,7 +272,7 @@ void									ServerConfig::readFile( ifstream & file )
 	// }
 }
 
-void									ServerConfig::init( void )
+void					ServerConfig::init( void )
 {
 	ifstream configFile(_pathConfFile.c_str());
 	if (configFile)
@@ -239,7 +281,7 @@ void									ServerConfig::init( void )
 		this->initConf();
 		this->readFolderHost();
 	} else {
-		throw tcpException("Error with config file");
+		throw configException("Error with config file", _pathConfFile);
 	}
 }
 
