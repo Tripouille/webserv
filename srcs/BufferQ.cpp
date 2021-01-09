@@ -11,7 +11,7 @@ s_buffer::~s_buffer(void)
 
 s_buffer::s_buffer(s_buffer const & other) : size(other.size), occupiedSize(other.occupiedSize)
 {
-	b = new char [size];
+	b = new char[size];
 }
 
 s_buffer &

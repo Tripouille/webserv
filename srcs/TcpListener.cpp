@@ -179,17 +179,17 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 		return (_disconnectClient(client));
 	}
 	struct stat fileInfos;
-	string requiredFile = _getRequiredFile(client, request, fileInfos);
+	string requiredFile = _getRequiredFile(client, request, fileInfos); // mettre dans request
 	_sendStatus(client, request._status);
-	bool requiredFileNeedCGI = false;
+	bool requiredFileNeedCGI = true;
 	if (requiredFileNeedCGI)
 	{
-		CgiRequest cgiRequest("", "", "", "CGI/1.1", "./cgitest/test.php",
-		"localhost:8080/cgitest/test.php", "", "127.0.0.1", "localhost", "localhost", "GET", "./cgitest/test.php",
-		"./cgitest/test.php", "webser", "8080", "HTTP/1.1", "webserv/1.1");
+		CgiRequest cgiRequest(_port, request, requiredFile);
 		cgiRequest.doRequest();
 		t_bufferQ const & answer = cgiRequest.getAnswer();
-		cout << answer.front()->b << endl;
+		cout << "first buffer cgiRequrest : " << endl;
+		write(1, answer.front()->b, (size_t)answer.front()->occupiedSize);
+		write(1, "\n", 1);
 	}
 	if (stat(requiredFile.c_str(), &fileInfos) == 0)
 		_sendAnswer(client, requiredFile.c_str(), fileInfos);

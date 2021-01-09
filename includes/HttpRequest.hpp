@@ -29,6 +29,7 @@ using std::vector;
 class HttpRequest
 {
 	friend class TcpListener;
+	friend class CgiRequest;
 	public:
 		struct s_status //déplacer dans private puisque friend ?
 		{

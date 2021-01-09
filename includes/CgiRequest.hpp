@@ -8,7 +8,10 @@
 #include <iostream>
 #include <string.h>
 #include <vector>
+#include <signal.h>
+#include <sys/socket.h>
 #include "BufferQ.hpp"
+#include "HttpRequest.hpp"
 #define STDOUT 1
 
 using std::cout; using std::endl; using std::string;
@@ -25,11 +28,8 @@ class CgiRequest
 			string _str;
 	};
 	public:
-		CgiRequest(string auth_type, string content_length, string content_type, string gateway_interface,
-					string path_info, string path_translated, string query_string, string remote_addr,
-					string remote_ident, string remote_user, string request_method, string request_uri,
-					string script_name, string server_name, string server_port, string server_protocol,
-					string server_software);
+		CgiRequest(const uint16_t serverPort, HttpRequest const & request,
+						string const & requiredFile);
 		~CgiRequest(void);
 		CgiRequest(CgiRequest const & other);
 
@@ -41,12 +41,14 @@ class CgiRequest
 		CgiRequest(void);
 		void _copy(CgiRequest const & other);
 		void _setEnv(int pos, string const & value);
+		template <class T>
+		string _toString(T number) const;
 
 
-		enum {BUFFER_SIZE = 10000, TIMEOUT = 100000, ENV_SIZE = 18};
+		enum {BUFFER_SIZE = 100000, TIMEOUT = 1000000, ENV_SIZE = 20};
 
 		char *				_env[ENV_SIZE];
-		char *				_av[1];
+		char *				_av[2];
 		t_bufferQ			_answer;	
 };
 

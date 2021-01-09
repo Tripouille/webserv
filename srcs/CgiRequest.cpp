@@ -22,31 +22,31 @@ CgiRequest::CgiRequest(void)
 {
 }
 
-CgiRequest::CgiRequest(string auth_type, string content_length, string content_type, string gateway_interface,
-					string path_info, string path_translated, string query_string, string remote_addr,
-					string remote_ident, string remote_user, string request_method, string request_uri,
-					string script_name, string server_name, string server_port, string server_protocol,
-					string server_software)
+CgiRequest::CgiRequest(const uint16_t serverPort, HttpRequest const & request,
+						string const & requiredFile)
 {
-	_setEnv(0, auth_type.insert(0, "AUTH_TYPE="));
-	_setEnv(1, content_length.insert(0, "CONTENT_LENGTH="));
-	_setEnv(2, content_type.insert(0, "CONTENT_TYPE="));
-	_setEnv(3, gateway_interface.insert(0, "GATEWAY_INTERFACE="));
-	_setEnv(4, path_info.insert(0, "PATH_INFO="));
-	_setEnv(5, path_translated.insert(0, "PATH_TRANSLATED="));
-	_setEnv(6, query_string.insert(0, "QUERY_STRING="));
-	_setEnv(7, remote_addr.insert(0, "REMOTE_ADDR="));
-	_setEnv(8, remote_ident.insert(0, "REMOTE_IDENT="));
-	_setEnv(9, remote_user.insert(0, "REMOTE_USER="));
-	_setEnv(10, request_method.insert(0, "REQUEST_METHOD="));
-	_setEnv(11, request_uri.insert(0, "REQUEST_URI="));
-	_setEnv(12, script_name.insert(0, "SCRIPT_NAME="));
-	_setEnv(13, server_name.insert(0, "SERVER_NAME="));
-	_setEnv(14, server_port.insert(0, "SERVER_PORT="));
-	_setEnv(15, server_protocol.insert(0, "SERVER_PROTOCOL="));
-	_setEnv(16, server_software.insert(0, "SERVER_SOFTWARE="));
-	_env[17] = NULL;
-	_av[0] = NULL;
+	_setEnv(0, string("AUTH_TYPE=")); //
+	_setEnv(1, string("CONTENT_LENGTH=") + _toString(request._bodySize));
+	_setEnv(2, string("CONTENT_TYPE=") /*+ request._fields.at("content_type")[0]*/); //
+	_setEnv(3, string("GATEWAY_INTERFACE=CGI/1.1"));
+	_setEnv(4, string("PATH_INFO=") + requiredFile);
+	_setEnv(5, string("PATH_TRANSLATED=") + requiredFile);
+	_setEnv(6, string("QUERY_STRING=")); // apres ?
+	_setEnv(7, string("REMOTE_ADDR=")); //
+	_setEnv(8, string("REMOTE_IDENT=")); //
+	_setEnv(9, string("REMOTE_USER=")); //
+	_setEnv(10, string("REQUEST_METHOD=") + request._method); // ou POST
+	_setEnv(11, string("REQUEST_URI=/Users/jgambard/webserv/cgitest/test.php")); //
+	_setEnv(12, string("SCRIPT_NAME=/Users/jgambard/webserv/cgitest/test.php")); //
+	_setEnv(13, string("SERVER_NAME=127.0.0.1"));
+	_setEnv(14, string("SERVER_PORT=") + _toString(serverPort)); //
+	_setEnv(15, string("SERVER_PROTOCOL=HTTP/1.1"));
+	_setEnv(16, string("SERVER_SOFTWARE=Webserv/1.0"));
+	_setEnv(17, string("REDIRECT_STATUS=200"));
+	_env[18] = NULL;
+
+	_av[0] = const_cast<char *>("/Users/jgambard/webserv/cgitest/test.php"); //
+	_av[1] = NULL;
 }
 
 CgiRequest::~CgiRequest(void)
@@ -79,7 +79,8 @@ CgiRequest::doRequest(void)
 	{
 		dup2(p[1], STDOUT);
 		//if (execve("./cgitest/printenv", _av, _env) == -1)
-		if (execve("/usr/bin/php-cgi", _av, _env) == -1)
+		//if (execve("./testers/cgi_tester", _av, _env) == -1)
+		if (execve("/Users/jgambard/.brew/bin/php-cgi", _av, _env) == -1)
 			exit(EXIT_FAILURE);
 	}
 	else
@@ -88,15 +89,18 @@ CgiRequest::doRequest(void)
 		waitpid(child, &status, WNOHANG);
 		if (WEXITSTATUS(status) == EXIT_FAILURE)
 			throw(cgiException("execve fail"));
-
+		//cout << "before kill" << endl;
 		kill(child, SIGKILL);
+		//cout << "after kill" << endl;
 		s_buffer * buffer = NULL;
 		do
 		{
 			buffer = new s_buffer(BUFFER_SIZE);
 			buffer->occupiedSize = read(p[0], buffer->b, static_cast<size_t>(buffer->size));
 			_answer.push(buffer);
+			cout << buffer->occupiedSize << " / " << buffer->size << endl;
 		} while (buffer->occupiedSize == buffer->size);
+		//cout << "after while" << endl;
 		if (buffer->occupiedSize == -1)
 		{
 			deleteQ(_answer);
@@ -123,5 +127,14 @@ CgiRequest::_setEnv(int pos, string const & value)
 {
 	_env[pos] = new char[value.size() + 1];
 	std::copy(value.begin(), value.end(), _env[pos]);
-	_env[value.size()] = 0;
+	_env[pos][value.size()] = 0;
+}
+
+template <class T>
+string
+CgiRequest::_toString(T number) const
+{
+	std::ostringstream ss;
+	ss << number;
+	return (ss.str());
 }
