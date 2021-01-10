@@ -6,24 +6,26 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2020/12/02 19:27:15 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/05 15:13:12 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/ServerConfig.hpp"
-#include <cerrno>
+#include "ServerConfig.hpp"
+#include <sstream>
+#include <unistd.h>
+#include <algorithm>
 
 
 /*
 ** -------------------------------- Exception ---------------------------------
 */
 
-ServerConfig::tcpException::tcpException(string str) throw()
-	: _str(str + " : " + strerror(errno))
+ServerConfig::configException::configException(string str, string arg) throw()
+	: _str(str + " " + arg + " : " + strerror(errno))
 {
 }
 
-const char *	ServerConfig::tcpException::what(void) const throw()
+const char *			ServerConfig::configException::what(void) const throw()
 {
 	return (_str.c_str());
 }
@@ -33,15 +35,7 @@ const char *	ServerConfig::tcpException::what(void) const throw()
 */
 
 ServerConfig::ServerConfig( std::string const & path ) :
-	_pathConfFile(path), _user(""), _worker(""), _pid(getPid()), _pathModules(""),
-	_workerConnections(0), _multiAccept(false), _sendfile(false), _tcpNoPush(false),
-	_tcpNoDelay(false), _keepAliveTimeout(0), _typeHashMaxSize(0), _serverTokens(false),
-	_serverNameHashBucketSize(0), _serverNameInRedirect(false),
-	_mimeType(map<string, string>()), _defaultType(""), _pathAccessLog(""),
-	_pathErrorLog(""), _gzip(false), _gzipVary(false), _gzipProxied(""), _gzipCompLevel(0),
-	_gzipBuffers(0), _gzipVersion(""), _gzipType(vector<string>()),
-	_portListen(vector<int>(80)), _pathRoot(""), _index(vector<string>()), _serverName("_"),
-	_fastcgi(map<string, vector<string> >())
+	_pathConfFile(path)
 {
 }
 
@@ -64,49 +58,277 @@ ServerConfig::~ServerConfig()
 ** --------------------------------- METHODS ----------------------------------
 */
 
-void									ServerConfig::init( void )
+DIR *					ServerConfig::directoryPath( void )
+{
+	if (_http.find("host") == _http.end())
+	{
+		errno = 113;
+		throw configException("Error path \"host\" does not exist on conf file");
+	}
+	string name(_http.at("host").c_str());
+	name.erase(name.find_last_of('/'), name.size());
+	return opendir(name.c_str());
+}
+
+vector<int> &			ServerConfig::checkPort( vector<int> & p_vector,
+													string & p_fileName )
+{
+	if (p_vector.empty())
+	{
+		errno = 22;
+		throw configException("Error params \"server_name:\" not found on ",
+								p_fileName);
+	}
+	return p_vector;
+}
+
+string					ServerConfig::checkServerName( map<string, string> & p_map,
+															string & p_fileName )
+{
+	if (p_map.find("server_name") == p_map.end())
+	{
+		errno = 22;
+		throw configException("Error params \"server_name:\" not found on ",
+								p_fileName);
+	}
+	return string(p_map.at("server_name"));
+}
+
+string					ServerConfig::checkRoot( map<string, string> & p_map,
+														string & p_fileName )
+{
+	if (p_map.find("root") == p_map.end())
+	{
+		errno = 22;
+		throw configException("Error params \"root:\" not found on ",
+								p_fileName);
+	}
+	return string(p_map.at("root"));
+}
+
+vector<string>			ServerConfig::convertIndex( map<string, string> & p_map,
+														string & p_fileName )
+{
+	std::string			word;
+	vector<string>		tmp;
+
+	if (p_map.find("index") == p_map.end())
+	{
+		errno = 22;
+		throw configException("Error params \"index:\" not found in file ",
+								p_fileName);
+	}
+	std::stringstream	line(p_map.at("index"));
+	while(line)
+	{
+		line >> word;
+		tmp.push_back(word);
+	}
+	return tmp;
+}
+
+void					ServerConfig::initHost( vector<string> & p_filname )
+{
+	string				line;
+	string				key;
+	string				arg;
+	size_t				nb(0);
+
+	for (size_t i = 0; i < p_filname.size(); i++)
+	{
+		string fileName(_http.at("host"));
+		fileName += p_filname[i];
+		ifstream  hostFile(fileName.c_str());
+		if (hostFile)
+		{
+			map<string, string>	tmp;
+			std::map<string, string>::iterator		it = tmp.begin();
+			vector<int> port;
+			while (getline(hostFile, line))
+			{
+				std::stringstream	str(line);
+
+				str >> key;
+				if (str.eof())
+					continue;
+				if (key.at(0) == '#')
+					continue;
+				if ((nb = key.find_first_of(':') != string::npos))
+					key.erase(key.find_first_of(':'), nb + 1);
+				getline(str, arg);
+				if (arg.find_first_of(';') != string::npos)
+					arg.erase(arg.find_first_of(';'), arg.size());
+				if (arg.find_first_not_of(' ') != string::npos)
+					arg.erase(0, arg.find_first_not_of(' '));
+				if (key == "port")
+					port.push_back(atoi(arg.c_str()));
+				else
+					tmp.insert(it, std::pair<string, string>(key, arg));
+			}
+			Host temp_host = {
+				this->checkPort(port, p_filname[i]),
+				this->checkRoot(tmp, p_filname[i]),
+				this->convertIndex(tmp, p_filname[i]),
+				this->checkServerName(tmp, p_filname[i]),
+				vector<string>()
+			};
+			_host.push_back(temp_host);
+		} else {
+			throw configException("Error with file", p_filname[i]);
+		}
+	}
+}
+
+void					ServerConfig::readFolderHost( void )
+{
+
+	DIR *				dir = NULL;
+	struct dirent *		ent = NULL;
+	vector<string>		fileName;
+
+	dir = this->directoryPath();
+	if (dir)
+	{
+		while ((ent = readdir(dir)) != NULL)
+		{
+			if (ent->d_type == DT_DIR)
+				continue ;
+			if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
+                continue;
+			fileName.push_back(string(ent->d_name));
+		}
+		closedir(dir);
+	} else {
+		throw configException("Error with folder ", _http.at("host"));
+	}
+	this->initHost(fileName);
+}
+
+void					ServerConfig::initConf( void )
+{
+	ofstream			pid;
+	string				line;
+	string				key;
+	string				arg;
+
+	std::map<string, string>::iterator		it = _mimeType.begin();
+
+	/* Check if params Type_file exist */
+	if (_http.find("type_file") == _http.end())
+	{
+		errno = 22;
+		throw configException("Error params type_file does not exist on conf file");
+	}
+	ifstream 			mimeFile(_http.at("type_file").c_str());
+
+	/* Save PID program on file */
+	if (_http.find("pid") != _http.end())
+	{
+		pid.open(_http.at("pid").c_str());
+		if (pid)
+			pid << getpid() << std::endl;
+		pid.close();
+	}
+
+	/* Charg mime.type on map */
+	if (mimeFile)
+	{
+		while (getline(mimeFile, line))
+		{
+			std::stringstream str(line);
+			str >> arg;
+			if (arg == "types" || arg == "}")
+				continue;
+			while (!str.eof())
+			{
+				str >> key;
+				if (key.find_first_of(';') != string::npos)
+					key.erase(key.find_first_of(';'), key.size());
+				_mimeType.insert(it, std::pair<string, string>(key, arg));
+			}
+		}
+		mimeFile.close();
+	} else {
+		throw configException("Error with path ", _http.at("type_file"));
+	}
+}
+
+void					ServerConfig::readFile( ifstream & file )
+{
+	string				line;
+	string				key;
+	string				arg;
+	size_t				nb(0);
+	std::map<string, string>::iterator		it = _http.begin();
+
+	while (getline(file, line))
+	{
+		std::stringstream	str(line);
+
+		str >> key;
+		if (str.eof())
+			continue;
+		if (key.at(0) == '#')
+			continue;
+		if ((nb = key.find_first_of(':') != string::npos))
+			key.erase(key.find_first_of(':'), nb + 1);
+		getline(str, arg);
+		if (arg.find_first_of(';') != string::npos)
+			arg.erase(arg.find_first_of(';'), arg.size());
+		if (arg.find_first_not_of(' ') != string::npos)
+			arg.erase(0, arg.find_first_not_of(' '));
+		_http.insert(it, std::pair<string, string>(key, arg));
+	}
+
+	// for (std::map<string, string>::iterator i = _http.begin(); i != _http.end(); ++i)
+	// {
+	// 	std::cout << i->first << " : ";
+	// 	std::cout << i->second << std::endl;
+	// }
+}
+
+void					ServerConfig::init( void )
 {
 	ifstream configFile(_pathConfFile.c_str());
 	if (configFile)
 	{
-
+		this->readFile(configFile);
+		this->initConf();
+		this->readFolderHost();
+		configFile.close();
 	} else {
-		throw tcpException("Error with config file");
+		throw configException("Error with config file", _pathConfFile);
+	}
+}
+
+void					ServerConfig::checkConfigFile( void )
+{
+	ifstream	configFile(_pathConfFile.c_str());
+	string		line;
+	string		params;
+
+	if (configFile)
+	{
+		while(getline(configFile, line))
+		{
+			std::stringstream	str(line);
+			str >> params;
+			if (str.eof())
+				continue;
+			if (params.at(0) == '#')
+				continue;
+			if (line.find_last_of(';') == string::npos)
+			{
+				errno = 22;
+				throw configException("Error in config file with params :", params);
+			}
+		}
+		configFile.close();
 	}
 }
 
 /*
 ** -------------------------------- ACCESSEUR ---------------------------------
 */
-
-string const 							ServerConfig::getUser( void ) const { return string("www-data"); }
-string const 							ServerConfig::getWorker( void ) const { return string("auto"); }
-pid_t		 							ServerConfig::getPid( void ) const { return _pid; }
-string const 							ServerConfig::getPathModules( void ) const { return ""; }
-short									ServerConfig::getWorkerConnections( void ) const { return 1024; }
-bool									ServerConfig::getMultiAccept( void ) const { return false; }
-bool									ServerConfig::getSendfile( void ) const { return true; }
-bool									ServerConfig::getTcpNoPush( void ) const { return true; }
-bool									ServerConfig::getTcpNoDelay( void ) const { return true; }
-int										ServerConfig::getKeepAliveTimeout( void ) const { return 65; }
-int										ServerConfig::getTypeHashMaxSize( void ) const { return 2048; }
-bool									ServerConfig::getServerTokens( void ) const {return false; }
-int										ServerConfig::getServerNameHashBucketSize( void ) const { return 64; }
-bool									ServerConfig::getServerNameInRedirect( void ) const { return false; }
-map<string, string> const &				ServerConfig::getMimeType( void ) const { return _mimeType; }
-string const 							ServerConfig::getDefaultType( void ) const { return string("application/octet-stream"); }
-bool									ServerConfig::getGzip( void ) const { return true; }
-bool									ServerConfig::getGzipVary( void ) const { return false; }
-string const 							ServerConfig::getGzipProxied( void ) const { return ""; }
-int										ServerConfig::getGzipCompLevel( void ) const { return 6;}
-int										ServerConfig::getGzipBuffers( void ) const { return 16; }
-string const 							ServerConfig::getGzipVersion( void ) const { return string("1.1"); }
-vector<string> const &					ServerConfig::getGzipType( void ) const { return _gzipType; }
-vector<int> const &						ServerConfig::getPortListen( void ) const { return _portListen; }
-string const 							ServerConfig::getPathRoot( void ) const { return string("www/"); }
-vector<string> const &					ServerConfig::getIndex( void ) const { return _index; }
-string const 							ServerConfig::getServerName( void ) const { return string("_"); }
-map<string, vector<string> > const &	ServerConfig::getFastcgi( void ) const { return _fastcgi; }
-
 
 /* ************************************************************************** */
