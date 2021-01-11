@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/05 15:13:12 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/11 15:00:20 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,14 +60,19 @@ ServerConfig::~ServerConfig()
 
 DIR *					ServerConfig::directoryPath( void )
 {
-	if (_http.find("host") == _http.end())
+	if (http.find("host") == http.end())
 	{
 		errno = 113;
 		throw configException("Error path \"host\" does not exist on conf file");
 	}
-	string name(_http.at("host").c_str());
+	string name(http.at("host").c_str());
 	name.erase(name.find_last_of('/'), name.size());
 	return opendir(name.c_str());
+}
+
+map<string, string> &	ServerConfig::checkCgi( map<string, string> & p_map )
+{
+	return p_map;
 }
 
 vector<int> &			ServerConfig::checkPort( vector<int> & p_vector,
@@ -136,7 +141,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 
 	for (size_t i = 0; i < p_filname.size(); i++)
 	{
-		string fileName(_http.at("host"));
+		string fileName(http.at("host"));
 		fileName += p_filname[i];
 		ifstream  hostFile(fileName.c_str());
 		if (hostFile)
@@ -144,6 +149,9 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 			map<string, string>	tmp;
 			std::map<string, string>::iterator		it = tmp.begin();
 			vector<int> port;
+			map<string, string> cgi;
+			std::map<string, string>::iterator		it2 = cgi.begin();
+
 			while (getline(hostFile, line))
 			{
 				std::stringstream	str(line);
@@ -162,6 +170,11 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 					arg.erase(0, arg.find_first_not_of(' '));
 				if (key == "port")
 					port.push_back(atoi(arg.c_str()));
+				else if (!strncmp(string(key).c_str(), "cgi", 3))
+				{
+					str >> key;
+					cgi.insert(it2, std::pair<string, string>(key, arg));
+				}
 				else
 					tmp.insert(it, std::pair<string, string>(key, arg));
 			}
@@ -170,9 +183,9 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				this->checkRoot(tmp, p_filname[i]),
 				this->convertIndex(tmp, p_filname[i]),
 				this->checkServerName(tmp, p_filname[i]),
-				vector<string>()
+				this->checkCgi(cgi)
 			};
-			_host.push_back(temp_host);
+			host.push_back(temp_host);
 		} else {
 			throw configException("Error with file", p_filname[i]);
 		}
@@ -199,7 +212,7 @@ void					ServerConfig::readFolderHost( void )
 		}
 		closedir(dir);
 	} else {
-		throw configException("Error with folder ", _http.at("host"));
+		throw configException("Error with folder ", http.at("host"));
 	}
 	this->initHost(fileName);
 }
@@ -211,20 +224,20 @@ void					ServerConfig::initConf( void )
 	string				key;
 	string				arg;
 
-	std::map<string, string>::iterator		it = _mimeType.begin();
+	std::map<string, string>::iterator		it = mimeType.begin();
 
 	/* Check if params Type_file exist */
-	if (_http.find("type_file") == _http.end())
+	if (http.find("type_file") == http.end())
 	{
 		errno = 22;
 		throw configException("Error params type_file does not exist on conf file");
 	}
-	ifstream 			mimeFile(_http.at("type_file").c_str());
+	ifstream 			mimeFile(http.at("type_file").c_str());
 
 	/* Save PID program on file */
-	if (_http.find("pid") != _http.end())
+	if (http.find("pid") != http.end())
 	{
-		pid.open(_http.at("pid").c_str());
+		pid.open(http.at("pid").c_str());
 		if (pid)
 			pid << getpid() << std::endl;
 		pid.close();
@@ -244,12 +257,12 @@ void					ServerConfig::initConf( void )
 				str >> key;
 				if (key.find_first_of(';') != string::npos)
 					key.erase(key.find_first_of(';'), key.size());
-				_mimeType.insert(it, std::pair<string, string>(key, arg));
+				mimeType.insert(it, std::pair<string, string>(key, arg));
 			}
 		}
 		mimeFile.close();
 	} else {
-		throw configException("Error with path ", _http.at("type_file"));
+		throw configException("Error with path ", http.at("type_file"));
 	}
 }
 
@@ -259,7 +272,7 @@ void					ServerConfig::readFile( ifstream & file )
 	string				key;
 	string				arg;
 	size_t				nb(0);
-	std::map<string, string>::iterator		it = _http.begin();
+	std::map<string, string>::iterator		it = http.begin();
 
 	while (getline(file, line))
 	{
@@ -277,7 +290,7 @@ void					ServerConfig::readFile( ifstream & file )
 			arg.erase(arg.find_first_of(';'), arg.size());
 		if (arg.find_first_not_of(' ') != string::npos)
 			arg.erase(0, arg.find_first_not_of(' '));
-		_http.insert(it, std::pair<string, string>(key, arg));
+		http.insert(it, std::pair<string, string>(key, arg));
 	}
 
 	// for (std::map<string, string>::iterator i = _http.begin(); i != _http.end(); ++i)

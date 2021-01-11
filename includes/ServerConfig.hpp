@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/05 17:02:57 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/11 15:00:09 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,11 +31,11 @@ using std::ifstream;
 
 struct Host
 {
-	vector<int>			port;
-	string				root;
-	vector<string>		index;
-	string				serverName;
-	vector<string>		cgi;
+	vector<int>				port;
+	string					root;
+	vector<string>			index;
+	string					serverName;
+	map<string, string>		cgi;
 };
 
 class ServerConfig
@@ -71,9 +71,9 @@ class ServerConfig
 
 
 
-		map<string, string>						_http;
-		map<string, string>						_mimeType;
-		vector<Host>							_host;
+		map<string, string>						http;
+		map<string, string>						mimeType;
+		vector<Host>							host;
 
 	private:
 
@@ -84,16 +84,18 @@ class ServerConfig
 */
 
 		ServerConfig( ServerConfig const & src );
-		ServerConfig &		operator=( ServerConfig const & rhs );
-		void				readFile( ifstream & file );
-		void				initConf( void );
-		void				readFolderHost( void );
-		void				initHost( vector<string> & p_filname );
-		DIR *				directoryPath( void );
-		vector<string>		convertIndex( map<string, string> & p_map, string & p_fileName );
-		string				checkRoot( map<string, string> & p_map, string & p_fileName );
-		string				checkServerName( map<string, string> & p_map, string & p_fileName );
-		vector<int> &		checkPort( vector<int> & p_vector, string & p_fileName );
+		ServerConfig &			operator=( ServerConfig const & rhs );
+		void					readFile( ifstream & file );
+		void					initConf( void );
+		void					readFolderHost( void );
+		void					initHost( vector<string> & p_filname );
+		DIR *					directoryPath( void );
+		vector<string>			convertIndex( map<string, string> & p_map, string & p_fileName );
+		string					checkRoot( map<string, string> & p_map, string & p_fileName );
+		string					checkServerName( map<string, string> & p_map, string & p_fileName );
+		vector<int> &			checkPort( vector<int> & p_vector, string & p_fileName );
+		map<string, string> &	checkCgi( map<string, string> & p_map );
+
 
 };
 
