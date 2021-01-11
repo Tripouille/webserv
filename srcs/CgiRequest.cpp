@@ -1,4 +1,4 @@
-#include "CgiRequest.hpp" 
+#include "CgiRequest.hpp"
 
 
 /* Execption */
@@ -23,8 +23,17 @@ CgiRequest::CgiRequest(void)
 }
 
 CgiRequest::CgiRequest(const uint16_t serverPort, HttpRequest const & request,
-						string const & requiredFile)
+						string requiredFile)
 {
+	size_t queryPos = requiredFile.find('?');
+	string query;
+	if (queryPos != std::string::npos)
+	{
+		query = requiredFile.substr(queryPos);
+		requiredFile.erase(queryPos);
+		cout << "? found // requiredfile = " << requiredFile << " query = " << query << endl;
+	}
+	cout << "required file = " << requiredFile << endl;
 	_setEnv(0, string("AUTH_TYPE=")); //
 	_setEnv(1, string("CONTENT_LENGTH=") + _toString(request._bodySize));
 	_setEnv(2, string("CONTENT_TYPE=") /*+ request._fields.at("content_type")[0]*/); //
@@ -36,8 +45,8 @@ CgiRequest::CgiRequest(const uint16_t serverPort, HttpRequest const & request,
 	_setEnv(8, string("REMOTE_IDENT=")); //
 	_setEnv(9, string("REMOTE_USER=")); //
 	_setEnv(10, string("REQUEST_METHOD=") + request._method); // ou POST
-	_setEnv(11, string("PATH_INFO=") + requiredFile);
-	_setEnv(12, string("PATH_INFO=") + requiredFile);
+	_setEnv(11, string("REQUEST_URI=") + requiredFile); //
+	_setEnv(12, string("SCRIPT_NAME=") + requiredFile); //
 	_setEnv(13, string("SERVER_NAME=127.0.0.1"));
 	_setEnv(14, string("SERVER_PORT=") + _toString(serverPort)); //
 	_setEnv(15, string("SERVER_PROTOCOL=HTTP/1.1"));
@@ -45,7 +54,7 @@ CgiRequest::CgiRequest(const uint16_t serverPort, HttpRequest const & request,
 	_setEnv(17, string("REDIRECT_STATUS=200"));
 	_env[18] = NULL;
 
-	_av[0] = const_cast<char *>("/Users/jgambard/webserv/cgitest/test.php"); //
+	_setArg(0, requiredFile);
 	_av[1] = NULL;
 }
 
@@ -53,6 +62,8 @@ CgiRequest::~CgiRequest(void)
 {
 	for (int i = 0; _env[i] != NULL; ++i)
 		delete _env[i];
+	for (int i = 0; _av[i] != NULL; ++i)
+		delete _av[i];
 }
 
 CgiRequest::CgiRequest(CgiRequest const & other)
@@ -128,6 +139,14 @@ CgiRequest::_setEnv(int pos, string const & value)
 	_env[pos] = new char[value.size() + 1];
 	std::copy(value.begin(), value.end(), _env[pos]);
 	_env[pos][value.size()] = 0;
+}
+
+void
+CgiRequest::_setArg(int pos, string const & value)
+{
+	_av[pos] = new char[value.size() + 1];
+	std::copy(value.begin(), value.end(), _av[pos]);
+	_av[pos][value.size()] = 0;
 }
 
 template <class T>

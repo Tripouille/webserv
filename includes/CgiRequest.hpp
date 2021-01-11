@@ -29,7 +29,7 @@ class CgiRequest
 	};
 	public:
 		CgiRequest(const uint16_t serverPort, HttpRequest const & request,
-						string const & requiredFile);
+						string requiredFile);
 		~CgiRequest(void);
 		CgiRequest(CgiRequest const & other);
 
@@ -41,6 +41,7 @@ class CgiRequest
 		CgiRequest(void);
 		void _copy(CgiRequest const & other);
 		void _setEnv(int pos, string const & value);
+		void _setArg(int pos, string const & value);
 		template <class T>
 		string _toString(T number) const;
 
