@@ -180,19 +180,23 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 	}
 	struct stat fileInfos;
 	string requiredFile = _getRequiredFile(client, request, fileInfos); // mettre dans request
+	if (requiredFile.empty())
+		return ;
 	_sendStatus(client, request._status);
 	bool requiredFileNeedCGI = true;
+	t_bufferQ answer;
 	if (requiredFileNeedCGI)
 	{
 		CgiRequest cgiRequest(_port, request, requiredFile);
 		cgiRequest.doRequest();
-		t_bufferQ const & answer = cgiRequest.getAnswer();
+		answer = cgiRequest.getAnswer();
 		cout << "first buffer cgiRequrest : " << endl;
 		write(1, answer.front()->b, (size_t)answer.front()->occupiedSize);
 		write(1, "\n", 1);
 	}
-	if (stat(requiredFile.c_str(), &fileInfos) == 0)
-		_sendAnswer(client, requiredFile.c_str(), fileInfos);
+	else
+		answer = _getFile(requiredFile);
+	_sendAnswer(client, requiredFile, answer, fileInfos);
 }
 
 string const
@@ -244,7 +248,7 @@ TcpListener::_sendEndOfHeader(SOCKET client) const throw(sendException)
 }
 
 void
-TcpListener::_sendAnswer(SOCKET client, char const * fileName,
+TcpListener::_sendAnswer(SOCKET client, string const & fileName, t_bufferQ & bufferQ,
 	struct stat const & fileInfos)
 	const throw(sendException, tcpException)
 {
@@ -252,7 +256,6 @@ TcpListener::_sendAnswer(SOCKET client, char const * fileName,
 
 	_writeServerField(headerStream);
 	_writeDateField(headerStream);
-	t_bufferQ bufferQ = _getFile(fileName);
 	_writeContentFields(headerStream, fileName, fileInfos, bufferQ);
 	string header = headerStream.str();
 	_sendToClient(client, header.c_str(), header.size());
@@ -290,14 +293,15 @@ TcpListener::_writeDateField(std::ostringstream & headerStream) const
 
 void
 TcpListener::_writeContentFields(std::ostringstream & headerStream,
-									char const * fileName,
+									string const & fileName,
 									struct stat const & fileInfos,
 									t_bufferQ const & bufferQ) const
 {
 	map<string, string> mimeTypes;
 	mimeTypes["html"] = "text/html";
 	mimeTypes["jpg"] = "image/jpeg";
-	string extension = string(fileName).substr(string(fileName).find_last_of('.') + 1, string::npos);
+	mimeTypes["php"] = "text/html"; // ???
+	string extension = fileName.substr(fileName.find_last_of('.') + 1, string::npos);
 	if (mimeTypes.count(extension))
 		headerStream << "Content-Type: " << mimeTypes[extension] <<"\r\n";
 
@@ -313,20 +317,20 @@ TcpListener::_writeContentFields(std::ostringstream & headerStream,
 }
 
 t_bufferQ
-TcpListener::_getFile(char const * fileName) const throw(tcpException)
+TcpListener::_getFile(string const & fileName) const throw(tcpException)
 {
 	t_bufferQ	bufferQ;
 	s_buffer *	buffer;
 
-	std::ifstream indexFile(fileName);
+	std::ifstream indexFile(fileName.c_str());
 	if (!indexFile.is_open())
-		throw(tcpException("Could not open file " + string(fileName)));
+		throw(tcpException("Could not open file " + fileName));
 	do
 	{
 		buffer = new s_buffer(BUFFER_SIZE);
 		try {indexFile.read(buffer->b, buffer->size);}
 		catch (std::exception const &)
-		{throw(tcpException("Coud not read file " + string(fileName)));}
+		{throw(tcpException("Coud not read file " + fileName));}
 		bufferQ.push(buffer);
 		buffer->occupiedSize = indexFile.gcount();
 	} while (buffer->occupiedSize == buffer->size && !indexFile.eof());

@@ -36,8 +36,8 @@ CgiRequest::CgiRequest(const uint16_t serverPort, HttpRequest const & request,
 	_setEnv(8, string("REMOTE_IDENT=")); //
 	_setEnv(9, string("REMOTE_USER=")); //
 	_setEnv(10, string("REQUEST_METHOD=") + request._method); // ou POST
-	_setEnv(11, string("REQUEST_URI=/Users/jgambard/webserv/cgitest/test.php")); //
-	_setEnv(12, string("SCRIPT_NAME=/Users/jgambard/webserv/cgitest/test.php")); //
+	_setEnv(11, string("PATH_INFO=") + requiredFile);
+	_setEnv(12, string("PATH_INFO=") + requiredFile);
 	_setEnv(13, string("SERVER_NAME=127.0.0.1"));
 	_setEnv(14, string("SERVER_PORT=") + _toString(serverPort)); //
 	_setEnv(15, string("SERVER_PROTOCOL=HTTP/1.1"));
@@ -80,7 +80,7 @@ CgiRequest::doRequest(void)
 		dup2(p[1], STDOUT);
 		//if (execve("./cgitest/printenv", _av, _env) == -1)
 		//if (execve("./testers/cgi_tester", _av, _env) == -1)
-		if (execve("/Users/jgambard/.brew/bin/php-cgi", _av, _env) == -1)
+		if (execve("/Users/aalleman/.brew/bin/php-cgi", _av, _env) == -1)
 			exit(EXIT_FAILURE);
 	}
 	else

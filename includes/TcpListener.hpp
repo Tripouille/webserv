@@ -87,7 +87,7 @@ class TcpListener
 			HttpRequest::s_status const & status)
 			const throw(sendException);
 		void _sendEndOfHeader(SOCKET client) const throw(sendException);
-		void _sendAnswer(SOCKET client, char const * fileName,
+		void _sendAnswer(SOCKET client, string const & fileName, t_bufferQ & bufferQ,
 			struct stat const & fileInfos)
 			const throw(sendException, tcpException);
 		void _sendBody(SOCKET client, t_bufferQ & bufferQ)
@@ -95,9 +95,9 @@ class TcpListener
 		void _writeServerField(std::ostringstream & headerStream) const;
 		void _writeDateField(std::ostringstream & headerStream) const;
 		void _writeContentFields(std::ostringstream & headerStream,
-			char const * fileName, struct stat const & fileInfos,
+			string const & fileName, struct stat const & fileInfos,
 			t_bufferQ const & bufferQ) const;
-		t_bufferQ _getFile(char const * fileName)
+		t_bufferQ _getFile(string const & fileName)
 			const throw(tcpException);
 };
 
