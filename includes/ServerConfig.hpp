@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/11 15:00:09 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/11 15:20:24 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,6 +95,8 @@ class ServerConfig
 		string					checkServerName( map<string, string> & p_map, string & p_fileName );
 		vector<int> &			checkPort( vector<int> & p_vector, string & p_fileName );
 		map<string, string> &	checkCgi( map<string, string> & p_map );
+		void					checkKeyExist( string const & p_key, map<string, string> const & p_tmp,
+												 string const & p_filename = "server.conf" );
 
 
 };

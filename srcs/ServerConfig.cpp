@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/11 15:00:20 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/11 15:19:52 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,22 @@ DIR *					ServerConfig::directoryPath( void )
 	string name(http.at("host").c_str());
 	name.erase(name.find_last_of('/'), name.size());
 	return opendir(name.c_str());
+}
+
+void					ServerConfig::checkKeyExist( string const & p_key,
+														map<string, string> const & p_tmp,
+														string const & p_filename )
+{
+	if (p_tmp.find(p_key.c_str())!= p_tmp.end())
+	{
+		string error("Error params \"");
+		error += p_key;
+		error += "\" already exist in file \"";
+		error += p_filename;
+		error += "\".";
+		errno = 22;
+		throw configException(error);
+	}
 }
 
 map<string, string> &	ServerConfig::checkCgi( map<string, string> & p_map )
@@ -176,7 +192,10 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 					cgi.insert(it2, std::pair<string, string>(key, arg));
 				}
 				else
+				{
+					this->checkKeyExist(key, tmp, p_filname[i]);
 					tmp.insert(it, std::pair<string, string>(key, arg));
+				}
 			}
 			Host temp_host = {
 				this->checkPort(port, p_filname[i]),
@@ -290,6 +309,7 @@ void					ServerConfig::readFile( ifstream & file )
 			arg.erase(arg.find_first_of(';'), arg.size());
 		if (arg.find_first_not_of(' ') != string::npos)
 			arg.erase(0, arg.find_first_not_of(' '));
+		this->checkKeyExist(key, http);
 		http.insert(it, std::pair<string, string>(key, arg));
 	}
 
