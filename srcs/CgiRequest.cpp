@@ -22,7 +22,7 @@ CgiRequest::CgiRequest(void)
 {
 }
 
-CgiRequest::CgiRequest(const /*uint16_t*/int serverPort,
+CgiRequest::CgiRequest(const unsigned short serverPort,
 	HttpRequest const & request)
 {
 	_setEnv(0, string("AUTH_TYPE=")); //

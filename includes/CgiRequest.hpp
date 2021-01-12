@@ -28,7 +28,7 @@ class CgiRequest
 			string _str;
 	};
 	public:
-		CgiRequest(const /*uint16_t*/int serverPort, HttpRequest const & request);
+		CgiRequest(const unsigned short serverPort, HttpRequest const & request);
 		~CgiRequest(void);
 		CgiRequest(CgiRequest const & other);
 
