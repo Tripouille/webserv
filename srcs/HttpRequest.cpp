@@ -83,6 +83,7 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException)
 	_analyseRequestLine(headerSize);
 	_analyseHeader(headerSize);
 	_analyseBody();
+	_setRequiredFile();
 }
 
 /* Private */
@@ -312,4 +313,32 @@ HttpRequest::_checkContentLength(vector<string> const & contentLengthField) cons
 		throw(parseException(*this, 400, "Bad Request", "Content-Length field is too long"));
 	else if (contentLengthField[0].find_first_not_of("0123456789") != string::npos)
 		throw(parseException(*this, 400, "Bad Request", "Content-Length is not a number"));
+}
+
+void
+HttpRequest::_setRequiredFile(void)
+{
+	size_t queryPos = _target.find('?');
+	if (queryPos != string::npos)
+		_queryPart = _target.substr(queryPos + 1);
+	cerr << "queryPart = " << _queryPart << endl;
+	_requiredFile = _target.substr(0, _target.find('?'));
+	cerr << "requiredFile = " << _requiredFile << endl;
+	if (_requiredFile == "/")
+		_requiredFile = ROOT_DIRECTORY + string("/index.html");
+	else if (_requiredFile[0] == '/')
+		_requiredFile = ROOT_DIRECTORY + _requiredFile;
+	else
+		_requiredFile = ROOT_DIRECTORY + string("/") + _requiredFile;
+	struct stat fileInfos;
+	if (stat(_requiredFile.c_str(), &fileInfos) != 0)
+	{
+		setStatus(404, "Not Found");
+		_requiredFile = ROOT_DIRECTORY + string("/404.html");
+		if (stat(_requiredFile.c_str(), &fileInfos) != 0)
+		{
+			cerr << "File 404.html not found" << endl;
+			_requiredFile.clear();
+		}
+	}
 }

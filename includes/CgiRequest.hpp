@@ -28,8 +28,7 @@ class CgiRequest
 			string _str;
 	};
 	public:
-		CgiRequest(const uint16_t serverPort, HttpRequest const & request,
-						string requiredFile);
+		CgiRequest(const /*uint16_t*/int serverPort, HttpRequest const & request);
 		~CgiRequest(void);
 		CgiRequest(CgiRequest const & other);
 

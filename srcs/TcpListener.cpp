@@ -172,22 +172,20 @@ void
 TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 	throw(sendException, tcpException)
 {
-	if (request._status.info != "OK")
+	if (request._status.info != "OK"
+	&& !(request._status.code == 404 && !request._requiredFile.empty()))
 	{
 		_sendStatus(client, request._status);
 		_sendEndOfHeader(client);
 		return (_disconnectClient(client));
 	}
-	struct stat fileInfos;
-	string requiredFile = _getRequiredFile(client, request, fileInfos); // mettre dans request
-	if (requiredFile.empty())
-		return ;
 	_sendStatus(client, request._status);
-	bool requiredFileNeedCGI = true;
+	string extension = request._requiredFile.substr(request._requiredFile.find_last_of('.') + 1, string::npos);
+	bool requiredFileNeedCGI = (extension == "php");
 	t_bufferQ answer;
 	if (requiredFileNeedCGI)
 	{
-		CgiRequest cgiRequest(_port, request, requiredFile);
+		CgiRequest cgiRequest(_port, request);
 		cgiRequest.doRequest();
 		answer = cgiRequest.getAnswer();
 		cout << "first buffer cgiRequrest : " << endl;
@@ -195,37 +193,13 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 		write(1, "\n", 1);
 	}
 	else
-		answer = _getFile(requiredFile);
-	_sendAnswer(client, requiredFile, answer, fileInfos);
-}
-
-string const
-TcpListener::_getRequiredFile(SOCKET client, HttpRequest & request,
-	struct stat & fileInfos) const
-{
-	string requiredFile;
-	if (request._target == "/")
-		requiredFile = ROOT_DIRECTORY + string("/index.html");
-	else if (request._target[0] == '/')
-		requiredFile = ROOT_DIRECTORY + request._target;
-	else
-		requiredFile = ROOT_DIRECTORY + string("/") + request._target;
-	if (stat(requiredFile.c_str(), &fileInfos) != 0)
-	{
-		request.setStatus(404, "Not Found");
-		requiredFile = ROOT_DIRECTORY + string("/404.html");
-		if (stat(requiredFile.c_str(), &fileInfos) != 0)
-		{
-			cerr << "File 404.html not found" << endl;
-			_sendEndOfHeader(client);
-			return ("");
-		}
-	}
-	return (requiredFile);
+		answer = _getFile(request._requiredFile);
+	_sendAnswer(client, request._requiredFile, answer);
 }
 
 void
-TcpListener::_sendToClient(SOCKET client, char const * msg, size_t size) 	const throw(sendException)
+TcpListener::_sendToClient(SOCKET client, char const * msg, size_t size)
+	const throw(sendException)
 {
 	if (send(client, msg, size, 0) == -1)
 		throw(sendException("Could not send to client"));
@@ -248,15 +222,15 @@ TcpListener::_sendEndOfHeader(SOCKET client) const throw(sendException)
 }
 
 void
-TcpListener::_sendAnswer(SOCKET client, string const & fileName, t_bufferQ & bufferQ,
-	struct stat const & fileInfos)
+TcpListener::_sendAnswer(SOCKET client, string const & fileName,
+	t_bufferQ & bufferQ)
 	const throw(sendException, tcpException)
 {
 	std::ostringstream headerStream;
 
 	_writeServerField(headerStream);
 	_writeDateField(headerStream);
-	_writeContentFields(headerStream, fileName, fileInfos, bufferQ);
+	_writeContentFields(headerStream, fileName, bufferQ);
 	string header = headerStream.str();
 	_sendToClient(client, header.c_str(), header.size());
 	_sendEndOfHeader(client);
@@ -294,7 +268,6 @@ TcpListener::_writeDateField(std::ostringstream & headerStream) const
 void
 TcpListener::_writeContentFields(std::ostringstream & headerStream,
 									string const & fileName,
-									struct stat const & fileInfos,
 									t_bufferQ const & bufferQ) const
 {
 	map<string, string> mimeTypes;
@@ -309,6 +282,8 @@ TcpListener::_writeContentFields(std::ostringstream & headerStream,
 							* bufferQ.back()->size + bufferQ.back()->occupiedSize;
 	headerStream << "Content-Length: " << fileSize << "\r\n";
 
+	struct stat fileInfos;
+	stat(fileName.c_str(), &fileInfos);
 	time_t lastModified = fileInfos.st_mtime;
 	struct tm tm = *gmtime(&lastModified);
 	char date[50];

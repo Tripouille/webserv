@@ -69,6 +69,7 @@ class HttpRequest
 	private:
 		SOCKET 							_client;
 		string 							_method, _target, _httpVersion;
+		string							_requiredFile, _queryPart;
 		map<string, vector<string> >	_fields;
 		char							_body[CLIENT_MAX_BODY_SIZE + 1];
 		size_t							_bodySize;
@@ -89,6 +90,7 @@ class HttpRequest
 		void _checkHeader(void) throw(parseException);
 		void _analyseBody(void) throw(parseException);
 		void _checkContentLength(vector<string> const & contentLengthField) const throw(parseException);
+		void _setRequiredFile(void);
 };
 
 #endif

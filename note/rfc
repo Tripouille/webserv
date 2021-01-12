@@ -1,6 +1,5 @@
 Todo list :
 test nginx with "Content-Length:" (no value)
-détecter un ctrl+C (ou le signal ?) pour fermer la connexion
 
 Autres trouvailles :
 HTTP/1.1 defines the sequence CR LF as the end-of-line marker for all protocol elements except the entity-body.
@@ -12,6 +11,20 @@ vu sur wiki :
 testeur :
 PUT et POST
 
+Testé sur nginx :
+s'il y a plusieurs "?" dans l'url : seul le premier est pris en compte, ce qu'il y a à partir du 2ème semble ignoré
+en vérité, une URI a des composants, séparés par des caractères réservés : ":" / "/" / "?" / "#" / "[" / "]" / "@"
+-> peut-être suffit-il de donner au php-cgi, soit le tout, soit le tout à partir du premier point d'interrogation, sans devoir parser nous-mêmes ?
+(sous-délimiteurs : "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "=")
+(> caractères non réservés : ALPHA / DIGIT / "-" / "." / "_" / "~")
+
+	     foo://example.com:8042/over/there?name=ferret#nose
+         \_/   \______________/\_________/ \_________/ \__/
+          |           |            |            |        |
+       scheme     authority       path        query   fragment
+          |   _____________________|__
+         / \ /                        \
+         urn:example:animal:ferret:nose
 
 RFC 7230
 

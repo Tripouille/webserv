@@ -22,31 +22,22 @@ CgiRequest::CgiRequest(void)
 {
 }
 
-CgiRequest::CgiRequest(const uint16_t serverPort, HttpRequest const & request,
-						string requiredFile)
+CgiRequest::CgiRequest(const /*uint16_t*/int serverPort,
+	HttpRequest const & request)
 {
-	size_t queryPos = requiredFile.find('?');
-	string query;
-	if (queryPos != std::string::npos)
-	{
-		query = requiredFile.substr(queryPos);
-		requiredFile.erase(queryPos);
-		cout << "? found // requiredfile = " << requiredFile << " query = " << query << endl;
-	}
-	cout << "required file = " << requiredFile << endl;
 	_setEnv(0, string("AUTH_TYPE=")); //
 	_setEnv(1, string("CONTENT_LENGTH=") + _toString(request._bodySize));
 	_setEnv(2, string("CONTENT_TYPE=") /*+ request._fields.at("content_type")[0]*/); //
 	_setEnv(3, string("GATEWAY_INTERFACE=CGI/1.1"));
-	_setEnv(4, string("PATH_INFO=") + requiredFile);
-	_setEnv(5, string("PATH_TRANSLATED=") + requiredFile);
-	_setEnv(6, string("QUERY_STRING=")); // apres ?
+	_setEnv(4, string("PATH_INFO=") + request._requiredFile);
+	_setEnv(5, string("PATH_TRANSLATED=") + request._requiredFile);
+	_setEnv(6, string("QUERY_STRING=") + request._queryPart); // apres ?
 	_setEnv(7, string("REMOTE_ADDR=")); //
 	_setEnv(8, string("REMOTE_IDENT=")); //
 	_setEnv(9, string("REMOTE_USER=")); //
 	_setEnv(10, string("REQUEST_METHOD=") + request._method); // ou POST
-	_setEnv(11, string("REQUEST_URI=") + requiredFile); //
-	_setEnv(12, string("SCRIPT_NAME=") + requiredFile); //
+	_setEnv(11, string("REQUEST_URI=") + request._requiredFile);
+	_setEnv(12, string("SCRIPT_NAME=") + request._requiredFile);
 	_setEnv(13, string("SERVER_NAME=127.0.0.1"));
 	_setEnv(14, string("SERVER_PORT=") + _toString(serverPort)); //
 	_setEnv(15, string("SERVER_PROTOCOL=HTTP/1.1"));
@@ -54,7 +45,7 @@ CgiRequest::CgiRequest(const uint16_t serverPort, HttpRequest const & request,
 	_setEnv(17, string("REDIRECT_STATUS=200"));
 	_env[18] = NULL;
 
-	_setArg(0, requiredFile);
+	_setArg(0, request._requiredFile);
 	_av[1] = NULL;
 }
 
@@ -91,7 +82,8 @@ CgiRequest::doRequest(void)
 		dup2(p[1], STDOUT);
 		//if (execve("./cgitest/printenv", _av, _env) == -1)
 		//if (execve("./testers/cgi_tester", _av, _env) == -1)
-		if (execve("/Users/aalleman/.brew/bin/php-cgi", _av, _env) == -1)
+		//if (execve("/Users/aalleman/.brew/bin/php-cgi", _av, _env) == -1)
+		if (execve("/usr/bin/php-cgi", _av, _env) == -1)
 			exit(EXIT_FAILURE);
 	}
 	else
