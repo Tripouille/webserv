@@ -32,13 +32,6 @@ TcpListener::~TcpListener()
 	close(_socket);
 }
 
-
-/* Operators */
-
-
-/* Getters and setters */
-
-
 /* Member functions */
 /* Public */
 void
@@ -170,7 +163,7 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 	if (requiredFileNeedCGI)
 	{
 		CgiRequest cgiRequest(_port, request, _clientInfos[client]);
-		try { cgiRequest.doRequest(); }
+		try { cgiRequest.doRequest(answer); }
 		catch(std::exception const & e)
 		{
 			request.setStatus(500, "Internal Server Error (CGI)");
@@ -178,7 +171,7 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 			answer.sendEndOfHeader();
 			return (_disconnectClient(client));
 		}
-		answer.setBody(cgiRequest.getAnswer());
+		//answer.setBody(cgiRequest.getAnswer());
 		cout << "first buffer cgiRequest : " << endl;
 		write(1, answer._body.front()->b, (size_t)answer._body.front()->occupiedSize);
 		write(1, "\n", 1);

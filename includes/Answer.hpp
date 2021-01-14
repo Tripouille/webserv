@@ -15,6 +15,7 @@ using std::string;
 class Answer
 {
 	friend class TcpListener;
+	friend class CgiRequest;
 
 	public:
 		class sendException : public std::exception

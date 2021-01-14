@@ -13,6 +13,7 @@
 # include "BufferQ.hpp"
 # include "HttpRequest.hpp"
 # include "Client.hpp"
+# include "Answer.hpp"
 # define STDOUT 1
 
 using std::cout; using std::endl; using std::string;
@@ -35,8 +36,7 @@ class CgiRequest
 		CgiRequest(CgiRequest const & other);
 
 		CgiRequest & operator=(CgiRequest const & other);
-		void doRequest(void);
-		t_bufferQ const & getAnswer(void) const;
+		void doRequest(Answer & answer);
 
 	private:
 		CgiRequest(void);
@@ -45,12 +45,14 @@ class CgiRequest
 		void _setArg(int pos, string const & value);
 		template <class T>
 		string _toString(T number) const;
+		void _analyzeHeader(int fd, Answer & answer);
+		ssize_t _getLine(int fd, char * buffer, ssize_t limit) const;
+		void _parseHeaderLine(string line, Answer & answer) throw(cgiException);
 
-		enum {BUFFER_SIZE = 100000, TIMEOUT = 1000000, ENV_SIZE = 20};
+		enum {BUFF_SIZE = 100000, TIMEOUT = 1000000, ENV_SIZE = 20};
 
 		char *				_env[ENV_SIZE];
 		char *				_av[2];
-		t_bufferQ			_answer;
 };
 
 #endif
