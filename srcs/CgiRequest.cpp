@@ -73,7 +73,7 @@ CgiRequest::operator=(CgiRequest const & other)
 
 /* Public method */
 void 
-CgiRequest::doRequest(void)
+CgiRequest::doRequest(Answer & answer)
 {
 	int status;
 	int p[2]; pipe(p);
@@ -93,26 +93,21 @@ CgiRequest::doRequest(void)
 		if (WEXITSTATUS(status) == EXIT_FAILURE)
 			throw(cgiException("execve fail"));
 		kill(child, SIGKILL);
+		_analyzeHeader(p[0], answer);
 		s_buffer * buffer = NULL;
 		do
 		{
-			buffer = new s_buffer(BUFFER_SIZE);
+			buffer = new s_buffer(BUFF_SIZE);
 			buffer->occupiedSize = read(p[0], buffer->b, static_cast<size_t>(buffer->size));
-			_answer.push(buffer);
+			answer._body.push(buffer);
 			cout << buffer->occupiedSize << " / " << buffer->size << endl;
 		} while (buffer->occupiedSize == buffer->size);
 		if (buffer->occupiedSize == -1)
 		{
-			deleteQ(_answer);
+			deleteQ(answer._body);
 			throw(cgiException("read fail"));
 		}
 	}
-}
-
-t_bufferQ const & 
-CgiRequest::getAnswer(void) const
-{
-	return (_answer);
 }
 
 /* Private method */
@@ -147,8 +142,8 @@ CgiRequest::_toString(T number) const
 	return (ss.str());
 }
 
-/*void
-CgiRequest::_analyseHeader(int fd)
+void
+CgiRequest::_analyzeHeader(int fd, Answer & answer)
 {
 	ssize_t			headerSize = 0;
 	//+1 pour pouvoir lire un char supplémentaire et dépasser la limite
@@ -160,14 +155,13 @@ CgiRequest::_analyseHeader(int fd)
 	&& line[0])
 	{
 		headerSize += lineSize;
-		try { _request._parseHeaderLine(line);}
-		catch (HttpRequest::parseException const & e)
-		{ throw(cgiException(e.what()));}
+		_parseHeaderLine(line, answer);
 	}
 	if (lineSize < 0)
 		throw(cgiException("recv error"));
 	else if (headerSize > HEADER_MAX_SIZE)
 		throw(cgiException("header too large"));
+	answer._fields.erase("X-Powered-By");
 }
 
 ssize_t
@@ -195,4 +189,18 @@ CgiRequest::_getLine(int fd, char * buffer, ssize_t limit) const
 	if (lineSize >= 2 && buffer[lineSize - 2] == '\r')
 		buffer[lineSize - 2] = 0;
 	return (lineSize);
-}*/
+}
+
+
+void
+CgiRequest::_parseHeaderLine(string line, Answer & answer) throw(cgiException)
+{
+	size_t colonPos = line.find(':', 0);
+	if (colonPos == string::npos)
+		throw(cgiException("no ':'"));
+	string name = line.substr(0, colonPos);
+	if (name.find(' ', 0) != string::npos)
+		throw(cgiException("space before ':'"));
+	string value = line.substr(colonPos + 1, string::npos);
+	answer._fields[name] = value;
+}

@@ -98,6 +98,8 @@ Answer::sendAnswer(string const & fileName) throw(sendException)
 {
 	std::ostringstream headerStream;
 
+	/*for (map<string, string>::iterator it = _fields.begin(); it != _fields.end(); ++it)
+		cerr << "_fields[" << it->first << "] = " << it-> second << endl;*/
 	_writeServerField(headerStream);
 	_writeDateField(headerStream);
 	_writeContentFields(headerStream, fileName);
@@ -157,10 +159,11 @@ Answer::_writeContentFields(std::ostringstream & headerStream,
 	map<string, string> mimeTypes;
 	mimeTypes["html"] = "text/html";
 	mimeTypes["jpg"] = "image/jpeg";
-	mimeTypes["php"] = "text/html"; // ???
 	string extension = fileName.substr(fileName.find_last_of('.') + 1, string::npos);
-	if (mimeTypes.count(extension))
-		headerStream << "Content-Type: " << mimeTypes[extension] <<"\r\n";
+	if (_fields.count("Content_type"))
+		headerStream << "Content-type: " << _fields.at("Content-type") << "\r\n";
+	else if (mimeTypes.count(extension))
+		headerStream << "Content-Type: " << mimeTypes[extension] << "\r\n";
 
 	streamsize fileSize = static_cast<streamsize>(_body.size() - 1)
 							* _body.back()->size + _body.back()->occupiedSize;
