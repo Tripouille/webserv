@@ -50,10 +50,10 @@ class Answer
 		void _sendToClient(char const * msg, size_t size)
 			const throw(sendException);
 		void _sendBody(void) throw(sendException);
-		void _writeServerField(std::ostringstream & headerStream) const;
-		void _writeDateField(std::ostringstream & headerStream) const;
-		void _writeContentFields(std::ostringstream & headerStream,
-			string const & fileName) const;
+		void _fillServerField(void);
+		void _fillDateField(void);
+		void _fillContentFields(string const & fileName);
+		void _sendHeader(void) const throw(sendException);
 };
 
 #endif

@@ -161,7 +161,7 @@ CgiRequest::_analyzeHeader(int fd, Answer & answer)
 		throw(cgiException("recv error"));
 	else if (headerSize > HEADER_MAX_SIZE)
 		throw(cgiException("header too large"));
-	answer._fields.erase("X-Powered-By");
+	answer._fields.erase("x-powered-by");
 }
 
 ssize_t
@@ -199,6 +199,7 @@ CgiRequest::_parseHeaderLine(string line, Answer & answer) throw(cgiException)
 	if (colonPos == string::npos)
 		throw(cgiException("no ':'"));
 	string name = line.substr(0, colonPos);
+	std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 	if (name.find(' ', 0) != string::npos)
 		throw(cgiException("space before ':'"));
 	string value = line.substr(colonPos + 1, string::npos);

@@ -96,15 +96,12 @@ Answer::sendEndOfHeader(void) const throw(sendException)
 void
 Answer::sendAnswer(string const & fileName) throw(sendException)
 {
-	std::ostringstream headerStream;
-
-	/*for (map<string, string>::iterator it = _fields.begin(); it != _fields.end(); ++it)
-		cerr << "_fields[" << it->first << "] = " << it-> second << endl;*/
-	_writeServerField(headerStream);
-	_writeDateField(headerStream);
-	_writeContentFields(headerStream, fileName);
-	string header = headerStream.str();
-	_sendToClient(header.c_str(), header.size());
+	for (map<string, string>::iterator it = _fields.begin(); it != _fields.end(); ++it)
+		cerr << "_fields[" << it->first << "] = " << it-> second << endl;
+	_fillServerField();
+	_fillDateField();
+	_fillContentFields(fileName);
+	_sendHeader();
 	sendEndOfHeader();
 	_sendBody();
 }
@@ -137,37 +134,35 @@ Answer::_sendBody(void) throw(sendException)
 }
 
 void
-Answer::_writeServerField(std::ostringstream & headerStream) const
+Answer::_fillServerField(void)
 {
-	headerStream << "Server: webserv" << "\r\n";
+	_fields["Server"] = "webserv";
 }
 
 void
-Answer::_writeDateField(std::ostringstream & headerStream) const
+Answer::_fillDateField(void)
 {
 	char date[50]; 
 	time_t now = time(0);
 	struct tm tm = *gmtime(&now);
 	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
-	headerStream << "Date: " << date << "\r\n";
+	_fields["Date"] = string(date);
 }
 
 void
-Answer::_writeContentFields(std::ostringstream & headerStream,
-									string const & fileName) const
+Answer::_fillContentFields(string const & fileName)
 {
 	map<string, string> mimeTypes;
 	mimeTypes["html"] = "text/html";
 	mimeTypes["jpg"] = "image/jpeg";
 	string extension = fileName.substr(fileName.find_last_of('.') + 1, string::npos);
-	if (_fields.count("Content_type"))
-		headerStream << "Content-type: " << _fields.at("Content-type") << "\r\n";
-	else if (mimeTypes.count(extension))
-		headerStream << "Content-Type: " << mimeTypes[extension] << "\r\n";
+	if (_fields.count("content-type") == 0 && mimeTypes.count(extension))
+		_fields["Content-Type"] = mimeTypes[extension];
 
 	streamsize fileSize = static_cast<streamsize>(_body.size() - 1)
 							* _body.back()->size + _body.back()->occupiedSize;
-	headerStream << "Content-Length: " << fileSize << "\r\n";
+	std::ostringstream fileSizeStream; fileSizeStream << fileSize;
+	_fields["Content-Length"] = fileSizeStream.str();
 
 	struct stat fileInfos;
 	stat(fileName.c_str(), &fileInfos);
@@ -175,5 +170,17 @@ Answer::_writeContentFields(std::ostringstream & headerStream,
 	struct tm tm = *gmtime(&lastModified);
 	char date[50];
 	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
-	headerStream << "Last-Modified: " << date << "\r\n";
+	_fields["Last-Modified"] = string(date);
+}
+
+void
+Answer::_sendHeader(void) const throw(sendException)
+{
+	std::ostringstream headerStream;
+
+	for (map<string, string>::const_iterator it = _fields.cbegin(); it != _fields.cend(); ++it)
+		headerStream << it->first << ": " << it->second << "\r\n";
+	string header = headerStream.str();
+	cerr << "header : " << endl << header << endl;
+	_sendToClient(header.c_str(), header.size());
 }
