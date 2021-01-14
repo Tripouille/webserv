@@ -179,21 +179,28 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 		_sendEndOfHeader(client);
 		return (_disconnectClient(client));
 	}
-	_sendStatus(client, request._status);
 	string extension = request._requiredFile.substr(request._requiredFile.find_last_of('.') + 1, string::npos);
 	bool requiredFileNeedCGI = (extension == "php");
 	t_bufferQ answer;
 	if (requiredFileNeedCGI)
 	{
 		CgiRequest cgiRequest(_port, request);
-		cgiRequest.doRequest();
+		try { cgiRequest.doRequest(); }
+		catch(std::exception const & e)
+		{
+			request.setStatus(500, "Internal Server Error (CGI)");
+			_sendStatus(client, request._status);
+			_sendEndOfHeader(client);
+			return (_disconnectClient(client));
+		}
 		answer = cgiRequest.getAnswer();
-		cout << "first buffer cgiRequrest : " << endl;
+		cout << "first buffer cgiRequest : " << endl;
 		write(1, answer.front()->b, (size_t)answer.front()->occupiedSize);
 		write(1, "\n", 1);
 	}
 	else
 		answer = _getFile(request._requiredFile);
+	_sendStatus(client, request._status);
 	_sendAnswer(client, request._requiredFile, answer);
 }
 

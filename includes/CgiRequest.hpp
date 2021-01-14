@@ -27,6 +27,7 @@ class CgiRequest
 		private:
 			string _str;
 	};
+
 	public:
 		CgiRequest(const unsigned short serverPort, HttpRequest const & request);
 		~CgiRequest(void);
@@ -44,12 +45,11 @@ class CgiRequest
 		template <class T>
 		string _toString(T number) const;
 
-
 		enum {BUFFER_SIZE = 100000, TIMEOUT = 1000000, ENV_SIZE = 20};
 
 		char *				_env[ENV_SIZE];
 		char *				_av[2];
-		t_bufferQ			_answer;	
+		t_bufferQ			_answer;
 };
 
 #endif
