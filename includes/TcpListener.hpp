@@ -5,6 +5,7 @@
 # include <sys/socket.h>
 # include <unistd.h>
 # include <netinet/in.h>
+# include <arpa/inet.h>
 # include <cstring>
 # include <cerrno>
 # include <vector>
@@ -16,6 +17,7 @@
 # include "HttpRequest.hpp"
 # include "CgiRequest.hpp"
 # include "BufferQ.hpp"
+# include "Client.hpp"
 
 # define BACKLOG 3
 # define HTTP_VERSION "HTTP/1.1"
@@ -63,12 +65,13 @@ class TcpListener
 		void run(void);
 
 	private:
-		in_addr_t		_ipAddress;
-		const uint16_t	_port;
-		int				_socket;
-		const int		_backlog;
-		fd_set			_activeFdSet;
-		int				_clientNb;
+		in_addr_t			_ipAddress;
+		const uint16_t		_port;
+		int					_socket;
+		const int			_backlog;
+		fd_set				_activeFdSet;
+		int					_clientNb;
+		map<SOCKET, Client> _clientInfos;
 
 		TcpListener(void);
 		TcpListener(TcpListener const & other);

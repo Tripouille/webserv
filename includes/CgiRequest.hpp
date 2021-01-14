@@ -1,18 +1,19 @@
 #ifndef CGIREQUEST_HPP
 # define CGIREQUEST_HPP
 
-#include <cstdlib>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <iostream>
-#include <string.h>
-#include <vector>
-#include <signal.h>
-#include <sys/socket.h>
-#include "BufferQ.hpp"
-#include "HttpRequest.hpp"
-#define STDOUT 1
+# include <cstdlib>
+# include <sys/types.h>
+# include <sys/wait.h>
+# include <unistd.h>
+# include <iostream>
+# include <string.h>
+# include <vector>
+# include <signal.h>
+# include <sys/socket.h>
+# include "BufferQ.hpp"
+# include "HttpRequest.hpp"
+# include "Client.hpp"
+# define STDOUT 1
 
 using std::cout; using std::endl; using std::string;
 
@@ -29,7 +30,7 @@ class CgiRequest
 	};
 
 	public:
-		CgiRequest(const unsigned short serverPort, HttpRequest const & request);
+		CgiRequest(const unsigned short serverPort, HttpRequest const & request, Client const & client);
 		~CgiRequest(void);
 		CgiRequest(CgiRequest const & other);
 
