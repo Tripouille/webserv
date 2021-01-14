@@ -1,0 +1,176 @@
+#include "Answer.hpp"
+#include <sstream>
+#include <fstream>
+#include <map>
+#include <sys/stat.h>
+#include <sys/socket.h>
+using std::map;
+
+/* Exception */
+
+Answer::sendException::sendException(string str) throw()
+						   : _str(str + " : " + strerror(errno))
+{
+}
+
+Answer::sendException::~sendException(void) throw()
+{
+}
+
+const char *
+Answer::sendException::what(void) const throw()
+{
+	return (_str.c_str());
+}
+
+/* Answer */
+
+Answer::Answer(void)
+{
+}
+
+Answer::Answer(SOCKET client) : _client(client)
+{
+}
+
+Answer::~Answer()
+{
+}
+
+Answer::Answer(Answer const & other)
+{
+	Answer::_copy(other);
+}
+
+Answer &
+Answer::operator=(Answer const & other)
+{
+	if (this != &other)
+		Answer::_copy(other);
+	return (*this);
+}
+
+/* Public */
+
+void
+Answer::setBody(t_bufferQ const & body)
+{
+	_body = body;
+}
+
+void
+Answer::getFile(string const & fileName) throw(sendException)
+{
+	s_buffer *	buffer;
+
+	std::ifstream indexFile(fileName.c_str());
+	if (!indexFile.is_open())
+		throw(sendException("Could not open file " + fileName));
+	do
+	{
+		buffer = new s_buffer(BUFFER_SIZE);
+		try {indexFile.read(buffer->b, buffer->size);}
+		catch (std::exception const &)
+		{throw(sendException("Coud not read file " + fileName));}
+		_body.push(buffer);
+		buffer->occupiedSize = indexFile.gcount();
+	} while (buffer->occupiedSize == buffer->size && !indexFile.eof());
+	indexFile.close();
+}
+
+void
+Answer::sendStatus(HttpRequest::s_status const & status)
+	const throw(sendException)
+{
+	std::ostringstream oss;
+	oss << HTTP_VERSION << " " << status.code << " " << status.info << "\r\n";
+	_sendToClient(oss.str().c_str(), oss.str().size());
+}
+
+void
+Answer::sendEndOfHeader(void) const throw(sendException)
+{
+	_sendToClient("\r\n", 2);
+}
+
+void
+Answer::sendAnswer(string const & fileName) throw(sendException)
+{
+	std::ostringstream headerStream;
+
+	_writeServerField(headerStream);
+	_writeDateField(headerStream);
+	_writeContentFields(headerStream, fileName);
+	string header = headerStream.str();
+	_sendToClient(header.c_str(), header.size());
+	sendEndOfHeader();
+	_sendBody();
+}
+
+/* Private */
+
+void
+Answer::_copy(Answer const & other)
+{
+	static_cast<void>(other);
+}
+
+void
+Answer::_sendToClient(char const * msg, size_t size)
+	const throw(sendException)
+{
+	if (send(_client, msg, size, 0) == -1)
+		throw(sendException("Could not send to client"));
+}
+
+void
+Answer::_sendBody(void) throw(sendException)
+{
+	while (!_body.empty())
+	{
+		_sendToClient(_body.front()->b, static_cast<size_t>(_body.front()->occupiedSize));
+		delete _body.front();
+		_body.pop();
+	}
+}
+
+void
+Answer::_writeServerField(std::ostringstream & headerStream) const
+{
+	headerStream << "Server: webserv" << "\r\n";
+}
+
+void
+Answer::_writeDateField(std::ostringstream & headerStream) const
+{
+	char date[50]; 
+	time_t now = time(0);
+	struct tm tm = *gmtime(&now);
+	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
+	headerStream << "Date: " << date << "\r\n";
+}
+
+void
+Answer::_writeContentFields(std::ostringstream & headerStream,
+									string const & fileName) const
+{
+	map<string, string> mimeTypes;
+	mimeTypes["html"] = "text/html";
+	mimeTypes["jpg"] = "image/jpeg";
+	mimeTypes["php"] = "text/html"; // ???
+	string extension = fileName.substr(fileName.find_last_of('.') + 1, string::npos);
+	if (mimeTypes.count(extension))
+		headerStream << "Content-Type: " << mimeTypes[extension] <<"\r\n";
+
+	streamsize fileSize = static_cast<streamsize>(_body.size() - 1)
+							* _body.back()->size + _body.back()->occupiedSize;
+	headerStream << "Content-Length: " << fileSize << "\r\n";
+
+	struct stat fileInfos;
+	stat(fileName.c_str(), &fileInfos);
+	time_t lastModified = fileInfos.st_mtime;
+	struct tm tm = *gmtime(&lastModified);
+	char date[50];
+	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
+	headerStream << "Last-Modified: " << date << "\r\n";
+}
