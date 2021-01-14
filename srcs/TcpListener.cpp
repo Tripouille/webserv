@@ -129,14 +129,14 @@ void
 TcpListener::_acceptNewClient(void) throw(tcpException)
 {
 	cout << endl << "New connection to the server" << endl;
-	SOCKET client = accept(_socket, NULL, NULL);
+	struct sockaddr_in address; socklen_t address_len = sizeof(address);
+	SOCKET client = accept(_socket, reinterpret_cast<sockaddr*>(&address), &address_len);
 	if (client < 0)
 		throw tcpException("Accept failed");
-	//std::cout << "Server : connect from host " << inet_ntoa(address.sin_addr)
-	//		<< ", port " << ntohs(address.sin_port) << std::endl;
+	_clientInfos[client].addr = inet_ntoa(address.sin_addr);
+	std::cout << "client address: " << _clientInfos[client].addr << endl;
 	FD_SET(client, &_activeFdSet);
 	cout << ++_clientNb << " clients connected" << endl;
-
 }
 
 void
@@ -185,7 +185,7 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 	t_bufferQ answer;
 	if (requiredFileNeedCGI)
 	{
-		CgiRequest cgiRequest(_port, request);
+		CgiRequest cgiRequest(_port, request, _clientInfos[client]);
 		cgiRequest.doRequest();
 		answer = cgiRequest.getAnswer();
 		cout << "first buffer cgiRequrest : " << endl;
