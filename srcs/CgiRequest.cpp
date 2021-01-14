@@ -82,8 +82,8 @@ CgiRequest::doRequest(void)
 		dup2(p[1], STDOUT);
 		//if (execve("./cgitest/printenv", _av, _env) == -1)
 		//if (execve("./testers/cgi_tester", _av, _env) == -1)
-		//if (execve("/Users/aalleman/.brew/bin/php-cgi", _av, _env) == -1)
-		if (execve("/usr/bin/php-cgi", _av, _env) == -1)
+		if (execve("/Users/alleman/.brew/bin/php-cgi", _av, _env) == -1)
+		//if (execve("/usr/bin/php-cgi", _av, _env) == -1)
 			exit(EXIT_FAILURE);
 	}
 	else

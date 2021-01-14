@@ -321,9 +321,7 @@ HttpRequest::_setRequiredFile(void)
 	size_t queryPos = _target.find('?');
 	if (queryPos != string::npos)
 		_queryPart = _target.substr(queryPos + 1);
-	cerr << "queryPart = " << _queryPart << endl;
 	_requiredFile = _target.substr(0, _target.find('?'));
-	cerr << "requiredFile = " << _requiredFile << endl;
 	if (_requiredFile == "/")
 		_requiredFile = ROOT_DIRECTORY + string("/index.html");
 	else if (_requiredFile[0] == '/')
