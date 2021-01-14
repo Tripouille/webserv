@@ -25,20 +25,17 @@ CgiRequest::CgiRequest(void)
 CgiRequest::CgiRequest(const unsigned short serverPort,
 	HttpRequest const & request, Client const & client)
 {
-	_setEnv(0, string("AUTH_TYPE=")); // A voir
+	_setEnv(0, string("AUTH_TYPE=") + client.auth);
 	_setEnv(1, string("CONTENT_LENGTH=") + _toString(request._bodySize));
-
-	_setEnv(2, string("CONTENT_TYPE=") /*+ request._fields.at("content_type")[0]*/); //
-
+	try {_setEnv(2, string("CONTENT_TYPE=") + request._fields.at("content_type")[0]);}
+	catch (std::out_of_range) {_setEnv(2, string("CONTENT_TYPE="));}
 	_setEnv(3, string("GATEWAY_INTERFACE=CGI/1.1"));
 	_setEnv(4, string("PATH_INFO=") + request._requiredFile);
 	_setEnv(5, string("PATH_TRANSLATED=") + request._requiredFile);
 	_setEnv(6, string("QUERY_STRING=") + request._queryPart);
-
 	_setEnv(7, string("REMOTE_ADDR=") + client.addr);
-	_setEnv(8, string("REMOTE_IDENT=")); //
-	_setEnv(9, string("REMOTE_USER=")); //
-	
+	_setEnv(8, string("REMOTE_IDENT=") + client.ident);
+	_setEnv(9, string("REMOTE_USER=") + client.user);
 	_setEnv(10, string("REQUEST_METHOD=") + request._method);
 	_setEnv(11, string("REQUEST_URI=") + request._requiredFile);
 	_setEnv(12, string("SCRIPT_NAME=") + request._requiredFile);

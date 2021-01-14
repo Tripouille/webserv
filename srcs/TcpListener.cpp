@@ -159,6 +159,18 @@ TcpListener::_handleRequest(SOCKET client) throw(tcpException)
 	catch(HttpRequest::closeOrderException const & e)
 	{ _disconnectClient(client); return ; }
 
+	//Debug print fields
+	map<string, vector<string> >::iterator it = request._fields.begin();
+	map<string, vector<string> >::iterator ite = request._fields.end();
+	for (; it != ite; ++it)
+	{
+		cout << "[" << it->first << "] = ";
+		vector<string>::iterator vit = it->second.begin();
+		vector<string>::iterator vite = it->second.end();
+		for (; vit != vite; ++vit)
+			cout << *vit << " ";
+		cout << endl;
+	}
 	// Request is valid, no close order
 	try { _answerToClient(client, request); }
 	catch (sendException const & e)
@@ -172,6 +184,15 @@ void
 TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 	throw(sendException, tcpException)
 {
+	//TEST AUTH
+	/*string msg = "HTTP/1.1 401 Unauthorized\n";
+	_sendToClient(client, msg.c_str(), msg.size());
+	msg = "WWW-Authenticate: Basic realm=\"Acces to the staging site\"\n";
+	_sendToClient(client, msg.c_str(), msg.size());
+	_sendEndOfHeader(client);
+	return (_disconnectClient(client));*/
+	//TEST AUTH END
+
 	if (request._status.info != "OK"
 	&& !(request._status.code == 404 && !request._requiredFile.empty()))
 	{
