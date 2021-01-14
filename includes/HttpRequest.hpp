@@ -8,6 +8,7 @@
 # include <iostream>
 # include <sstream>
 # include <sys/stat.h>
+# include "Client.hpp"
 
 # define CLIENT_MAX_BODY_SIZE 1000000
 # define REQUEST_LINE_MAX_SIZE 1024
@@ -55,11 +56,9 @@ class HttpRequest
 				virtual const char * what(void) const throw();
 		};
 
-		HttpRequest(SOCKET client);
+		HttpRequest(Client & client);
 		~HttpRequest(void);
 		HttpRequest(HttpRequest const & other);
-
-		HttpRequest & operator=(HttpRequest const & other);
 
 		s_status const & getStatus(void) const;
 		void setStatus(int c, string const & i);
@@ -67,7 +66,7 @@ class HttpRequest
 		void analyze(void) throw(parseException, closeOrderException);
 
 	private:
-		SOCKET 							_client;
+		Client &						_client;
 		string 							_method, _target, _httpVersion;
 		string							_requiredFile, _queryPart;
 		map<string, vector<string> >	_fields;
@@ -76,6 +75,8 @@ class HttpRequest
 		s_status						_status;
 
 		HttpRequest(void);
+		HttpRequest & operator=(HttpRequest const & other);
+
 		void _copy(HttpRequest const & other);
 		void _analyseRequestLine(ssize_t & headerSize) throw(parseException, closeOrderException);
 		ssize_t _getLine(char * buffer, ssize_t limit) const throw(parseException);
@@ -91,6 +92,7 @@ class HttpRequest
 		void _analyseBody(void) throw(parseException);
 		void _checkContentLength(vector<string> const & contentLengthField) const throw(parseException);
 		void _setRequiredFile(void);
+		void _setClientInfos(void) const;
 };
 
 #endif
