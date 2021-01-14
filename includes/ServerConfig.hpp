@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
+/*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/05 17:02:57 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/14 13:34:03 by aalleman         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ class ServerConfig
 				string _str;
 		};
 
-		explicit ServerConfig( std::string const & path = "server.conf" );
+		explicit ServerConfig( std::string const & path = "conf/server.conf" );
 		~ServerConfig();
 
 /*
