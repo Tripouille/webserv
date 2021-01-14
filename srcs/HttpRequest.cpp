@@ -37,7 +37,7 @@ HttpRequest::closeOrderException::what(void) const throw()
 
 /* HttpRequest */
 
-HttpRequest::HttpRequest(SOCKET client)
+HttpRequest::HttpRequest(Client & client)
 			: _client(client)
 {
 	setStatus(200, "OK");
@@ -47,7 +47,7 @@ HttpRequest::~HttpRequest(void)
 {
 }
 
-HttpRequest::HttpRequest(HttpRequest const & other)
+HttpRequest::HttpRequest(HttpRequest const & other) : _client(other._client)
 {
 	HttpRequest::_copy(other);
 }
@@ -84,6 +84,7 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException)
 	_analyseHeader(headerSize);
 	_analyseBody();
 	_setRequiredFile();
+	_setClientInfos();
 }
 
 /* Private */
@@ -91,7 +92,6 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException)
 void
 HttpRequest::_copy(HttpRequest const & other)
 {
-	_client = other._client;
 	_method = other._method;
 	_target = other._target;
 	_httpVersion = other._httpVersion;
@@ -139,14 +139,14 @@ ssize_t
 HttpRequest::_getLine(char * buffer, ssize_t limit) const throw(parseException)
 {
 	ssize_t lineSize = 1;
-	ssize_t	recvReturn = recv(_client, buffer, 1, 0);
+	ssize_t	recvReturn = recv(_client.s, buffer, 1, 0);
 
 	if (recvReturn <= 0)
 		return (recvReturn);
 	while (buffer[lineSize - 1] != '\n'
 	&& buffer[lineSize - 1] != -1
 	&& lineSize <= limit
-	&& (recvReturn = recv(_client, buffer + lineSize, 1, 0)) == 1)
+	&& (recvReturn = recv(_client.s, buffer + lineSize, 1, 0)) == 1)
 		++lineSize;
 
 	if (recvReturn <= 0)
@@ -295,7 +295,7 @@ HttpRequest::_analyseBody(void) throw(parseException)
 	else if (_bodySize == 0)
 		return ;
 	cerr << "_bodySize = " << _bodySize << endl;
-	ssize_t recvRet = recv(_client, _body, _bodySize, 0);
+	ssize_t recvRet = recv(_client.s, _body, _bodySize, 0);
 	if (recvRet < 0)
 		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
 	else if (static_cast<size_t>(recvRet) < _bodySize)
@@ -339,4 +339,17 @@ HttpRequest::_setRequiredFile(void)
 			_requiredFile.clear();
 		}
 	}
+}
+
+void
+HttpRequest::_setClientInfos(void) const
+{
+	vector<string> value;
+	try
+	{value = _fields.at("Authorization");}
+	catch (std::out_of_range) {return ;}
+	if (value.size() != 2)
+		throw (parseException(*this, 401, "Unauthorized", "Invalid Authorization")); //A voir
+	_client.auth = value[0];
+	_client.user = value[1];
 }

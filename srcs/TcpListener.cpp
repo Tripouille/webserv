@@ -118,6 +118,7 @@ TcpListener::_acceptNewClient(void) throw(tcpException)
 	SOCKET client = accept(_socket, reinterpret_cast<sockaddr*>(&address), &address_len);
 	if (client < 0)
 		throw tcpException("Accept failed");
+	_clientInfos[client].s = client;
 	_clientInfos[client].addr = inet_ntoa(address.sin_addr);
 	std::cout << "client address: " << _clientInfos[client].addr << endl;
 	FD_SET(client, &_activeFdSet);
@@ -137,7 +138,7 @@ void
 TcpListener::_handleRequest(SOCKET client) throw(tcpException)
 {
 	cout << endl << "Data arriving from socket " << client << endl;
-	HttpRequest request(client);
+	HttpRequest request(_clientInfos[client]);
 	try { request.analyze(); }
 	catch(HttpRequest::parseException const & e)
 	{ cerr << e.what() << endl; }
