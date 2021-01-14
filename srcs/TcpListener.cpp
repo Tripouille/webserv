@@ -3,7 +3,7 @@
 #include <fstream>
 #include <limits>
 
-/* Exceptions */
+/* Exception */
 
 TcpListener::tcpException::tcpException(string str) throw()
 						  : _str(str + " : " + strerror(errno))
@@ -16,21 +16,6 @@ TcpListener::tcpException::~tcpException(void) throw()
 
 const char *
 TcpListener::tcpException::what(void) const throw()
-{
-	return (_str.c_str());
-}
-
-TcpListener::sendException::sendException(string str) throw()
-						   : _str(str + " : " + strerror(errno))
-{
-}
-
-TcpListener::sendException::~sendException(void) throw()
-{
-}
-
-const char *
-TcpListener::sendException::what(void) const throw()
 {
 	return (_str.c_str());
 }
@@ -173,7 +158,7 @@ TcpListener::_handleRequest(SOCKET client) throw(tcpException)
 	}
 	// Request is valid, no close order
 	try { _answerToClient(client, request); }
-	catch (sendException const & e)
+	catch (Answer::sendException const & e)
 	{
 		cerr << e.what() << endl;
 		_disconnectClient(client);
@@ -182,7 +167,7 @@ TcpListener::_handleRequest(SOCKET client) throw(tcpException)
 
 void
 TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
-	throw(sendException, tcpException)
+	throw(tcpException)
 {
 	//TEST AUTH
 	/*string msg = "HTTP/1.1 401 Unauthorized\n";
@@ -193,144 +178,37 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 	return (_disconnectClient(client));*/
 	//TEST AUTH END
 
+	Answer answer(client);
 	if (request._status.info != "OK"
 	&& !(request._status.code == 404 && !request._requiredFile.empty()))
 	{
-		_sendStatus(client, request._status);
-		_sendEndOfHeader(client);
+		answer.sendStatus(request._status);
+		answer.sendEndOfHeader();
 		return (_disconnectClient(client));
 	}
-	_sendStatus(client, request._status);
 	string extension = request._requiredFile.substr(request._requiredFile.find_last_of('.') + 1, string::npos);
 	bool requiredFileNeedCGI = (extension == "php");
-	t_bufferQ answer;
 	if (requiredFileNeedCGI)
 	{
 		CgiRequest cgiRequest(_port, request, _clientInfos[client]);
-		cgiRequest.doRequest();
-		answer = cgiRequest.getAnswer();
-		cout << "first buffer cgiRequrest : " << endl;
-		write(1, answer.front()->b, (size_t)answer.front()->occupiedSize);
+		try { cgiRequest.doRequest(); }
+		catch(std::exception const & e)
+		{
+			request.setStatus(500, "Internal Server Error (CGI)");
+			answer.sendStatus(request._status);
+			answer.sendEndOfHeader();
+			return (_disconnectClient(client));
+		}
+		answer.setBody(cgiRequest.getAnswer());
+		cout << "first buffer cgiRequest : " << endl;
+		write(1, answer._body.front()->b, (size_t)answer._body.front()->occupiedSize);
 		write(1, "\n", 1);
 	}
 	else
-		answer = _getFile(request._requiredFile);
-	_sendAnswer(client, request._requiredFile, answer);
-}
-
-void
-TcpListener::_sendToClient(SOCKET client, char const * msg, size_t size)
-	const throw(sendException)
-{
-	if (send(client, msg, size, 0) == -1)
-		throw(sendException("Could not send to client"));
-}
-
-void
-TcpListener::_sendStatus(SOCKET client,
-	HttpRequest::s_status const & status)
-	const throw(sendException)
-{
-	std::ostringstream oss;
-	oss << HTTP_VERSION << " " << status.code << " " << status.info << "\r\n";
-	_sendToClient(client, oss.str().c_str(), oss.str().size());
-}
-
-void
-TcpListener::_sendEndOfHeader(SOCKET client) const throw(sendException)
-{
-	_sendToClient(client, "\r\n", 2);
-}
-
-void
-TcpListener::_sendAnswer(SOCKET client, string const & fileName,
-	t_bufferQ & bufferQ)
-	const throw(sendException, tcpException)
-{
-	std::ostringstream headerStream;
-
-	_writeServerField(headerStream);
-	_writeDateField(headerStream);
-	_writeContentFields(headerStream, fileName, bufferQ);
-	string header = headerStream.str();
-	_sendToClient(client, header.c_str(), header.size());
-	_sendEndOfHeader(client);
-	_sendBody(client, bufferQ);
-}
-
-void
-TcpListener::_sendBody(SOCKET client, t_bufferQ & bufferQ)
-	const throw(sendException)
-{
-	while (!bufferQ.empty())
 	{
-		_sendToClient(client, bufferQ.front()->b, static_cast<size_t>(bufferQ.front()->occupiedSize));
-		delete bufferQ.front();
-		bufferQ.pop();
+		try { answer.getFile(request._requiredFile); }
+		catch (Answer::sendException const &) { throw(tcpException("File reading failed")); }
 	}
-}
-
-void
-TcpListener::_writeServerField(std::ostringstream & headerStream) const
-{
-	headerStream << "Server: webserv" << "\r\n";
-}
-
-void
-TcpListener::_writeDateField(std::ostringstream & headerStream) const
-{
-	char date[50]; 
-	time_t now = time(0);
-	struct tm tm = *gmtime(&now);
-	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
-	headerStream << "Date: " << date << "\r\n";
-}
-
-void
-TcpListener::_writeContentFields(std::ostringstream & headerStream,
-									string const & fileName,
-									t_bufferQ const & bufferQ) const
-{
-	map<string, string> mimeTypes;
-	mimeTypes["html"] = "text/html";
-	mimeTypes["jpg"] = "image/jpeg";
-	mimeTypes["php"] = "text/html"; // ???
-	string extension = fileName.substr(fileName.find_last_of('.') + 1, string::npos);
-	if (mimeTypes.count(extension))
-		headerStream << "Content-Type: " << mimeTypes[extension] <<"\r\n";
-
-	streamsize fileSize = static_cast<streamsize>(bufferQ.size() - 1)
-							* bufferQ.back()->size + bufferQ.back()->occupiedSize;
-	headerStream << "Content-Length: " << fileSize << "\r\n";
-
-	struct stat fileInfos;
-	stat(fileName.c_str(), &fileInfos);
-	time_t lastModified = fileInfos.st_mtime;
-	struct tm tm = *gmtime(&lastModified);
-	char date[50];
-	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
-	headerStream << "Last-Modified: " << date << "\r\n";
-}
-
-t_bufferQ
-TcpListener::_getFile(string const & fileName) const throw(tcpException)
-{
-	t_bufferQ	bufferQ;
-	s_buffer *	buffer;
-
-	std::ifstream indexFile(fileName.c_str());
-	if (!indexFile.is_open())
-		throw(tcpException("Could not open file " + fileName));
-	do
-	{
-		buffer = new s_buffer(BUFFER_SIZE);
-		try {indexFile.read(buffer->b, buffer->size);}
-		catch (std::exception const &)
-		{throw(tcpException("Coud not read file " + fileName));}
-		bufferQ.push(buffer);
-		buffer->occupiedSize = indexFile.gcount();
-	} while (buffer->occupiedSize == buffer->size && !indexFile.eof());
-	indexFile.close();
-
-	return (bufferQ);
+	answer.sendStatus(request._status);
+	answer.sendAnswer(request._requiredFile);
 }

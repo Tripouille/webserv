@@ -18,10 +18,9 @@
 # include "CgiRequest.hpp"
 # include "BufferQ.hpp"
 # include "Client.hpp"
+# include "Answer.hpp"
 
 # define BACKLOG 3
-# define HTTP_VERSION "HTTP/1.1"
-# define BUFFER_SIZE 1024
 # define RCV_TIMEOUT 3000
 
 typedef int SOCKET;
@@ -44,15 +43,6 @@ class TcpListener
 			public:
 				tcpException(string str = "") throw();
 				virtual ~tcpException(void) throw();
-				virtual const char * what(void) const throw();
-			private:
-				string _str;
-		};
-		class sendException : public std::exception
-		{
-			public:
-				sendException(string str = "") throw();
-				virtual ~sendException(void) throw();
 				virtual const char * what(void) const throw();
 			private:
 				string _str;
@@ -81,25 +71,7 @@ class TcpListener
 		void _disconnectClient(SOCKET client);
 		void _handleRequest(SOCKET client) throw(tcpException);
 		void _answerToClient(SOCKET client, HttpRequest & request)
-			throw(sendException, tcpException);
-		void _sendToClient(SOCKET client, char const * msg, size_t size)
-			const throw(sendException);
-		void _sendStatus(SOCKET client,
-			HttpRequest::s_status const & status)
-			const throw(sendException);
-		void _sendEndOfHeader(SOCKET client) const throw(sendException);
-		void _sendAnswer(SOCKET client, string const & fileName,
-			t_bufferQ & bufferQ)
-			const throw(sendException, tcpException);
-		void _sendBody(SOCKET client, t_bufferQ & bufferQ)
-			const throw(sendException);
-		void _writeServerField(std::ostringstream & headerStream) const;
-		void _writeDateField(std::ostringstream & headerStream) const;
-		void _writeContentFields(std::ostringstream & headerStream,
-			string const & fileName, t_bufferQ const & bufferQ)
-			const;
-		t_bufferQ _getFile(string const & fileName)
-			const throw(tcpException);
+			throw(tcpException);
 };
 
 #endif

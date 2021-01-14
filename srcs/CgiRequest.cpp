@@ -82,7 +82,7 @@ CgiRequest::doRequest(void)
 	{
 		dup2(p[1], STDOUT);
 		//if (execve("./testers/cgi_tester", _av, _env) == -1)
-		if (execve("/Users/jgambard/.brew/bin/php-cgi", _av, _env) == -1)
+		if (execve("/Users/aalleman/.brew/bin/php-cgi", _av, _env) == -1)
 		//if (execve("/usr/bin/php-cgi", _av, _env) == -1)
 			exit(EXIT_FAILURE);
 	}
@@ -146,3 +146,53 @@ CgiRequest::_toString(T number) const
 	ss << number;
 	return (ss.str());
 }
+
+/*void
+CgiRequest::_analyseHeader(int fd)
+{
+	ssize_t			headerSize = 0;
+	//+1 pour pouvoir lire un char supplémentaire et dépasser la limite
+	char			line[HEADER_MAX_SIZE + 1];
+	ssize_t			lineSize;
+
+	while (headerSize <= HEADER_MAX_SIZE
+	&& (lineSize = _getLine(fd, line, HEADER_MAX_SIZE)) > 0
+	&& line[0])
+	{
+		headerSize += lineSize;
+		try { _request._parseHeaderLine(line);}
+		catch (HttpRequest::parseException const & e)
+		{ throw(cgiException(e.what()));}
+	}
+	if (lineSize < 0)
+		throw(cgiException("recv error"));
+	else if (headerSize > HEADER_MAX_SIZE)
+		throw(cgiException("header too large"));
+}
+
+ssize_t
+CgiRequest::_getLine(int fd, char * buffer, ssize_t limit) const
+{
+	ssize_t lineSize = 1;
+	ssize_t	recvReturn = read(fd, buffer, 1);
+
+	if (recvReturn <= 0)
+		return (recvReturn);
+	while (buffer[lineSize - 1] != '\n'
+	&& buffer[lineSize - 1] != -1
+	&& lineSize <= limit
+	&& (recvReturn = read(fd, buffer + lineSize, 1)) == 1)
+		++lineSize;
+
+	if (recvReturn <= 0)
+		return (recvReturn);
+	else if (buffer[lineSize - 1] == -1)
+		return (0);
+	else if (lineSize > limit)
+		return (lineSize);
+
+	buffer[lineSize - 1] = 0;
+	if (lineSize >= 2 && buffer[lineSize - 2] == '\r')
+		buffer[lineSize - 2] = 0;
+	return (lineSize);
+}*/
