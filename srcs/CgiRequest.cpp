@@ -161,7 +161,6 @@ CgiRequest::_analyzeHeader(int fd, Answer & answer)
 		throw(cgiException("recv error"));
 	else if (headerSize > HEADER_MAX_SIZE)
 		throw(cgiException("header too large"));
-	answer._fields.erase("x-powered-by");
 }
 
 ssize_t
