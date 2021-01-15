@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/11 15:20:24 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/14 13:26:25 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ using std::ifstream;
 
 struct Host
 {
-	vector<int>				port;
+	vector<uint16_t>		port;
 	string					root;
 	vector<string>			index;
 	string					serverName;
@@ -93,7 +93,7 @@ class ServerConfig
 		vector<string>			convertIndex( map<string, string> & p_map, string & p_fileName );
 		string					checkRoot( map<string, string> & p_map, string & p_fileName );
 		string					checkServerName( map<string, string> & p_map, string & p_fileName );
-		vector<int> &			checkPort( vector<int> & p_vector, string & p_fileName );
+		vector<uint16_t> &		checkPort( vector<uint16_t> & p_vector, string & p_fileName );
 		map<string, string> &	checkCgi( map<string, string> & p_map );
 		void					checkKeyExist( string const & p_key, map<string, string> const & p_tmp,
 												 string const & p_filename = "server.conf" );

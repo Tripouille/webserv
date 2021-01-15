@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/11 15:19:52 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/14 13:49:01 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,7 +91,7 @@ map<string, string> &	ServerConfig::checkCgi( map<string, string> & p_map )
 	return p_map;
 }
 
-vector<int> &			ServerConfig::checkPort( vector<int> & p_vector,
+vector<uint16_t> &			ServerConfig::checkPort( vector<uint16_t> & p_vector,
 													string & p_fileName )
 {
 	if (p_vector.empty())
@@ -164,7 +164,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 		{
 			map<string, string>	tmp;
 			std::map<string, string>::iterator		it = tmp.begin();
-			vector<int> port;
+			vector<uint16_t> port;
 			map<string, string> cgi;
 			std::map<string, string>::iterator		it2 = cgi.begin();
 
@@ -185,7 +185,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				if (arg.find_first_not_of(' ') != string::npos)
 					arg.erase(0, arg.find_first_not_of(' '));
 				if (key == "port")
-					port.push_back(atoi(arg.c_str()));
+					port.push_back(static_cast<unsigned short>(atoi(arg.c_str())));
 				else if (!strncmp(string(key).c_str(), "cgi", 3))
 				{
 					str >> key;
