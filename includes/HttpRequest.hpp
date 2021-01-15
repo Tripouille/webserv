@@ -8,12 +8,15 @@
 # include <iostream>
 # include <sstream>
 # include <sys/stat.h>
+# include "Client.hpp"
 
 # define CLIENT_MAX_BODY_SIZE 1000000
 # define REQUEST_LINE_MAX_SIZE 1024
 # define URI_MAX_SIZE 512
 # define HEADER_MAX_SIZE 8000
-# define MAX_EMPTY_LINE_BEFORE_REQUEST 3
+# define MAX_EMPTY_LINE_BEFORE_REQUEST 1
+
+# define ROOT_DIRECTORY "www"
 
 typedef int SOCKET;
 
@@ -26,8 +29,10 @@ using std::vector;
 
 class HttpRequest
 {
+	friend class TcpListener;
+	friend class CgiRequest;
 	public:
-		struct s_status
+		struct s_status //déplacer dans private puisque friend ?
 		{
 			int		code;
 			string	info;
@@ -51,11 +56,9 @@ class HttpRequest
 				virtual const char * what(void) const throw();
 		};
 
-		HttpRequest(SOCKET client);
+		HttpRequest(Client & client);
 		~HttpRequest(void);
 		HttpRequest(HttpRequest const & other);
-
-		HttpRequest & operator=(HttpRequest const & other);
 
 		s_status const & getStatus(void) const;
 		void setStatus(int c, string const & i);
@@ -63,7 +66,16 @@ class HttpRequest
 		void analyze(void) throw(parseException, closeOrderException);
 
 	private:
+		Client &						_client;
+		string 							_method, _target, _httpVersion;
+		string							_requiredFile, _queryPart;
+		map<string, vector<string> >	_fields;
+		char							_body[CLIENT_MAX_BODY_SIZE + 1];
+		size_t							_bodySize;
+		s_status						_status;
+
 		HttpRequest(void);
+		HttpRequest & operator=(HttpRequest const & other);
 
 		void _copy(HttpRequest const & other);
 		void _analyseRequestLine(ssize_t & headerSize) throw(parseException, closeOrderException);
@@ -76,15 +88,11 @@ class HttpRequest
 		void _analyseHeader(ssize_t & headerSize) throw(parseException);
 		void _parseHeaderLine(string line) throw(parseException);
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
+		void _checkHeader(void) throw(parseException);
 		void _analyseBody(void) throw(parseException);
 		void _checkContentLength(vector<string> const & contentLengthField) const throw(parseException);
-
-		SOCKET 							_client;
-		string 							_method, _target, _httpVersion;
-		map<string, vector<string> >	_fields;
-		char							_body[CLIENT_MAX_BODY_SIZE + 1];
-		size_t							_bodySize;
-		s_status						_status;
+		void _setRequiredFile(void);
+		void _setClientInfos(void) const;
 };
 
 #endif

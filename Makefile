@@ -1,9 +1,9 @@
 HEADERS_PATH			= includes/
-HEADERS_NAME			= ServerConfig.hpp TcpListener.hpp HttpRequest.hpp
+HEADERS_NAME			= ServerConfig.hpp TcpListener.hpp HttpRequest.hpp CgiRequest.hpp BufferQ.hpp Client.hpp Answer.hpp
 HEADERS					= $(addprefix $(HEADERS_PATH), $(HEADERS_NAME))
 
 SRCS_PATH				= srcs/
-SRCS_NAME				= main.cpp ServerConfig.cpp TcpListener.cpp HttpRequest.cpp
+SRCS_NAME				= main.cpp ServerConfig.cpp TcpListener.cpp HttpRequest.cpp CgiRequest.cpp BufferQ.cpp Client.cpp Answer.cpp
 SRCS					= $(addprefix $(SRCS_PATH), $(SRCS_NAME))
 
 OBJS_PATH				= objs/
@@ -12,7 +12,7 @@ OBJS					= $(addprefix $(OBJS_PATH), $(SRCS_NAME:.cpp=.o))
 NAME					= webserv
 RM						= rm -rf
 CC						= clang++
-FLAGS					= -Wall -Wextra -Werror -Wconversion -std=c++98
+FLAGS					= -Wall -Wextra -Werror -Wconversion -std=c++98 -Wno-unused-parameter
 
 ifdef DEBUG
 FLAGS					+= -g3

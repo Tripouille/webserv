@@ -1,0 +1,94 @@
+#ifndef CGIREQUEST_HPP
+# define CGIREQUEST_HPP
+
+# include <cstdlib>
+# include <sys/types.h>
+# include <sys/wait.h>
+# include <unistd.h>
+# include <iostream>
+# include <string.h>
+# include <vector>
+# include <signal.h>
+# include <sys/socket.h>
+# include "BufferQ.hpp"
+# include "HttpRequest.hpp"
+# include "Client.hpp"
+# include "Answer.hpp"
+# define STDOUT 1
+
+using std::cout; using std::endl; using std::string;
+
+class CgiRequest
+{
+	class cgiException : public std::exception
+	{
+		public:
+			cgiException(string str = "") throw();
+			virtual ~cgiException(void) throw();
+			virtual const char * what(void) const throw();
+		private:
+			string _str;
+	};
+
+	public:
+		CgiRequest(const unsigned short serverPort, HttpRequest const & request, Client const & client);
+		~CgiRequest(void);
+		CgiRequest(CgiRequest const & other);
+
+		CgiRequest & operator=(CgiRequest const & other);
+		void doRequest(Answer & answer);
+
+	private:
+		CgiRequest(void);
+		void _copy(CgiRequest const & other);
+		void _setEnv(int pos, string const & value);
+		void _setArg(int pos, string const & value);
+		template <class T>
+		string _toString(T number) const;
+		void _analyzeHeader(int fd, Answer & answer);
+		ssize_t _getLine(int fd, char * buffer, ssize_t limit) const;
+		void _parseHeaderLine(string line, Answer & answer) throw(cgiException);
+
+		enum {BUFF_SIZE = 100000, TIMEOUT = 1000000, ENV_SIZE = 20};
+
+		char *				_env[ENV_SIZE];
+		char *				_av[2];
+};
+
+#endif
+
+/*
+AUTH_TYPE      = "" | auth-scheme
+      			auth-scheme    = "Basic" | "Digest" | extension-auth
+      			extension-auth = token
+For HTTP, if the client request required authentication for external
+   access, then the server MUST set the value of this variable from the
+   'auth-scheme' token in the request Authorization header field.
+
+CONTENT_LENGTH
+The CONTENT_LENGTH variable contains the size of the message-body
+   attached to the request, if any, in decimal number of octets.  If no
+   data is attached, then NULL (or unset).
+
+      CONTENT_LENGTH = "" | 1*digit
+
+   The server MUST set this meta-variable if and only if the request is
+   accompanied by a message-body entity.  The CONTENT_LENGTH value must
+   reflect the length of the message-body after the server has removed
+   any transfer-codings or content-codings.
+CONTENT_TYPE
+GATEWAY_INTERFACE
+PATH_INFO
+PATH_TRANSLATED
+QUERY_STRING
+REMOTE_ADDR
+REMOTE_IDENT
+REMOTE_USER
+REQUEST_METHOD
+REQUEST_URI
+SCRIPT_NAME
+SERVER_NAME
+SERVER_PORT
+SERVER_PROTOCOL
+SERVER_SOFTWARE
+*/

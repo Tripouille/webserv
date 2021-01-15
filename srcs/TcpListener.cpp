@@ -1,7 +1,9 @@
 #include "TcpListener.hpp"
 #include <cstdio>
+#include <fstream>
+#include <limits>
 
-/* Exceptions */
+/* Exception */
 
 TcpListener::tcpException::tcpException(string str) throw()
 						  : _str(str + " : " + strerror(errno))
@@ -30,15 +32,8 @@ TcpListener::~TcpListener()
 	close(_socket);
 }
 
-
-/* Operators */
-
-
-/* Getters and setters */
-
-
 /* Member functions */
-
+/* Public */
 void
 TcpListener::init(void)
 {
@@ -54,8 +49,9 @@ TcpListener::init(void)
 		throw tcpException("Socket creation failed");
 
 	// Flag SO_REUSEADDR pour éviter l'erreur "bind failed: Address already in use"
-	int n = 1;
-	if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) < 0)
+	int n = 1; struct timeval tv = {0, RCV_TIMEOUT};
+	if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) < 0
+	|| setsockopt(_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
 	{
 		close(_socket);
 		throw tcpException("Setting socket option failed");
@@ -78,15 +74,6 @@ TcpListener::init(void)
 }
 
 void
-TcpListener::_disconnectClient(SOCKET client)
-{
-	cerr << "Killing socket " << client << endl;
-	FD_CLR(client, &_activeFdSet);
-	close(client);
-	_clientNb--;
-}
-
-void
 TcpListener::run(void)
 {
 	fd_set setCopy;
@@ -94,7 +81,7 @@ TcpListener::run(void)
 	while (running)
 	{
 		setCopy = _activeFdSet;
-		timeval timeout = {10, 0}; //sec, usec
+		timeval timeout = {60, 0}; // 60 seconds
 		int socketCount = select(FD_SETSIZE, &setCopy, NULL, NULL, &timeout);
 		if (socketCount < 0)
 		{
@@ -109,57 +96,113 @@ TcpListener::run(void)
 				if (sock == _socket)
 					_acceptNewClient();
 				else
-					_receiveData(sock);
+					_handleRequest(sock);
 			}
 		}
 	}
 }
 
+/* Private */
 void
 TcpListener::_acceptNewClient(void) throw(tcpException)
 {
 	cout << endl << "New connection to the server" << endl;
-	SOCKET client = accept(_socket, NULL, NULL);
+	struct sockaddr_in address; socklen_t address_len = sizeof(address);
+	SOCKET client = accept(_socket, reinterpret_cast<sockaddr*>(&address), &address_len);
 	if (client < 0)
 		throw tcpException("Accept failed");
-	//std::cout << "Server : connect from host " << inet_ntoa(address.sin_addr)
-	//		<< ", port " << ntohs(address.sin_port) << std::endl;
+	_clientInfos[client].s = client;
+	_clientInfos[client].addr = inet_ntoa(address.sin_addr);
+	std::cout << "client address: " << _clientInfos[client].addr << endl;
 	FD_SET(client, &_activeFdSet);
 	cout << ++_clientNb << " clients connected" << endl;
-
 }
 
 void
-TcpListener::_receiveData(SOCKET client)
+TcpListener::_disconnectClient(SOCKET client)
+{
+	cerr << "Killing socket " << client << endl;
+	FD_CLR(client, &_activeFdSet);
+	close(client);
+	_clientNb--;
+}
+
+void
+TcpListener::_handleRequest(SOCKET client) throw(tcpException)
 {
 	cout << endl << "Data arriving from socket " << client << endl;
-	HttpRequest request(client);
+	HttpRequest request(_clientInfos[client]);
 	try { request.analyze(); }
-	catch(const HttpRequest::parseException & e)
+	catch(HttpRequest::parseException const & e)
 	{ cerr << e.what() << endl; }
-	catch(const HttpRequest::closeOrderException & e)
+	catch(HttpRequest::closeOrderException const & e)
 	{ _disconnectClient(client); return ; }
-	// temporary
-	_sendStatus(client, request.getStatus());
-	if (request.getStatus().info != "OK")
+
+	//Debug print fields
+	map<string, vector<string> >::iterator it = request._fields.begin();
+	map<string, vector<string> >::iterator ite = request._fields.end();
+	for (; it != ite; ++it)
 	{
-		send(client, "\r\n", 2, 0);
+		cout << "[" << it->first << "] = ";
+		vector<string>::iterator vit = it->second.begin();
+		vector<string>::iterator vite = it->second.end();
+		for (; vit != vite; ++vit)
+			cout << *vit << " ";
+		cout << endl;
+	}
+	// Request is valid, no close order
+	try { _answerToClient(client, request); }
+	catch (Answer::sendException const & e)
+	{
+		cerr << e.what() << endl;
 		_disconnectClient(client);
+	}
+}
+
+void
+TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
+	throw(tcpException)
+{
+	//TEST AUTH
+	/*string msg = "HTTP/1.1 401 Unauthorized\n";
+	_sendToClient(client, msg.c_str(), msg.size());
+	msg = "WWW-Authenticate: Basic realm=\"Acces to the staging site\"\n";
+	_sendToClient(client, msg.c_str(), msg.size());
+	_sendEndOfHeader(client);
+	return (_disconnectClient(client));*/
+	//TEST AUTH END
+
+	Answer answer(client);
+	if (request._status.info != "OK"
+	&& !(request._status.code == 404 && !request._requiredFile.empty()))
+	{
+		answer.sendStatus(request._status);
+		answer.sendEndOfHeader();
+		return (_disconnectClient(client));
+	}
+	string extension = request._requiredFile.substr(request._requiredFile.find_last_of('.') + 1, string::npos);
+	bool requiredFileNeedCGI = (extension == "php");
+	if (requiredFileNeedCGI)
+	{
+		CgiRequest cgiRequest(_port, request, _clientInfos[client]);
+		try { cgiRequest.doRequest(answer); }
+		catch(std::exception const & e)
+		{
+			request.setStatus(500, "Internal Server Error (CGI)");
+			answer.sendStatus(request._status);
+			answer.sendEndOfHeader();
+			return (_disconnectClient(client));
+		}
+		//answer.setBody(cgiRequest.getAnswer());
+		cout << "first buffer cgiRequest : " << endl;
+		write(1, answer._body.front()->b, (size_t)answer._body.front()->occupiedSize);
+		write(1, "\n", 1);
 	}
 	else
 	{
-		string message = "Content-Length: 5\r\n\r\nprout";
-		send(client, message.c_str(), message.size(), 0);
-		//message
-		//send(client, oss.str().c_str(), oss.str().size(), 0);
-		//_disconnectClient(client);
+		try { answer.getFile(request._requiredFile); }
+		catch (Answer::sendException const &) { throw(tcpException("File reading failed")); }
 	}
-}
-
-void
-TcpListener::_sendStatus(SOCKET client, HttpRequest::s_status const & status)
-{
-	std::ostringstream oss;
-	oss << HTTP_VERSION << " " << status.code << " " << status.info << "\r\n";
-	send(client, oss.str().c_str(), oss.str().size(), 0);
+	answer.sendStatus(request._status);
+	answer.sendAnswer(request._requiredFile);
 }

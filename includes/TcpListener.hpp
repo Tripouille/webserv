@@ -5,16 +5,23 @@
 # include <sys/socket.h>
 # include <unistd.h>
 # include <netinet/in.h>
+# include <arpa/inet.h>
 # include <cstring>
 # include <cerrno>
 # include <vector>
 # include <map>
+# include <queue>
+# include <list>
 # include <sstream>
 
 # include "HttpRequest.hpp"
+# include "CgiRequest.hpp"
+# include "BufferQ.hpp"
+# include "Client.hpp"
+# include "Answer.hpp"
 
 # define BACKLOG 3
-# define HTTP_VERSION "HTTP/1.1"
+# define RCV_TIMEOUT 3000
 
 typedef int SOCKET;
 
@@ -23,7 +30,10 @@ using std::cerr;
 using std::cout;
 using std::endl;
 using std::vector;
+using std::queue;
+using std::list;
 using std::map;
+using std::streamsize;
 
 class TcpListener
 {
@@ -45,20 +55,23 @@ class TcpListener
 		void run(void);
 
 	private:
-		in_addr_t		_ipAddress;
-		const uint16_t	_port;
-		int				_socket;
-		const int		_backlog;
-		fd_set			_activeFdSet;
-		int				_clientNb;
+		in_addr_t			_ipAddress;
+		const uint16_t		_port;
+		int					_socket;
+		const int			_backlog;
+		fd_set				_activeFdSet;
+		int					_clientNb;
+		map<SOCKET, Client> _clientInfos;
 
 		TcpListener(void);
-		TcpListener(TcpListener const& other);
-		TcpListener& operator=(TcpListener const& other);
-		void _disconnectClient(SOCKET client);
+		TcpListener(TcpListener const & other);
+		TcpListener & operator=(TcpListener const & other);
+
 		void _acceptNewClient(void) throw(tcpException);
-		void _receiveData(SOCKET client);
-		void _sendStatus(SOCKET client, HttpRequest::s_status const & status);
+		void _disconnectClient(SOCKET client);
+		void _handleRequest(SOCKET client) throw(tcpException);
+		void _answerToClient(SOCKET client, HttpRequest & request)
+			throw(tcpException);
 };
 
 #endif
