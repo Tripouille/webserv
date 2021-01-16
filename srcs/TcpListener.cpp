@@ -111,8 +111,7 @@ TcpListener::_acceptNewClient(void) throw(tcpException)
 	SOCKET client = accept(_socket, reinterpret_cast<sockaddr*>(&address), &address_len);
 	if (client < 0)
 		throw tcpException("Accept failed");
-	_clientInfos[client].s = client;
-	_clientInfos[client].addr = inet_ntoa(address.sin_addr);
+	_clientInfos[client] = Client(client, inet_ntoa(address.sin_addr));
 	std::cout << "client address: " << _clientInfos[client].addr << endl;
 	FD_SET(client, &_activeFdSet);
 	cout << ++_clientNb << " clients connected" << endl;

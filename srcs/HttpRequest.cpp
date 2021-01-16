@@ -41,6 +41,8 @@ HttpRequest::HttpRequest(Client & client)
 			: _client(client)
 {
 	setStatus(200, "OK");
+	_realms["/private"] = std::make_pair("private_realm", "./conf/private.access");
+	_realms["/private/admin"] = std::make_pair("admin_realm", "./conf/admin.access");
 }
 
 HttpRequest::~HttpRequest(void)
@@ -84,9 +86,9 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException)
 	_analyseHeader(headerSize);
 	_analyseBody();
 	_setRequiredFile();
-	cerr << "before setClientInfos" << endl;
-	_setClientInfos();
-	cerr << "after setClientInfos" << endl;
+	_setRequiredRealm();
+	if (_requiredRealm.name.size())
+		_setClientInfos();
 }
 
 /* Private */
@@ -345,6 +347,32 @@ HttpRequest::_setRequiredFile(void)
 }
 
 void
+HttpRequest::_setRequiredRealm(void) // a fix : requiredfile = avec ROOT_DIRECTORY, mais les chemins realm sont sans
+{
+	string analyzedFile(_requiredFile);
+	std::map<string, std::pair<string, string> >::iterator its = _realms.begin();
+	std::map<string, std::pair<string, string> >::iterator ite = _realms.end();
+	std::map<string, std::pair<string, string> >::iterator actual;
+	size_t slashPos;
+
+	analyzedFile.erase(0, strlen(ROOT_DIRECTORY) + 1);
+	while (analyzedFile.size())
+	{
+		for (actual = its; actual != ite; ++actual)
+			if (actual->first == analyzedFile)
+			{
+				_requiredRealm.name = actual->second.first;
+				_requiredRealm.userFile = actual->second.second;
+				return ;
+			}
+		slashPos = analyzedFile.find_last_of('/');
+		if (slashPos == string::npos)
+			return ;
+		analyzedFile.erase(slashPos);
+	}
+}
+
+void
 HttpRequest::_setClientInfos(void) const
 {
 	vector<string> value;
@@ -354,12 +382,13 @@ HttpRequest::_setClientInfos(void) const
 		throw (parseException(*this, 401, "Unauthorized", "Invalid format of authorization header field"));
 
 	size_t spacePos = value[0].find(' ');
-	_client.auth = string(value[0], 0, spacePos);
+	_client.authentications[_requiredRealm.name].scheme = string(value[0], 0, spacePos);
 	string credentials = base64_decode(string(value[0], spacePos + 1));
 
 	if (std::count(credentials.begin(), credentials.end(), ':') == 0)
 		throw (parseException(*this, 401, "Unauthorized", "No ':' in credentials"));
 	size_t colonPos = credentials.find(':');
-	_client.user = string(credentials, 0, colonPos);
-	_client.ident = _client.user;
+	_client.authentications[_requiredRealm.name].user = string(credentials, 0, colonPos);
+	_client.authentications[_requiredRealm.name].ident = _client.authentications[_requiredRealm.name].user;
+	_client.authentications[_requiredRealm.name].password = string(credentials, colonPos + 1);
 }

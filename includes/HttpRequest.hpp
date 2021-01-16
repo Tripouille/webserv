@@ -39,6 +39,12 @@ class HttpRequest
 			string	info;
 		};
 
+		struct realmInfos
+		{
+			string	name;
+			string	userFile;
+		};
+
 		/* Sets status on throw */
 		class parseException : public std::exception
 		{
@@ -70,10 +76,12 @@ class HttpRequest
 		Client &						_client;
 		string 							_method, _target, _httpVersion;
 		string							_requiredFile, _queryPart;
+		realmInfos						_requiredRealm;
 		map<string, vector<string> >	_fields;
 		char							_body[CLIENT_MAX_BODY_SIZE + 1];
 		size_t							_bodySize;
 		s_status						_status;
+		std::map<string, std::pair<string, string> > _realms;
 
 		HttpRequest(void);
 		HttpRequest & operator=(HttpRequest const & other);
@@ -93,6 +101,7 @@ class HttpRequest
 		void _analyseBody(void) throw(parseException);
 		void _checkContentLength(vector<string> const & contentLengthField) const throw(parseException);
 		void _setRequiredFile(void);
+		void _setRequiredRealm(void);
 		void _setClientInfos(void) const;
 };
 
