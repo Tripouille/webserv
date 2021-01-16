@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/14 13:49:01 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/16 14:27:50 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -252,15 +252,6 @@ void					ServerConfig::initConf( void )
 		throw configException("Error params type_file does not exist on conf file");
 	}
 	ifstream 			mimeFile(http.at("type_file").c_str());
-
-	/* Save PID program on file */
-	if (http.find("pid") != http.end())
-	{
-		pid.open(http.at("pid").c_str());
-		if (pid)
-			pid << getpid() << std::endl;
-		pid.close();
-	}
 
 	/* Charg mime.type on map */
 	if (mimeFile)
