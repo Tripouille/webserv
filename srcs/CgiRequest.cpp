@@ -198,7 +198,7 @@ CgiRequest::_parseHeaderLine(string line, Answer & answer) throw(cgiException)
 	if (colonPos == string::npos)
 		throw(cgiException("no ':'"));
 	string name = line.substr(0, colonPos);
-	std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+	std::transform(name.begin(), name.end(), name.begin(), tolower);
 	if (name.find(' ', 0) != string::npos)
 		throw(cgiException("space before ':'"));
 	string value = line.substr(colonPos + 1, string::npos);

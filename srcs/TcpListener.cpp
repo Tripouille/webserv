@@ -163,16 +163,21 @@ void
 TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 	throw(tcpException)
 {
+	Answer answer(client);
+
 	//TEST AUTH
-	/*string msg = "HTTP/1.1 401 Unauthorized\n";
-	_sendToClient(client, msg.c_str(), msg.size());
-	msg = "WWW-Authenticate: Basic realm=\"Acces to the staging site\"\n";
-	_sendToClient(client, msg.c_str(), msg.size());
-	_sendEndOfHeader(client);
-	return (_disconnectClient(client));*/
+	static int isAuth = 1;
+	if (isAuth++ < 3)
+	{
+		string msg = "HTTP/1.1 401 Unauthorized\r\n";
+		answer._sendToClient(msg.c_str(), msg.size());
+		msg = "WWW-Authenticate: Basic realm=\"Access to the staging site\"\r\n";
+		answer._sendToClient(msg.c_str(), msg.size());
+		answer.sendEndOfHeader();
+		return (_disconnectClient(client));
+	}
 	//TEST AUTH END
 
-	Answer answer(client);
 	if (request._status.info != "OK"
 	&& !(request._status.code == 404 && !request._requiredFile.empty()))
 	{

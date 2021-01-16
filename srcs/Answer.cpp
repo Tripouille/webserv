@@ -96,8 +96,8 @@ Answer::sendEndOfHeader(void) const throw(sendException)
 void
 Answer::sendAnswer(string const & fileName) throw(sendException)
 {
-	for (map<string, string>::iterator it = _fields.begin(); it != _fields.end(); ++it)
-		cerr << "_fields[" << it->first << "] = " << it-> second << endl;
+	/*for (map<string, string>::iterator it = _fields.begin(); it != _fields.end(); ++it)
+		cerr << "_fields[" << it->first << "] = " << it-> second << endl;*/
 	_fillServerField();
 	_fillDateField();
 	_fillContentFields(fileName);

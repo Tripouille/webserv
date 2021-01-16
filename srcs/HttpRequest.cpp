@@ -84,7 +84,9 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException)
 	_analyseHeader(headerSize);
 	_analyseBody();
 	_setRequiredFile();
+	cerr << "before setClientInfos" << endl;
 	_setClientInfos();
+	cerr << "after setClientInfos" << endl;
 }
 
 /* Private */
@@ -246,6 +248,7 @@ HttpRequest::_parseHeaderLine(string line) throw(parseException)
 	if (colonPos == string::npos)
 		throw(parseException(*this, 400, "Bad Request", "no ':'"));
 	string name = line.substr(0, colonPos);
+	std::transform(name.begin(), name.end(), name.begin(), tolower);
 	if (name.find(' ', 0) != string::npos)
 		throw(parseException(*this, 400, "Bad Request", "space before :"));
 	string value = line.substr(colonPos + 1, string::npos);
@@ -275,10 +278,10 @@ HttpRequest::_splitHeaderField(string s, vector<string> & fieldValue) const
 void
 HttpRequest::_checkHeader(void) throw(parseException)
 {
-	if (_fields["Host"].size() == 0
-	|| (_fields["Host"].size() == 1 && _fields["Host"][0] == ""))
+	if (_fields["host"].size() == 0
+	|| (_fields["host"].size() == 1 && _fields["host"][0] == ""))
 		throw(parseException(*this, 400, "Bad Request", "no Host header field"));
-	if (_fields["Host"].size() > 1)
+	if (_fields["host"].size() > 1)
 		throw(parseException(*this, 400, "Bad Request", "too many Host header fields"));
 }
 
@@ -286,10 +289,10 @@ void
 HttpRequest::_analyseBody(void) throw(parseException)
 {
 	_body[0] = 0;
-	if (_fields["Content-Length"].size() == 0)
+	if (_fields["content-length"].size() == 0)
 		return ;
-	_checkContentLength(_fields["Content-Length"]);
-	std::istringstream(_fields["Content-Length"][0]) >> _bodySize;
+	_checkContentLength(_fields["content-length"]);
+	std::istringstream(_fields["content-length"][0]) >> _bodySize;
 	if (_bodySize > CLIENT_MAX_BODY_SIZE)
 		throw(parseException(*this, 413, "Payload Too Large", "Content-Length too high"));
 	else if (_bodySize == 0)
@@ -345,11 +348,18 @@ void
 HttpRequest::_setClientInfos(void) const
 {
 	vector<string> value;
-	try
-	{value = _fields.at("Authorization");}
-	catch (std::out_of_range) {return ;}
-	if (value.size() != 2)
-		throw (parseException(*this, 401, "Unauthorized", "Invalid Authorization")); //A voir
-	_client.auth = value[0];
-	_client.user = value[1];
+	try { value = _fields.at("authorization"); }
+	catch (std::out_of_range) { return ; }
+	if (value.size() != 1 || std::count(value[0].begin(), value[0].end(), ' ') != 1)
+		throw (parseException(*this, 401, "Unauthorized", "Invalid format of authorization header field"));
+
+	size_t spacePos = value[0].find(' ');
+	_client.auth = string(value[0], 0, spacePos);
+	string credentials = base64_decode(string(value[0], spacePos + 1));
+
+	if (std::count(credentials.begin(), credentials.end(), ':') == 0)
+		throw (parseException(*this, 401, "Unauthorized", "No ':' in credentials"));
+	size_t colonPos = credentials.find(':');
+	_client.user = string(credentials, 0, colonPos);
+	_client.ident = _client.user;
 }
