@@ -164,6 +164,7 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 		try { cgiRequest.doRequest(answer); }
 		catch(std::exception const & e)
 		{
+			cerr << e.what() << endl;
 			request.setStatus(500, "Internal Server Error (CGI)");
 			answer.sendStatus(request._status);
 			answer.sendEndOfHeader();

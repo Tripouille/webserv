@@ -3,6 +3,7 @@
 
 # include <string>
 # include <map>
+# include <errno.h>
 # include "BufferQ.hpp"
 # include "HttpRequest.hpp"
 

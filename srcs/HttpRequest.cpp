@@ -365,10 +365,10 @@ HttpRequest::_setClientInfos(void) const
 
 bool
 HttpRequest::_isAuthorized(void) const
-{\
+{
 	if (_requiredRealm.name.empty())
 		return (true);
-	if (_client.authentications.find(_requiredRealm.name) == _client.authentications.cend())
+	if (_client.authentications.find(_requiredRealm.name) == _client.authentications.end())
 		return (false);
 	std::ifstream accessFile(_requiredRealm.userFile.c_str());
 	if (!accessFile)

@@ -30,7 +30,7 @@ CgiRequest::CgiRequest(const unsigned short serverPort,
 		authentication = client.authentications.at(request._requiredRealm.name);
 	_setEnv(0, string("AUTH_TYPE=") + authentication.scheme);
 	_setEnv(1, string("CONTENT_LENGTH=") + _toString(request._bodySize));
-	try {_setEnv(2, string("CONTENT_TYPE=") + request._fields.at("content_type")[0]);}
+	try {cerr << "try of content_type, content-type = " << request._fields.at("content-type")[0] << endl; _setEnv(2, string("CONTENT_TYPE=") + request._fields.at("content-type")[0]);}
 	catch (std::out_of_range) {_setEnv(2, string("CONTENT_TYPE="));}
 	_setEnv(3, string("GATEWAY_INTERFACE=CGI/1.1"));
 	_setEnv(4, string("PATH_INFO=") + request._requiredFile);
@@ -79,26 +79,32 @@ void
 CgiRequest::doRequest(Answer & answer)
 {
 	int status;
-	int p[2]; pipe(p);
-	int child = fork();
+	int p[2]; pipe(p); // to protect
+	int inPipe[2]; pipe(inPipe);
+	int child = fork(); // to protect
 	if (child == 0)
 	{
 		dup2(p[1], STDOUT);
+		if (execve("./cgitest/printenv", _av, _env) == -1)
 		//if (execve("./testers/cgi_tester", _av, _env) == -1)
-		if (execve("/Users/aalleman/.brew/bin/php-cgi", _av, _env) == -1)
+		//if (execve("/Users/aalleman/.brew/bin/php-cgi", _av, _env) == -1)
 		//if (execve("/usr/bin/php-cgi", _av, _env) == -1)
 			exit(EXIT_FAILURE);
 	}
 	else
 	{
+		write(1, )
 		usleep(TIMEOUT);
 		waitpid(child, &status, WNOHANG);
 		if (WEXITSTATUS(status) == EXIT_FAILURE)
 			throw(cgiException("execve fail"));
 		kill(child, SIGKILL);
-		char eof = EOF; write(p[1], &eof, 1);
-		char buf[100]; buf[0] = 0;
-		ssize_t ret = read(p[0], buf, 100);
+		cerr << "after kill" << endl;
+		char eof = EOF; write(p[1], "test", 4); write(p[1], &eof, 1);
+		char zero = 0; write(p[1], &zero, 1);
+		cerr << "after writes" << endl;
+		char buf[1000]; buf[0] = 0;
+		ssize_t ret = read(p[0], buf, 1000);
 		cerr << "ret = " << ret << ", buf = " << buf << endl;
 		cerr << "before analyseHeader" << endl;
 		_analyzeHeader(p[0], answer);
