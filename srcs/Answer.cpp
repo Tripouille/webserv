@@ -88,6 +88,18 @@ Answer::sendStatus(HttpRequest::s_status const & status)
 }
 
 void
+Answer::sendHeader(void) const throw(sendException)
+{
+	std::ostringstream headerStream;
+
+	for (map<string, string>::const_iterator it = _fields.cbegin(); it != _fields.cend(); ++it)
+		headerStream << it->first << ": " << it->second << "\r\n";
+	string header = headerStream.str();
+	cerr << "header : " << endl << header << endl;
+	_sendToClient(header.c_str(), header.size());
+}
+
+void
 Answer::sendEndOfHeader(void) const throw(sendException)
 {
 	_sendToClient("\r\n", 2);
@@ -96,12 +108,12 @@ Answer::sendEndOfHeader(void) const throw(sendException)
 void
 Answer::sendAnswer(string const & fileName) throw(sendException)
 {
-	for (map<string, string>::iterator it = _fields.begin(); it != _fields.end(); ++it)
-		cerr << "_fields[" << it->first << "] = " << it-> second << endl;
+	/*for (map<string, string>::iterator it = _fields.begin(); it != _fields.end(); ++it)
+		cerr << "_fields[" << it->first << "] = " << it-> second << endl;*/
 	_fillServerField();
 	_fillDateField();
 	_fillContentFields(fileName);
-	_sendHeader();
+	sendHeader();
 	sendEndOfHeader();
 	_sendBody();
 }
@@ -171,16 +183,4 @@ Answer::_fillContentFields(string const & fileName)
 	char date[50];
 	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
 	_fields["Last-Modified"] = string(date);
-}
-
-void
-Answer::_sendHeader(void) const throw(sendException)
-{
-	std::ostringstream headerStream;
-
-	for (map<string, string>::const_iterator it = _fields.cbegin(); it != _fields.cend(); ++it)
-		headerStream << it->first << ": " << it->second << "\r\n";
-	string header = headerStream.str();
-	cerr << "header : " << endl << header << endl;
-	_sendToClient(header.c_str(), header.size());
 }

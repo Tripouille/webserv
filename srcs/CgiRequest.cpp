@@ -25,7 +25,10 @@ CgiRequest::CgiRequest(void)
 CgiRequest::CgiRequest(const unsigned short serverPort,
 	HttpRequest const & request, Client const & client)
 {
-	_setEnv(0, string("AUTH_TYPE=") + client.auth);
+	Client::authentication authentication;
+	if (request._requiredRealm.name.size())
+		authentication = client.authentications.at(request._requiredRealm.name);
+	_setEnv(0, string("AUTH_TYPE=") + authentication.scheme);
 	_setEnv(1, string("CONTENT_LENGTH=") + _toString(request._bodySize));
 	try {_setEnv(2, string("CONTENT_TYPE=") + request._fields.at("content_type")[0]);}
 	catch (std::out_of_range) {_setEnv(2, string("CONTENT_TYPE="));}
@@ -34,8 +37,8 @@ CgiRequest::CgiRequest(const unsigned short serverPort,
 	_setEnv(5, string("PATH_TRANSLATED=") + request._requiredFile);
 	_setEnv(6, string("QUERY_STRING=") + request._queryPart);
 	_setEnv(7, string("REMOTE_ADDR=") + client.addr);
-	_setEnv(8, string("REMOTE_IDENT=") + client.ident);
-	_setEnv(9, string("REMOTE_USER=") + client.user);
+	_setEnv(8, string("REMOTE_IDENT=") + authentication.ident);
+	_setEnv(9, string("REMOTE_USER=") + authentication.user);
 	_setEnv(10, string("REQUEST_METHOD=") + request._method);
 	_setEnv(11, string("REQUEST_URI=") + request._requiredFile);
 	_setEnv(12, string("SCRIPT_NAME=") + request._requiredFile);
@@ -100,7 +103,6 @@ CgiRequest::doRequest(Answer & answer)
 			buffer = new s_buffer(BUFF_SIZE);
 			buffer->occupiedSize = read(p[0], buffer->b, static_cast<size_t>(buffer->size));
 			answer._body.push(buffer);
-			cout << buffer->occupiedSize << " / " << buffer->size << endl;
 		} while (buffer->occupiedSize == buffer->size);
 		if (buffer->occupiedSize == -1)
 		{
@@ -198,7 +200,7 @@ CgiRequest::_parseHeaderLine(string line, Answer & answer) throw(cgiException)
 	if (colonPos == string::npos)
 		throw(cgiException("no ':'"));
 	string name = line.substr(0, colonPos);
-	std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+	std::transform(name.begin(), name.end(), name.begin(), tolower);
 	if (name.find(' ', 0) != string::npos)
 		throw(cgiException("space before ':'"));
 	string value = line.substr(colonPos + 1, string::npos);

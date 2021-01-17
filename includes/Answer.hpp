@@ -37,6 +37,7 @@ class Answer
 		void getFile(string const & fileName) throw(sendException);
 		void sendStatus(HttpRequest::s_status const & status)
 			const throw(sendException);
+		void sendHeader(void) const throw(sendException);
 		void sendEndOfHeader(void) const throw(sendException);
 		void sendAnswer(string const & fileName) throw(sendException);
 
@@ -53,7 +54,6 @@ class Answer
 		void _fillServerField(void);
 		void _fillDateField(void);
 		void _fillContentFields(string const & fileName);
-		void _sendHeader(void) const throw(sendException);
 };
 
 #endif

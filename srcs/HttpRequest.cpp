@@ -41,6 +41,8 @@ HttpRequest::HttpRequest(Client & client)
 			: _client(client)
 {
 	setStatus(200, "OK");
+	_realms["/private"] = std::make_pair("private_realm", "./conf/private.access");
+	_realms["/private/admin"] = std::make_pair("admin_realm", "./conf/admin.access");
 }
 
 HttpRequest::~HttpRequest(void)
@@ -82,9 +84,14 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException)
 	
 	_analyseRequestLine(headerSize);
 	_analyseHeader(headerSize);
-	_analyseBody();
+	_debugFields();
 	_setRequiredFile();
-	_setClientInfos();
+	_setRequiredRealm();
+	if (_requiredRealm.name.size())
+		_setClientInfos();
+	if (!_isAuthorized())
+		throw(parseException(*this, 401, "Unauthorized", ""));
+	_analyseBody();
 }
 
 /* Private */
@@ -246,6 +253,7 @@ HttpRequest::_parseHeaderLine(string line) throw(parseException)
 	if (colonPos == string::npos)
 		throw(parseException(*this, 400, "Bad Request", "no ':'"));
 	string name = line.substr(0, colonPos);
+	std::transform(name.begin(), name.end(), name.begin(), tolower);
 	if (name.find(' ', 0) != string::npos)
 		throw(parseException(*this, 400, "Bad Request", "space before :"));
 	string value = line.substr(colonPos + 1, string::npos);
@@ -275,21 +283,120 @@ HttpRequest::_splitHeaderField(string s, vector<string> & fieldValue) const
 void
 HttpRequest::_checkHeader(void) throw(parseException)
 {
-	if (_fields["Host"].size() == 0
-	|| (_fields["Host"].size() == 1 && _fields["Host"][0] == ""))
+	if (_fields["host"].size() == 0
+	|| (_fields["host"].size() == 1 && _fields["host"][0] == ""))
 		throw(parseException(*this, 400, "Bad Request", "no Host header field"));
-	if (_fields["Host"].size() > 1)
+	if (_fields["host"].size() > 1)
 		throw(parseException(*this, 400, "Bad Request", "too many Host header fields"));
+}
+
+void
+HttpRequest::_setRequiredFile(void)
+{
+	size_t queryPos = _target.find('?');
+	if (queryPos != string::npos)
+		_queryPart = _target.substr(queryPos + 1);
+	_requiredFile = _target.substr(0, _target.find('?'));
+	if (_requiredFile == "/")
+		_requiredFile = ROOT_DIRECTORY + string("/index.html");
+	else if (_requiredFile[0] == '/')
+		_requiredFile = ROOT_DIRECTORY + _requiredFile;
+	else
+		_requiredFile = ROOT_DIRECTORY + string("/") + _requiredFile;
+	struct stat fileInfos;
+	if (stat(_requiredFile.c_str(), &fileInfos) != 0)
+	{
+		setStatus(404, "Not Found");
+		_requiredFile = ROOT_DIRECTORY + string("/404.html"); // a changer
+		if (stat(_requiredFile.c_str(), &fileInfos) != 0)
+		{
+			cerr << "File 404.html not found" << endl;
+			_requiredFile.clear();
+		}
+	}
+}
+
+void
+HttpRequest::_setRequiredRealm(void) // a fix : requiredfile = avec ROOT_DIRECTORY, mais les chemins realm sont sans
+{
+	string analyzedFile(_requiredFile);
+	std::map<string, std::pair<string, string> >::iterator its = _realms.begin();
+	std::map<string, std::pair<string, string> >::iterator ite = _realms.end();
+	std::map<string, std::pair<string, string> >::iterator actual;
+	size_t slashPos;
+
+	analyzedFile.erase(0, strlen(ROOT_DIRECTORY));
+	while (analyzedFile.size())
+	{
+		for (actual = its; actual != ite; ++actual)
+			if (actual->first == analyzedFile)
+			{
+				_requiredRealm.name = actual->second.first;
+				_requiredRealm.userFile = actual->second.second;
+				return ;
+			}
+		slashPos = analyzedFile.find_last_of('/');
+		if (slashPos == string::npos)
+			return ;
+		analyzedFile.erase(slashPos);
+	}
+}
+
+void
+HttpRequest::_setClientInfos(void) const
+{
+	vector<string> value;
+	try { value = _fields.at("authorization"); }
+	catch (std::out_of_range) { return ; }
+	if (value.size() != 1 || std::count(value[0].begin(), value[0].end(), ' ') != 1)
+		throw (parseException(*this, 401, "Unauthorized", "Invalid format of authorization header field"));
+
+	size_t spacePos = value[0].find(' ');
+	_client.authentications[_requiredRealm.name].scheme = string(value[0], 0, spacePos);
+	string credentials = base64_decode(string(value[0], spacePos + 1));
+
+	if (std::count(credentials.begin(), credentials.end(), ':') == 0)
+		throw (parseException(*this, 401, "Unauthorized", "No ':' in credentials"));
+	size_t colonPos = credentials.find(':');
+	_client.authentications[_requiredRealm.name].user = string(credentials, 0, colonPos);
+	_client.authentications[_requiredRealm.name].ident = _client.authentications[_requiredRealm.name].user;
+	_client.authentications[_requiredRealm.name].password = string(credentials, colonPos + 1);
+}
+
+bool
+HttpRequest::_isAuthorized(void) const
+{\
+	if (_requiredRealm.name.empty())
+		return (true);
+	if (_client.authentications.find(_requiredRealm.name) == _client.authentications.cend())
+		return (false);
+	std::ifstream accessFile(_requiredRealm.userFile.c_str());
+	if (!accessFile)
+		throw(parseException(*this, 500, "Internal Server Error", "Could not open access file"));
+	string line;
+	while (getline(accessFile, line))
+	{
+		size_t colonPos = line.find(':');
+		if (colonPos == string::npos)
+			throw(parseException(*this, 500, "Internal Server Error", "No ':' in access file"));
+		if (line.substr(0, colonPos) == _client.authentications[_requiredRealm.name].user)
+		{
+			accessFile.close();
+			return (string(line, colonPos + 1) == md5(_client.authentications[_requiredRealm.name].password));
+		}
+	}
+	accessFile.close();
+	return (false);
 }
 
 void
 HttpRequest::_analyseBody(void) throw(parseException)
 {
 	_body[0] = 0;
-	if (_fields["Content-Length"].size() == 0)
+	if (_fields["content-length"].size() == 0)
 		return ;
-	_checkContentLength(_fields["Content-Length"]);
-	std::istringstream(_fields["Content-Length"][0]) >> _bodySize;
+	_checkContentLength(_fields["content-length"]);
+	std::istringstream(_fields["content-length"][0]) >> _bodySize;
 	if (_bodySize > CLIENT_MAX_BODY_SIZE)
 		throw(parseException(*this, 413, "Payload Too Large", "Content-Length too high"));
 	else if (_bodySize == 0)
@@ -316,40 +423,17 @@ HttpRequest::_checkContentLength(vector<string> const & contentLengthField) cons
 }
 
 void
-HttpRequest::_setRequiredFile(void)
+HttpRequest::_debugFields(void)
 {
-	size_t queryPos = _target.find('?');
-	if (queryPos != string::npos)
-		_queryPart = _target.substr(queryPos + 1);
-	_requiredFile = _target.substr(0, _target.find('?'));
-	if (_requiredFile == "/")
-		_requiredFile = ROOT_DIRECTORY + string("/index.html");
-	else if (_requiredFile[0] == '/')
-		_requiredFile = ROOT_DIRECTORY + _requiredFile;
-	else
-		_requiredFile = ROOT_DIRECTORY + string("/") + _requiredFile;
-	struct stat fileInfos;
-	if (stat(_requiredFile.c_str(), &fileInfos) != 0)
+	map<string, vector<string> >::iterator it = _fields.begin();
+	map<string, vector<string> >::iterator ite = _fields.end();
+	for (; it != ite; ++it)
 	{
-		setStatus(404, "Not Found");
-		_requiredFile = ROOT_DIRECTORY + string("/404.html");
-		if (stat(_requiredFile.c_str(), &fileInfos) != 0)
-		{
-			cerr << "File 404.html not found" << endl;
-			_requiredFile.clear();
-		}
+		cout << "[" << it->first << "] = ";
+		vector<string>::iterator vit = it->second.begin();
+		vector<string>::iterator vite = it->second.end();
+		for (; vit != vite; ++vit)
+			cout << *vit << " ";
+		cout << endl;
 	}
-}
-
-void
-HttpRequest::_setClientInfos(void) const
-{
-	vector<string> value;
-	try
-	{value = _fields.at("Authorization");}
-	catch (std::out_of_range) {return ;}
-	if (value.size() != 2)
-		throw (parseException(*this, 401, "Unauthorized", "Invalid Authorization")); //A voir
-	_client.auth = value[0];
-	_client.user = value[1];
 }
