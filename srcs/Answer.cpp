@@ -184,3 +184,14 @@ Answer::_fillContentFields(string const & fileName)
 	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
 	_fields["Last-Modified"] = string(date);
 }
+
+void
+Answer::_debugFields(void)
+{
+	cerr << "debugging fields of answer object :" << endl;
+	map<string, string >::iterator it = _fields.begin();
+	map<string, string >::iterator ite = _fields.end();
+	for (; it != ite; ++it)
+		cout << "[" << it->first << "] = " << it->second << endl;
+	cerr << "end of debug" << endl;
+}

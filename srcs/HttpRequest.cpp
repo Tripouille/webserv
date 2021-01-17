@@ -204,7 +204,7 @@ HttpRequest::_fillAndCheckRequestLine(vector<string> const & requestLine) throw(
 void
 HttpRequest::_checkMethod(void) const throw(parseException)
 {
-	if (_method != "GET" && _method != "HEAD")
+	if (_method != "GET" && _method != "HEAD" && _method != "POST")
 		throw parseException(*this, 501, "Not Implemented", "bad method : " + _method);
 }
 

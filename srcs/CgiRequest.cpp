@@ -96,13 +96,23 @@ CgiRequest::doRequest(Answer & answer)
 		if (WEXITSTATUS(status) == EXIT_FAILURE)
 			throw(cgiException("execve fail"));
 		kill(child, SIGKILL);
+		char eof = EOF; write(p[1], &eof, 1);
+		char buf[100]; buf[0] = 0;
+		ssize_t ret = read(p[0], buf, 100);
+		cerr << "ret = " << ret << ", buf = " << buf << endl;
+		cerr << "before analyseHeader" << endl;
 		_analyzeHeader(p[0], answer);
+		answer._debugFields();
+		cerr << "after analyseHeader" << endl;
 		s_buffer * buffer = NULL;
 		do
 		{
+			//char eof = EOF; write(p[1], &eof, 1);
 			buffer = new s_buffer(BUFF_SIZE);
+			cerr << "before read" << endl;
 			buffer->occupiedSize = read(p[0], buffer->b, static_cast<size_t>(buffer->size));
 			answer._body.push(buffer);
+			cerr << "buffer = " << buffer->b << endl;
 		} while (buffer->occupiedSize == buffer->size);
 		if (buffer->occupiedSize == -1)
 		{
@@ -156,6 +166,7 @@ CgiRequest::_analyzeHeader(int fd, Answer & answer)
 	&& (lineSize = _getLine(fd, line, HEADER_MAX_SIZE)) > 0
 	&& line[0])
 	{
+		cerr << "in while of analyzeHeader" << endl;
 		headerSize += lineSize;
 		_parseHeaderLine(line, answer);
 	}
@@ -168,9 +179,11 @@ CgiRequest::_analyzeHeader(int fd, Answer & answer)
 ssize_t
 CgiRequest::_getLine(int fd, char * buffer, ssize_t limit) const
 {
+	cerr << "before first read of getLine" << endl;
 	ssize_t lineSize = 1;
 	ssize_t	recvReturn = read(fd, buffer, 1);
 
+	cerr << "after first read of getLine" << endl;
 	if (recvReturn <= 0)
 		return (recvReturn);
 	while (buffer[lineSize - 1] != '\n'
