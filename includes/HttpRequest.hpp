@@ -9,6 +9,7 @@
 # include <sstream>
 # include <sys/stat.h>
 # include "Client.hpp"
+# include "ServerConfig.hpp"
 
 # define CLIENT_MAX_BODY_SIZE 1000000
 # define REQUEST_LINE_MAX_SIZE 1024
@@ -56,7 +57,7 @@ class HttpRequest
 				virtual const char * what(void) const throw();
 		};
 
-		HttpRequest(Client & client);
+		HttpRequest(Client & client, Host& host, uint16_t port, ServerConfig & config);
 		~HttpRequest(void);
 		HttpRequest(HttpRequest const & other);
 
@@ -73,6 +74,9 @@ class HttpRequest
 		char							_body[CLIENT_MAX_BODY_SIZE + 1];
 		size_t							_bodySize;
 		s_status						_status;
+		Host &							_host;
+		uint16_t						_port;
+		ServerConfig &					_config;
 
 		HttpRequest(void);
 		HttpRequest & operator=(HttpRequest const & other);

@@ -37,8 +37,9 @@ HttpRequest::closeOrderException::what(void) const throw()
 
 /* HttpRequest */
 
-HttpRequest::HttpRequest(Client & client)
-			: _client(client)
+HttpRequest::HttpRequest(Client & client, Host& host, uint16_t port,
+							ServerConfig & config)
+			: _client(client), _host(host), _port(port), _config(config)
 {
 	setStatus(200, "OK");
 }
@@ -47,7 +48,9 @@ HttpRequest::~HttpRequest(void)
 {
 }
 
-HttpRequest::HttpRequest(HttpRequest const & other) : _client(other._client)
+HttpRequest::HttpRequest(HttpRequest const & other)
+		: _client(other._client), _host(other._host), _port(other._port),
+			_config(other._config)
 {
 	HttpRequest::_copy(other);
 }
@@ -79,7 +82,7 @@ void
 HttpRequest::analyze(void) throw(parseException, closeOrderException)
 {
 	ssize_t headerSize = 0;
-	
+
 	_analyseRequestLine(headerSize);
 	_analyseHeader(headerSize);
 	_analyseBody();
@@ -319,20 +322,33 @@ void
 HttpRequest::_setRequiredFile(void)
 {
 	size_t queryPos = _target.find('?');
+	string root(_host.root);
+
 	if (queryPos != string::npos)
 		_queryPart = _target.substr(queryPos + 1);
 	_requiredFile = _target.substr(0, _target.find('?'));
 	if (_requiredFile == "/")
-		_requiredFile = ROOT_DIRECTORY + string("/index.html");
+	{
+		for (vector<string>::iterator index = _host.index.begin(); index != _host.index.end(); index++)
+		{
+			struct stat fileInfos;
+
+			_requiredFile = root + string("/") + string(*index);
+			if (stat(_requiredFile.c_str(), &fileInfos) == 0)
+				break ;
+		}
+	}
 	else if (_requiredFile[0] == '/')
-		_requiredFile = ROOT_DIRECTORY + _requiredFile;
+		_requiredFile = root + _requiredFile;
 	else
-		_requiredFile = ROOT_DIRECTORY + string("/") + _requiredFile;
+		_requiredFile = root + string("/") + _requiredFile;
+
 	struct stat fileInfos;
 	if (stat(_requiredFile.c_str(), &fileInfos) != 0)
 	{
 		setStatus(404, "Not Found");
-		_requiredFile = ROOT_DIRECTORY + string("/404.html");
+		if (_config.http.find("error") != _config.http.end())
+			_requiredFile = _config.http.at("error") + string("/404.html");
 		if (stat(_requiredFile.c_str(), &fileInfos) != 0)
 		{
 			cerr << "File 404.html not found" << endl;

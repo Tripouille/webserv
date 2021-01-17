@@ -19,6 +19,7 @@
 # include "BufferQ.hpp"
 # include "Client.hpp"
 # include "Answer.hpp"
+# include "ServerConfig.hpp"
 
 # define BACKLOG 3
 # define RCV_TIMEOUT 3000
@@ -48,20 +49,24 @@ class TcpListener
 				string _str;
 		};
 
-		TcpListener(in_addr_t const & ipAddress, uint16_t port);
+		TcpListener(in_addr_t const & ipAddress, uint16_t port, \
+			ServerConfig & config, Host & host);
 		virtual ~TcpListener();
 
 		void init(void);
 		void run(void);
 
 	private:
-		in_addr_t			_ipAddress;
-		const uint16_t		_port;
-		int					_socket;
-		const int			_backlog;
-		fd_set				_activeFdSet;
-		int					_clientNb;
-		map<SOCKET, Client> _clientInfos;
+		in_addr_t				_ipAddress;
+		uint16_t				_port;
+		int						_socket;
+		const int				_backlog;
+		fd_set					_activeFdSet;
+		int						_clientNb;
+		map<SOCKET, Client> 	_clientInfos;
+		ServerConfig &			_config;
+		Host &					_host;
+
 
 		TcpListener(void);
 		TcpListener(TcpListener const & other);
