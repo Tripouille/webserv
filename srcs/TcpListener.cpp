@@ -137,18 +137,6 @@ TcpListener::_handleRequest(SOCKET client) throw(tcpException)
 	catch(HttpRequest::closeOrderException const & e)
 	{ _disconnectClient(client); return ; }
 
-	//Debug print fields
-	map<string, vector<string> >::iterator it = request._fields.begin();
-	map<string, vector<string> >::iterator ite = request._fields.end();
-	for (; it != ite; ++it)
-	{
-		cout << "[" << it->first << "] = ";
-		vector<string>::iterator vit = it->second.begin();
-		vector<string>::iterator vite = it->second.end();
-		for (; vit != vite; ++vit)
-			cout << *vit << " ";
-		cout << endl;
-	}
 	// Request is valid, no close order
 	try { _answerToClient(client, request); }
 	catch (Answer::sendException const & e)
@@ -160,30 +148,14 @@ TcpListener::_handleRequest(SOCKET client) throw(tcpException)
 
 void
 TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
-	throw(tcpException)
+	throw(tcpException, Answer::sendException)
 {
 	Answer answer(client);
 
-	//TEST AUTH
-	static int isAuth = 1;
-	if (isAuth++ < 3)
-	{
-		string msg = "HTTP/1.1 401 Unauthorized\r\n";
-		answer._sendToClient(msg.c_str(), msg.size());
-		msg = "WWW-Authenticate: Basic realm=\"Access to the staging site\"\r\n";
-		answer._sendToClient(msg.c_str(), msg.size());
-		answer.sendEndOfHeader();
-		return (_disconnectClient(client));
-	}
-	//TEST AUTH END
-
 	if (request._status.info != "OK"
-	&& !(request._status.code == 404 && !request._requiredFile.empty()))
-	{
-		answer.sendStatus(request._status);
-		answer.sendEndOfHeader();
-		return (_disconnectClient(client));
-	}
+	&& !(request._status.code == 404 && request._requiredFile.size()))
+		return (_handleBadStatus(answer, request));
+
 	string extension = request._requiredFile.substr(request._requiredFile.find_last_of('.') + 1, string::npos);
 	bool requiredFileNeedCGI = (extension == "php");
 	if (requiredFileNeedCGI)
@@ -197,10 +169,6 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 			answer.sendEndOfHeader();
 			return (_disconnectClient(client));
 		}
-		//answer.setBody(cgiRequest.getAnswer());
-		cout << "first buffer cgiRequest : " << endl;
-		write(1, answer._body.front()->b, (size_t)answer._body.front()->occupiedSize);
-		write(1, "\n", 1);
 	}
 	else
 	{
@@ -209,4 +177,19 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 	}
 	answer.sendStatus(request._status);
 	answer.sendAnswer(request._requiredFile);
+}
+
+void
+TcpListener::_handleBadStatus(Answer & answer, HttpRequest const & request)
+	throw(Answer::sendException)
+{
+	answer.sendStatus(request._status);
+	if (request._status.code == 401)
+	{
+		answer._fields["WWW-Authenticate"] = string("Basic realm=\"")
+											+ request._requiredRealm.name + string("\"");
+		answer.sendHeader();
+	}
+	answer.sendEndOfHeader();
+	return (_disconnectClient(answer._client));
 }

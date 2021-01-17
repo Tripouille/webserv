@@ -84,11 +84,14 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException)
 	
 	_analyseRequestLine(headerSize);
 	_analyseHeader(headerSize);
-	_analyseBody();
+	_debugFields();
 	_setRequiredFile();
 	_setRequiredRealm();
 	if (_requiredRealm.name.size())
 		_setClientInfos();
+	if (!_isAuthorized())
+		throw(parseException(*this, 401, "Unauthorized", ""));
+	_analyseBody();
 }
 
 /* Private */
@@ -288,39 +291,6 @@ HttpRequest::_checkHeader(void) throw(parseException)
 }
 
 void
-HttpRequest::_analyseBody(void) throw(parseException)
-{
-	_body[0] = 0;
-	if (_fields["content-length"].size() == 0)
-		return ;
-	_checkContentLength(_fields["content-length"]);
-	std::istringstream(_fields["content-length"][0]) >> _bodySize;
-	if (_bodySize > CLIENT_MAX_BODY_SIZE)
-		throw(parseException(*this, 413, "Payload Too Large", "Content-Length too high"));
-	else if (_bodySize == 0)
-		return ;
-	cerr << "_bodySize = " << _bodySize << endl;
-	ssize_t recvRet = recv(_client.s, _body, _bodySize, 0);
-	if (recvRet < 0)
-		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
-	else if (static_cast<size_t>(recvRet) < _bodySize)
-		throw(parseException(*this, 500, "Internal Server Error", "body smaller than given content length"));
-	_body[_bodySize] = 0;
-	cerr << "Body : " << _body << endl;
-}
-
-void
-HttpRequest::_checkContentLength(vector<string> const & contentLengthField) const throw(parseException)
-{
-	if (contentLengthField.size() > 1)
-		throw(parseException(*this, 400, "Bad Request", "Mutiple Content-Length fields"));
-	else if (contentLengthField[0].size() > 9)
-		throw(parseException(*this, 400, "Bad Request", "Content-Length field is too long"));
-	else if (contentLengthField[0].find_first_not_of("0123456789") != string::npos)
-		throw(parseException(*this, 400, "Bad Request", "Content-Length is not a number"));
-}
-
-void
 HttpRequest::_setRequiredFile(void)
 {
 	size_t queryPos = _target.find('?');
@@ -337,7 +307,7 @@ HttpRequest::_setRequiredFile(void)
 	if (stat(_requiredFile.c_str(), &fileInfos) != 0)
 	{
 		setStatus(404, "Not Found");
-		_requiredFile = ROOT_DIRECTORY + string("/404.html");
+		_requiredFile = ROOT_DIRECTORY + string("/404.html"); // a changer
 		if (stat(_requiredFile.c_str(), &fileInfos) != 0)
 		{
 			cerr << "File 404.html not found" << endl;
@@ -355,7 +325,7 @@ HttpRequest::_setRequiredRealm(void) // a fix : requiredfile = avec ROOT_DIRECTO
 	std::map<string, std::pair<string, string> >::iterator actual;
 	size_t slashPos;
 
-	analyzedFile.erase(0, strlen(ROOT_DIRECTORY) + 1);
+	analyzedFile.erase(0, strlen(ROOT_DIRECTORY));
 	while (analyzedFile.size())
 	{
 		for (actual = its; actual != ite; ++actual)
@@ -391,4 +361,79 @@ HttpRequest::_setClientInfos(void) const
 	_client.authentications[_requiredRealm.name].user = string(credentials, 0, colonPos);
 	_client.authentications[_requiredRealm.name].ident = _client.authentications[_requiredRealm.name].user;
 	_client.authentications[_requiredRealm.name].password = string(credentials, colonPos + 1);
+}
+
+bool
+HttpRequest::_isAuthorized(void) const
+{\
+	if (_requiredRealm.name.empty())
+		return (true);
+	if (_client.authentications.find(_requiredRealm.name) == _client.authentications.cend())
+		return (false);
+	std::ifstream accessFile(_requiredRealm.userFile.c_str());
+	if (!accessFile)
+		throw(parseException(*this, 500, "Internal Server Error", "Could not open access file"));
+	string line;
+	while (getline(accessFile, line))
+	{
+		size_t colonPos = line.find(':');
+		if (colonPos == string::npos)
+			throw(parseException(*this, 500, "Internal Server Error", "No ':' in access file"));
+		if (line.substr(0, colonPos) == _client.authentications[_requiredRealm.name].user)
+		{
+			accessFile.close();
+			return (string(line, colonPos + 1) == md5(_client.authentications[_requiredRealm.name].password));
+		}
+	}
+	accessFile.close();
+	return (false);
+}
+
+void
+HttpRequest::_analyseBody(void) throw(parseException)
+{
+	_body[0] = 0;
+	if (_fields["content-length"].size() == 0)
+		return ;
+	_checkContentLength(_fields["content-length"]);
+	std::istringstream(_fields["content-length"][0]) >> _bodySize;
+	if (_bodySize > CLIENT_MAX_BODY_SIZE)
+		throw(parseException(*this, 413, "Payload Too Large", "Content-Length too high"));
+	else if (_bodySize == 0)
+		return ;
+	cerr << "_bodySize = " << _bodySize << endl;
+	ssize_t recvRet = recv(_client.s, _body, _bodySize, 0);
+	if (recvRet < 0)
+		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
+	else if (static_cast<size_t>(recvRet) < _bodySize)
+		throw(parseException(*this, 500, "Internal Server Error", "body smaller than given content length"));
+	_body[_bodySize] = 0;
+	cerr << "Body : " << _body << endl;
+}
+
+void
+HttpRequest::_checkContentLength(vector<string> const & contentLengthField) const throw(parseException)
+{
+	if (contentLengthField.size() > 1)
+		throw(parseException(*this, 400, "Bad Request", "Mutiple Content-Length fields"));
+	else if (contentLengthField[0].size() > 9)
+		throw(parseException(*this, 400, "Bad Request", "Content-Length field is too long"));
+	else if (contentLengthField[0].find_first_not_of("0123456789") != string::npos)
+		throw(parseException(*this, 400, "Bad Request", "Content-Length is not a number"));
+}
+
+void
+HttpRequest::_debugFields(void)
+{
+	map<string, vector<string> >::iterator it = _fields.begin();
+	map<string, vector<string> >::iterator ite = _fields.end();
+	for (; it != ite; ++it)
+	{
+		cout << "[" << it->first << "] = ";
+		vector<string>::iterator vit = it->second.begin();
+		vector<string>::iterator vite = it->second.end();
+		for (; vit != vite; ++vit)
+			cout << *vit << " ";
+		cout << endl;
+	}
 }

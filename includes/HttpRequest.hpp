@@ -8,6 +8,8 @@
 # include <iostream>
 # include <sstream>
 # include <sys/stat.h>
+# include <fstream>
+# include <md5.hpp>
 # include "Client.hpp"
 # include "base64.hpp"
 
@@ -98,11 +100,13 @@ class HttpRequest
 		void _parseHeaderLine(string line) throw(parseException);
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
 		void _checkHeader(void) throw(parseException);
-		void _analyseBody(void) throw(parseException);
-		void _checkContentLength(vector<string> const & contentLengthField) const throw(parseException);
 		void _setRequiredFile(void);
 		void _setRequiredRealm(void);
 		void _setClientInfos(void) const;
+		bool _isAuthorized(void) const;
+		void _analyseBody(void) throw(parseException);
+		void _checkContentLength(vector<string> const & contentLengthField) const throw(parseException);
+		void _debugFields(void);
 };
 
 #endif

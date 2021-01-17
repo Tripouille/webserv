@@ -25,7 +25,9 @@ CgiRequest::CgiRequest(void)
 CgiRequest::CgiRequest(const unsigned short serverPort,
 	HttpRequest const & request, Client const & client)
 {
-	Client::authentication authentication = client.authentications.at(request._requiredRealm.name);
+	Client::authentication authentication;
+	if (request._requiredRealm.name.size())
+		authentication = client.authentications.at(request._requiredRealm.name);
 	_setEnv(0, string("AUTH_TYPE=") + authentication.scheme);
 	_setEnv(1, string("CONTENT_LENGTH=") + _toString(request._bodySize));
 	try {_setEnv(2, string("CONTENT_TYPE=") + request._fields.at("content_type")[0]);}
@@ -101,7 +103,6 @@ CgiRequest::doRequest(Answer & answer)
 			buffer = new s_buffer(BUFF_SIZE);
 			buffer->occupiedSize = read(p[0], buffer->b, static_cast<size_t>(buffer->size));
 			answer._body.push(buffer);
-			cout << buffer->occupiedSize << " / " << buffer->size << endl;
 		} while (buffer->occupiedSize == buffer->size);
 		if (buffer->occupiedSize == -1)
 		{
