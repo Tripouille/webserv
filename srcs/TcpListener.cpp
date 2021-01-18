@@ -187,7 +187,7 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 	bool requiredFileNeedCGI = (extension == "php");
 	if (requiredFileNeedCGI)
 	{
-		CgiRequest cgiRequest(_port, request, _clientInfos[client]);
+		CgiRequest cgiRequest(_port, request, _clientInfos[client], _host, extension);
 		try { cgiRequest.doRequest(answer); }
 		catch(std::exception const & e)
 		{

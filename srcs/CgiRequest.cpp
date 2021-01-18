@@ -2,7 +2,7 @@
 
 
 /* Execption */
-CgiRequest::cgiException::cgiException(string str) throw() : _str(str) 
+CgiRequest::cgiException::cgiException(string str) throw() : _str(str)
 {
 }
 
@@ -18,12 +18,11 @@ CgiRequest::cgiException::what(void) const throw()
 
 
 /* CgiRequest */
-CgiRequest::CgiRequest(void)
-{
-}
 
 CgiRequest::CgiRequest(const unsigned short serverPort,
-	HttpRequest const & request, Client const & client)
+			HttpRequest const & request, Client const & client,
+			Host & host, string & extension)
+	:	_host(host), _extension(extension)
 {
 	_setEnv(0, string("AUTH_TYPE=") + client.auth);
 	_setEnv(1, string("CONTENT_LENGTH=") + _toString(request._bodySize));
@@ -59,6 +58,7 @@ CgiRequest::~CgiRequest(void)
 }
 
 CgiRequest::CgiRequest(CgiRequest const & other)
+	: _host(other._host), _extension(other._extension)
 {
 	CgiRequest::_copy(other);
 }
@@ -72,9 +72,11 @@ CgiRequest::operator=(CgiRequest const & other)
 }
 
 /* Public method */
-void 
+void
 CgiRequest::doRequest(Answer & answer)
 {
+	string cgi;
+	std::cout << "DEBUG: " << string("cgi_" + string(_extension)) << std::endl;
 	int status;
 	int p[2]; pipe(p);
 	int child = fork();
@@ -82,7 +84,9 @@ CgiRequest::doRequest(Answer & answer)
 	{
 		dup2(p[1], STDOUT);
 		//if (execve("./testers/cgi_tester", _av, _env) == -1)
-		if (execve("/Users/aalleman/.brew/bin/php-cgi", _av, _env) == -1)
+		if (_host.cgi.find(string("cgi_" + string(_extension))) != _host.cgi.end())
+			cgi = _host.cgi.at("cgi_" + string(_extension));
+		if (execve(cgi.c_str(), _av, _env) == -1)
 		//if (execve("/usr/bin/php-cgi", _av, _env) == -1)
 			exit(EXIT_FAILURE);
 	}
