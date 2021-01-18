@@ -15,6 +15,7 @@
 # include "Client.hpp"
 # include "Answer.hpp"
 # define STDOUT 1
+# define STDIN 0
 
 using std::cout; using std::endl; using std::string;
 

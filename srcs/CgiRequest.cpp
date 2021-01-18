@@ -85,27 +85,28 @@ CgiRequest::doRequest(Answer & answer)
 	if (child == 0)
 	{
 		dup2(p[1], STDOUT);
-		if (execve("./cgitest/printenv", _av, _env) == -1)
+		dup2(inPipe[0], STDIN);
+		write(inPipe[1], "mot_de_passe=pouet", 18);
+		//if (execve("./cgitest/printenv", _av, _env) == -1)
 		//if (execve("./testers/cgi_tester", _av, _env) == -1)
 		//if (execve("/Users/aalleman/.brew/bin/php-cgi", _av, _env) == -1)
-		//if (execve("/usr/bin/php-cgi", _av, _env) == -1)
+		if (execve("/usr/bin/php-cgi", _av, _env) == -1)
 			exit(EXIT_FAILURE);
 	}
 	else
 	{
-		write(1, )
 		usleep(TIMEOUT);
 		waitpid(child, &status, WNOHANG);
 		if (WEXITSTATUS(status) == EXIT_FAILURE)
 			throw(cgiException("execve fail"));
 		kill(child, SIGKILL);
-		cerr << "after kill" << endl;
+		/*cerr << "after kill" << endl;
 		char eof = EOF; write(p[1], "test", 4); write(p[1], &eof, 1);
 		char zero = 0; write(p[1], &zero, 1);
 		cerr << "after writes" << endl;
 		char buf[1000]; buf[0] = 0;
 		ssize_t ret = read(p[0], buf, 1000);
-		cerr << "ret = " << ret << ", buf = " << buf << endl;
+		cerr << "ret = " << ret << ", buf = " << buf << endl;*/
 		cerr << "before analyseHeader" << endl;
 		_analyzeHeader(p[0], answer);
 		answer._debugFields();
@@ -118,7 +119,7 @@ CgiRequest::doRequest(Answer & answer)
 			cerr << "before read" << endl;
 			buffer->occupiedSize = read(p[0], buffer->b, static_cast<size_t>(buffer->size));
 			answer._body.push(buffer);
-			cerr << "buffer = " << buffer->b << endl;
+			//cerr << "buffer = " << buffer->b << endl;
 		} while (buffer->occupiedSize == buffer->size);
 		if (buffer->occupiedSize == -1)
 		{
