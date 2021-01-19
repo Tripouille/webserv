@@ -10,6 +10,7 @@
 # include <vector>
 # include <signal.h>
 # include <sys/socket.h>
+# include <fcntl.h>
 # include "BufferQ.hpp"
 # include "HttpRequest.hpp"
 # include "Client.hpp"

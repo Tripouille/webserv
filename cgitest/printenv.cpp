@@ -5,6 +5,7 @@ using namespace std;
 
 int main(int ac, char ** argv, char **env)
 {
+	return (0);
 	(void)ac; (void)argv;
 	while (*env)
 		cout << *(env++) << endl;
