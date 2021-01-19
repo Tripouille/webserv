@@ -10,6 +10,7 @@
 # include <sys/stat.h>
 # include <fstream>
 # include <md5.hpp>
+# include <algorithm>
 # include "Client.hpp"
 # include "base64.hpp"
 

@@ -3,6 +3,7 @@
 
 # include <string>
 # include <map>
+# include <errno.h>
 # include "BufferQ.hpp"
 # include "HttpRequest.hpp"
 
@@ -54,6 +55,7 @@ class Answer
 		void _fillServerField(void);
 		void _fillDateField(void);
 		void _fillContentFields(string const & fileName);
+		void _debugFields(void);
 };
 
 #endif
