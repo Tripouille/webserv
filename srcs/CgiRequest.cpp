@@ -30,7 +30,7 @@ CgiRequest::CgiRequest(const unsigned short serverPort,
 		authentication = client.authentications.at(request._requiredRealm.name);
 	_setEnv(0, string("AUTH_TYPE=") + authentication.scheme);
 	_setEnv(1, string("CONTENT_LENGTH=") + _toString(request._bodySize));
-	try {cerr << "try of content_type, content-type = " << request._fields.at("content-type")[0] << endl; _setEnv(2, string("CONTENT_TYPE=") + request._fields.at("content-type")[0]);}
+	try { _setEnv(2, string("CONTENT_TYPE=") + request._fields.at("content-type")[0]); }
 	catch (std::out_of_range) {_setEnv(2, string("CONTENT_TYPE="));}
 	_setEnv(3, string("GATEWAY_INTERFACE=CGI/1.1"));
 	_setEnv(4, string("PATH_INFO=") + request._requiredFile);
@@ -76,21 +76,21 @@ CgiRequest::operator=(CgiRequest const & other)
 
 /* Public method */
 void 
-CgiRequest::doRequest(Answer & answer)
+CgiRequest::doRequest(HttpRequest const & request, Answer & answer)
 {
 	int status;
-	int p[2]; pipe(p); // to protect
-	int inPipe[2]; pipe(inPipe);
+	int outPipe[2]; pipe(outPipe); // to protect
+	int inPipe[2]; pipe(inPipe); // to protect
 	int child = fork(); // to protect
 	if (child == 0)
 	{
-		dup2(p[1], STDOUT);
+		dup2(outPipe[1], STDOUT);
 		dup2(inPipe[0], STDIN);
-		write(inPipe[1], "mot_de_passe=pouet", 18);
+		write(inPipe[1], request._body, request._bodySize);
 		//if (execve("./cgitest/printenv", _av, _env) == -1)
 		//if (execve("./testers/cgi_tester", _av, _env) == -1)
-		//if (execve("/Users/aalleman/.brew/bin/php-cgi", _av, _env) == -1)
-		if (execve("/usr/bin/php-cgi", _av, _env) == -1)
+		if (execve("/Users/aalleman/.brew/bin/php-cgi", _av, _env) == -1)
+		//if (execve("/usr/bin/php-cgi", _av, _env) == -1)
 			exit(EXIT_FAILURE);
 	}
 	else
@@ -100,24 +100,13 @@ CgiRequest::doRequest(Answer & answer)
 		if (WEXITSTATUS(status) == EXIT_FAILURE)
 			throw(cgiException("execve fail"));
 		kill(child, SIGKILL);
-		/*cerr << "after kill" << endl;
-		char eof = EOF; write(p[1], "test", 4); write(p[1], &eof, 1);
-		char zero = 0; write(p[1], &zero, 1);
-		cerr << "after writes" << endl;
-		char buf[1000]; buf[0] = 0;
-		ssize_t ret = read(p[0], buf, 1000);
-		cerr << "ret = " << ret << ", buf = " << buf << endl;*/
-		cerr << "before analyseHeader" << endl;
-		_analyzeHeader(p[0], answer);
-		answer._debugFields();
-		cerr << "after analyseHeader" << endl;
+		_analyzeHeader(outPipe[0], answer);
+		//answer._debugFields();
 		s_buffer * buffer = NULL;
 		do
 		{
-			//char eof = EOF; write(p[1], &eof, 1);
 			buffer = new s_buffer(BUFF_SIZE);
-			cerr << "before read" << endl;
-			buffer->occupiedSize = read(p[0], buffer->b, static_cast<size_t>(buffer->size));
+			buffer->occupiedSize = read(outPipe[0], buffer->b, static_cast<size_t>(buffer->size));
 			answer._body.push(buffer);
 			//cerr << "buffer = " << buffer->b << endl;
 		} while (buffer->occupiedSize == buffer->size);
@@ -173,7 +162,6 @@ CgiRequest::_analyzeHeader(int fd, Answer & answer)
 	&& (lineSize = _getLine(fd, line, HEADER_MAX_SIZE)) > 0
 	&& line[0])
 	{
-		cerr << "in while of analyzeHeader" << endl;
 		headerSize += lineSize;
 		_parseHeaderLine(line, answer);
 	}
@@ -186,11 +174,9 @@ CgiRequest::_analyzeHeader(int fd, Answer & answer)
 ssize_t
 CgiRequest::_getLine(int fd, char * buffer, ssize_t limit) const
 {
-	cerr << "before first read of getLine" << endl;
 	ssize_t lineSize = 1;
 	ssize_t	recvReturn = read(fd, buffer, 1);
 
-	cerr << "after first read of getLine" << endl;
 	if (recvReturn <= 0)
 		return (recvReturn);
 	while (buffer[lineSize - 1] != '\n'

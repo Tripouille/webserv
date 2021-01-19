@@ -95,7 +95,7 @@ Answer::sendHeader(void) const throw(sendException)
 	for (map<string, string>::const_iterator it = _fields.begin(); it != _fields.end(); ++it)
 		headerStream << it->first << ": " << it->second << "\r\n";
 	string header = headerStream.str();
-	cerr << "header : " << endl << header << endl;
+	//cerr << "header sent : " << endl << header << endl;
 	_sendToClient(header.c_str(), header.size());
 }
 

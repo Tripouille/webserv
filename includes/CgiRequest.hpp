@@ -37,7 +37,7 @@ class CgiRequest
 		CgiRequest(CgiRequest const & other);
 
 		CgiRequest & operator=(CgiRequest const & other);
-		void doRequest(Answer & answer);
+		void doRequest(HttpRequest const & request, Answer & answer);
 
 	private:
 		CgiRequest(void);

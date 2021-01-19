@@ -84,7 +84,7 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException)
 	
 	_analyseRequestLine(headerSize);
 	_analyseHeader(headerSize);
-	_debugFields();
+	//_debugFields();
 	_setRequiredFile();
 	_setRequiredRealm();
 	if (_requiredRealm.name.size())
@@ -401,14 +401,12 @@ HttpRequest::_analyseBody(void) throw(parseException)
 		throw(parseException(*this, 413, "Payload Too Large", "Content-Length too high"));
 	else if (_bodySize == 0)
 		return ;
-	cerr << "_bodySize = " << _bodySize << endl;
 	ssize_t recvRet = recv(_client.s, _body, _bodySize, 0);
 	if (recvRet < 0)
 		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
 	else if (static_cast<size_t>(recvRet) < _bodySize)
 		throw(parseException(*this, 500, "Internal Server Error", "body smaller than given content length"));
 	_body[_bodySize] = 0;
-	cerr << "Body : " << _body << endl;
 }
 
 void
@@ -425,6 +423,7 @@ HttpRequest::_checkContentLength(vector<string> const & contentLengthField) cons
 void
 HttpRequest::_debugFields(void)
 {
+	cerr << "Header received : " << endl;
 	map<string, vector<string> >::iterator it = _fields.begin();
 	map<string, vector<string> >::iterator ite = _fields.end();
 	for (; it != ite; ++it)
@@ -436,4 +435,5 @@ HttpRequest::_debugFields(void)
 			cout << *vit << " ";
 		cout << endl;
 	}
+	cerr << "end of debug 'header received'" << endl;
 }
