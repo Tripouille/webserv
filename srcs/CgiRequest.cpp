@@ -90,9 +90,9 @@ CgiRequest::doRequest(HttpRequest const & request, Answer & answer)
 		dup2(inPipe[0], STDIN);
 		dup2(outPipe[1], STDOUT);
 		write(inPipe[1], request._body, request._bodySize);
-		if (execve("./cgitest/printenv", _av, _env) == -1)
+		//if (execve("./cgitest/printenv", _av, _env) == -1)
 		//if (execve("./testers/cgi_tester", _av, _env) == -1)
-		//if (execve("/Users/aalleman/.brew/bin/php-cgi", _av, _env) == -1)
+		if (execve("/Users/aalleman/.brew/bin/php-cgi", _av, _env) == -1)
 		//if (execve("/usr/bin/php-cgi", _av, _env) == -1)
 			exit(EXIT_FAILURE);
 	}
@@ -103,9 +103,7 @@ CgiRequest::doRequest(HttpRequest const & request, Answer & answer)
 		if (WEXITSTATUS(status) == EXIT_FAILURE)
 			throw(cgiException("execve fail"));
 		kill(child, SIGKILL);
-		//char eof = EOF; write(outPipe[1], &eof, 1);
 		fcntl(outPipe[0], F_SETFL, O_NONBLOCK);
-		cerr << "Start analyzing output of cgi" << endl;
 		_analyzeHeader(outPipe[0], answer);
 		//answer._debugFields();
 		s_buffer * buffer = NULL;
@@ -169,7 +167,6 @@ CgiRequest::_analyzeHeader(int fd, Answer & answer)
 	&& (lineSize = _getLine(fd, line, HEADER_MAX_SIZE)) > 0
 	&& line[0])
 	{
-		cerr << "line = " << line << endl;
 		headerSize += lineSize;
 		_parseHeaderLine(line, answer);
 	}
