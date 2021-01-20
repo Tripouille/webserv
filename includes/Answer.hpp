@@ -40,7 +40,7 @@ class Answer
 			const throw(sendException);
 		void sendHeader(void) const throw(sendException);
 		void sendEndOfHeader(void) const throw(sendException);
-		void sendAnswer(string const & fileName) throw(sendException);
+		void sendAnswer(HttpRequest const & request) throw(sendException);
 
 	private:
 		SOCKET						_client;
@@ -52,6 +52,7 @@ class Answer
 		void _sendToClient(char const * msg, size_t size)
 			const throw(sendException);
 		void _sendBody(void) throw(sendException);
+		void _clearBody(void);
 		void _fillServerField(void);
 		void _fillDateField(void);
 		void _fillContentFields(string const & fileName);

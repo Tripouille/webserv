@@ -35,6 +35,7 @@ class HttpRequest
 {
 	friend class TcpListener;
 	friend class CgiRequest;
+	friend class Answer;
 	public:
 		struct s_status //déplacer dans private puisque friend ?
 		{

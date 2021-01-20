@@ -177,7 +177,7 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 		catch (Answer::sendException const &) { throw(tcpException("File reading failed")); }
 	}
 	answer.sendStatus(request._status);
-	answer.sendAnswer(request._requiredFile);
+	answer.sendAnswer(request);
 }
 
 void

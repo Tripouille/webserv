@@ -317,7 +317,7 @@ HttpRequest::_setRequiredFile(void)
 }
 
 void
-HttpRequest::_setRequiredRealm(void) // a fix : requiredfile = avec ROOT_DIRECTORY, mais les chemins realm sont sans
+HttpRequest::_setRequiredRealm(void)
 {
 	string analyzedFile(_requiredFile);
 	std::map<string, std::pair<string, string> >::iterator its = _realms.begin();

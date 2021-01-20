@@ -106,16 +106,19 @@ Answer::sendEndOfHeader(void) const throw(sendException)
 }
 
 void
-Answer::sendAnswer(string const & fileName) throw(sendException)
+Answer::sendAnswer(HttpRequest const & request) throw(sendException)
 {
 	/*for (map<string, string>::iterator it = _fields.begin(); it != _fields.end(); ++it)
 		cerr << "_fields[" << it->first << "] = " << it-> second << endl;*/
 	_fillServerField();
 	_fillDateField();
-	_fillContentFields(fileName);
+	_fillContentFields(request._requiredFile);
 	sendHeader();
 	sendEndOfHeader();
-	_sendBody();
+	if (request._method != "HEAD")
+		_sendBody();
+	else
+		_clearBody();
 }
 
 /* Private */
@@ -140,6 +143,16 @@ Answer::_sendBody(void) throw(sendException)
 	while (!_body.empty())
 	{
 		_sendToClient(_body.front()->b, static_cast<size_t>(_body.front()->occupiedSize));
+		delete _body.front();
+		_body.pop();
+	}
+}
+
+void
+Answer::_clearBody(void)
+{
+	while (!_body.empty())
+	{
 		delete _body.front();
 		_body.pop();
 	}
