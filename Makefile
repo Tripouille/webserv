@@ -1,9 +1,11 @@
 HEADERS_PATH			= includes/
-HEADERS_NAME			= ServerConfig.hpp TcpListener.hpp HttpRequest.hpp CgiRequest.hpp BufferQ.hpp Client.hpp Answer.hpp
+HEADERS_NAME			= ServerConfig.hpp TcpListener.hpp HttpRequest.hpp CgiRequest.hpp \
+						BufferQ.hpp Client.hpp Answer.hpp base64.hpp md5.hpp
 HEADERS					= $(addprefix $(HEADERS_PATH), $(HEADERS_NAME))
 
 SRCS_PATH				= srcs/
-SRCS_NAME				= main.cpp ServerConfig.cpp TcpListener.cpp HttpRequest.cpp CgiRequest.cpp BufferQ.cpp Client.cpp Answer.cpp
+SRCS_NAME				= main.cpp ServerConfig.cpp TcpListener.cpp HttpRequest.cpp CgiRequest.cpp \
+						BufferQ.cpp Client.cpp Answer.cpp base64.cpp md5.cpp
 SRCS					= $(addprefix $(SRCS_PATH), $(SRCS_NAME))
 
 OBJS_PATH				= objs/

@@ -10,11 +10,13 @@
 # include <vector>
 # include <signal.h>
 # include <sys/socket.h>
+# include <fcntl.h>
 # include "BufferQ.hpp"
 # include "HttpRequest.hpp"
 # include "Client.hpp"
 # include "Answer.hpp"
 # define STDOUT 1
+# define STDIN 0
 
 using std::cout; using std::endl; using std::string;
 
@@ -36,7 +38,7 @@ class CgiRequest
 		CgiRequest(CgiRequest const & other);
 
 		CgiRequest & operator=(CgiRequest const & other);
-		void doRequest(Answer & answer);
+		void doRequest(HttpRequest const & request, Answer & answer);
 
 	private:
 		CgiRequest(void);

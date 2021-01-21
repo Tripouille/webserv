@@ -8,7 +8,11 @@
 # include <iostream>
 # include <sstream>
 # include <sys/stat.h>
+# include <fstream>
+# include <md5.hpp>
+# include <algorithm>
 # include "Client.hpp"
+# include "base64.hpp"
 
 # define CLIENT_MAX_BODY_SIZE 1000000
 # define REQUEST_LINE_MAX_SIZE 1024
@@ -31,11 +35,18 @@ class HttpRequest
 {
 	friend class TcpListener;
 	friend class CgiRequest;
+	friend class Answer;
 	public:
 		struct s_status //déplacer dans private puisque friend ?
 		{
 			int		code;
 			string	info;
+		};
+
+		struct realmInfos
+		{
+			string	name;
+			string	userFile;
 		};
 
 		/* Sets status on throw */
@@ -69,10 +80,12 @@ class HttpRequest
 		Client &						_client;
 		string 							_method, _target, _httpVersion;
 		string							_requiredFile, _queryPart;
+		realmInfos						_requiredRealm;
 		map<string, vector<string> >	_fields;
 		char							_body[CLIENT_MAX_BODY_SIZE + 1];
 		size_t							_bodySize;
 		s_status						_status;
+		std::map<string, std::pair<string, string> > _realms;
 
 		HttpRequest(void);
 		HttpRequest & operator=(HttpRequest const & other);
@@ -89,10 +102,13 @@ class HttpRequest
 		void _parseHeaderLine(string line) throw(parseException);
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
 		void _checkHeader(void) throw(parseException);
+		void _setRequiredFile(void);
+		void _setRequiredRealm(void);
+		void _setClientInfos(void) const;
+		bool _isAuthorized(void) const;
 		void _analyseBody(void) throw(parseException);
 		void _checkContentLength(vector<string> const & contentLengthField) const throw(parseException);
-		void _setRequiredFile(void);
-		void _setClientInfos(void) const;
+		void _debugFields(void);
 };
 
 #endif

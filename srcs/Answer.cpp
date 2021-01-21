@@ -88,22 +88,37 @@ Answer::sendStatus(HttpRequest::s_status const & status)
 }
 
 void
+Answer::sendHeader(void) const throw(sendException)
+{
+	std::ostringstream headerStream;
+
+	for (map<string, string>::const_iterator it = _fields.begin(); it != _fields.end(); ++it)
+		headerStream << it->first << ": " << it->second << "\r\n";
+	string header = headerStream.str();
+	//cerr << "header sent : " << endl << header << endl;
+	_sendToClient(header.c_str(), header.size());
+}
+
+void
 Answer::sendEndOfHeader(void) const throw(sendException)
 {
 	_sendToClient("\r\n", 2);
 }
 
 void
-Answer::sendAnswer(string const & fileName) throw(sendException)
+Answer::sendAnswer(HttpRequest const & request) throw(sendException)
 {
-	for (map<string, string>::iterator it = _fields.begin(); it != _fields.end(); ++it)
-		cerr << "_fields[" << it->first << "] = " << it-> second << endl;
+	/*for (map<string, string>::iterator it = _fields.begin(); it != _fields.end(); ++it)
+		cerr << "_fields[" << it->first << "] = " << it-> second << endl;*/
 	_fillServerField();
 	_fillDateField();
-	_fillContentFields(fileName);
-	_sendHeader();
+	_fillContentFields(request._requiredFile);
+	sendHeader();
 	sendEndOfHeader();
-	_sendBody();
+	if (request._method != "HEAD")
+		_sendBody();
+	else
+		_clearBody();
 }
 
 /* Private */
@@ -128,6 +143,16 @@ Answer::_sendBody(void) throw(sendException)
 	while (!_body.empty())
 	{
 		_sendToClient(_body.front()->b, static_cast<size_t>(_body.front()->occupiedSize));
+		delete _body.front();
+		_body.pop();
+	}
+}
+
+void
+Answer::_clearBody(void)
+{
+	while (!_body.empty())
+	{
 		delete _body.front();
 		_body.pop();
 	}
@@ -174,13 +199,12 @@ Answer::_fillContentFields(string const & fileName)
 }
 
 void
-Answer::_sendHeader(void) const throw(sendException)
+Answer::_debugFields(void)
 {
-	std::ostringstream headerStream;
-
-	for (map<string, string>::const_iterator it = _fields.cbegin(); it != _fields.cend(); ++it)
-		headerStream << it->first << ": " << it->second << "\r\n";
-	string header = headerStream.str();
-	cerr << "header : " << endl << header << endl;
-	_sendToClient(header.c_str(), header.size());
+	cerr << "debugging fields of answer object :" << endl;
+	map<string, string >::iterator it = _fields.begin();
+	map<string, string >::iterator ite = _fields.end();
+	for (; it != ite; ++it)
+		cout << "[" << it->first << "] = " << it->second << endl;
+	cerr << "end of debug" << endl;
 }

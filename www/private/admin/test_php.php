@@ -8,11 +8,11 @@
     <body>
 <?php	if (isset($_GET['var']) AND $_GET['var'] == '1')
 		{ ?>
-			<p>Bonjour ! (1)</p>
+			<p>Bonjour (private) ! (1)</p>
 <?php	}
 		else
 		{ ?>
-			<p>Bonjour ! (pas 1)</p>
+			<p>Bonjour (private) ! (pas 1)</p>
 <?php	} ?>
 	</body>
 </html>

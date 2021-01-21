@@ -25,17 +25,20 @@ CgiRequest::CgiRequest(void)
 CgiRequest::CgiRequest(const unsigned short serverPort,
 	HttpRequest const & request, Client const & client)
 {
-	_setEnv(0, string("AUTH_TYPE=") + client.auth);
+	Client::authentication authentication;
+	if (request._requiredRealm.name.size())
+		authentication = client.authentications.at(request._requiredRealm.name);
+	_setEnv(0, string("AUTH_TYPE=") + authentication.scheme);
 	_setEnv(1, string("CONTENT_LENGTH=") + _toString(request._bodySize));
-	try {_setEnv(2, string("CONTENT_TYPE=") + request._fields.at("content_type")[0]);}
+	try { _setEnv(2, string("CONTENT_TYPE=") + request._fields.at("content-type")[0]); }
 	catch (std::out_of_range) {_setEnv(2, string("CONTENT_TYPE="));}
 	_setEnv(3, string("GATEWAY_INTERFACE=CGI/1.1"));
 	_setEnv(4, string("PATH_INFO=") + request._requiredFile);
 	_setEnv(5, string("PATH_TRANSLATED=") + request._requiredFile);
 	_setEnv(6, string("QUERY_STRING=") + request._queryPart);
 	_setEnv(7, string("REMOTE_ADDR=") + client.addr);
-	_setEnv(8, string("REMOTE_IDENT=") + client.ident);
-	_setEnv(9, string("REMOTE_USER=") + client.user);
+	_setEnv(8, string("REMOTE_IDENT=") + authentication.ident);
+	_setEnv(9, string("REMOTE_USER=") + authentication.user);
 	_setEnv(10, string("REQUEST_METHOD=") + request._method);
 	_setEnv(11, string("REQUEST_URI=") + request._requiredFile);
 	_setEnv(12, string("SCRIPT_NAME=") + request._requiredFile);
@@ -73,14 +76,21 @@ CgiRequest::operator=(CgiRequest const & other)
 
 /* Public method */
 void 
-CgiRequest::doRequest(Answer & answer)
+CgiRequest::doRequest(HttpRequest const & request, Answer & answer)
 {
 	int status;
-	int p[2]; pipe(p);
+	int inPipe[2], outPipe[2];
+	if (pipe(inPipe) < 0 || pipe(outPipe) < 0)
+		throw(cgiException("pipe failed"));
 	int child = fork();
+	if (child < 0)
+		throw(cgiException("fork failed"));
 	if (child == 0)
 	{
-		dup2(p[1], STDOUT);
+		dup2(inPipe[0], STDIN);
+		dup2(outPipe[1], STDOUT);
+		write(inPipe[1], request._body, request._bodySize);
+		//if (execve("./cgitest/printenv", _av, _env) == -1)
 		//if (execve("./testers/cgi_tester", _av, _env) == -1)
 		if (execve("/Users/aalleman/.brew/bin/php-cgi", _av, _env) == -1)
 		//if (execve("/usr/bin/php-cgi", _av, _env) == -1)
@@ -93,20 +103,23 @@ CgiRequest::doRequest(Answer & answer)
 		if (WEXITSTATUS(status) == EXIT_FAILURE)
 			throw(cgiException("execve fail"));
 		kill(child, SIGKILL);
-		_analyzeHeader(p[0], answer);
+		fcntl(outPipe[0], F_SETFL, O_NONBLOCK);
+		_analyzeHeader(outPipe[0], answer);
+		//answer._debugFields();
 		s_buffer * buffer = NULL;
 		do
 		{
 			buffer = new s_buffer(BUFF_SIZE);
-			buffer->occupiedSize = read(p[0], buffer->b, static_cast<size_t>(buffer->size));
+			buffer->occupiedSize = read(outPipe[0], buffer->b, static_cast<size_t>(buffer->size));
 			answer._body.push(buffer);
-			cout << buffer->occupiedSize << " / " << buffer->size << endl;
+			//cerr << "buffer = " << buffer->b << endl;
 		} while (buffer->occupiedSize == buffer->size);
 		if (buffer->occupiedSize == -1)
 		{
 			deleteQ(answer._body);
 			throw(cgiException("read fail"));
 		}
+		answer._body.back()->b[--answer._body.back()->occupiedSize] = 0;
 	}
 }
 
@@ -161,7 +174,6 @@ CgiRequest::_analyzeHeader(int fd, Answer & answer)
 		throw(cgiException("recv error"));
 	else if (headerSize > HEADER_MAX_SIZE)
 		throw(cgiException("header too large"));
-	answer._fields.erase("x-powered-by");
 }
 
 ssize_t
@@ -199,7 +211,7 @@ CgiRequest::_parseHeaderLine(string line, Answer & answer) throw(cgiException)
 	if (colonPos == string::npos)
 		throw(cgiException("no ':'"));
 	string name = line.substr(0, colonPos);
-	std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+	std::transform(name.begin(), name.end(), name.begin(), tolower);
 	if (name.find(' ', 0) != string::npos)
 		throw(cgiException("space before ':'"));
 	string value = line.substr(colonPos + 1, string::npos);
