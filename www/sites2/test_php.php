@@ -4,7 +4,7 @@
         <meta charset="utf-8" />
         <title>Test PHP</title>
     </head>
-    
+
     <body>
 <?php	if (isset($_GET['var']) AND $_GET['var'] == '1')
 		{ ?>
