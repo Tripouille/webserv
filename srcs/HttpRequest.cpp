@@ -323,6 +323,7 @@ HttpRequest::_setRequiredFile(void)
 {
 	size_t queryPos = _target.find('?');
 	string root(_host.root);
+	struct stat fileInfos;
 
 	if (queryPos != string::npos)
 		_queryPart = _target.substr(queryPos + 1);
@@ -331,11 +332,11 @@ HttpRequest::_setRequiredFile(void)
 	{
 		for (vector<string>::iterator index = _host.index.begin(); index != _host.index.end(); index++)
 		{
-			struct stat fileInfos;
-
 			_requiredFile = root + string("/") + string(*index);
 			if (stat(_requiredFile.c_str(), &fileInfos) == 0)
 				break ;
+			else
+				_requiredFile.clear();
 		}
 	}
 	else if (_requiredFile[0] == '/')
@@ -343,7 +344,6 @@ HttpRequest::_setRequiredFile(void)
 	else
 		_requiredFile = root + string("/") + _requiredFile;
 
-	struct stat fileInfos;
 	if (stat(_requiredFile.c_str(), &fileInfos) != 0)
 	{
 		setStatus(404, "Not Found");
