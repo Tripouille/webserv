@@ -164,7 +164,7 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 	if (requiredFileNeedCGI)
 	{
 		CgiRequest cgiRequest(_port, request, _clientInfos[client], _host, extension);
-		try { cgiRequest.doRequest(answer); }
+		try { cgiRequest.doRequest(request, answer); }
 		catch(std::exception const & e)
 		{
 			cerr << e.what() << endl;
