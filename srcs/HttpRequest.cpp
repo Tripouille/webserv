@@ -296,36 +296,9 @@ HttpRequest::_checkHeader(void) throw(parseException)
 void
 HttpRequest::_setRequiredFile(void)
 {
-	size_t queryPos = _target.find('?');
-	if (queryPos != string::npos)
-		_queryPart = _target.substr(queryPos + 1);
-	_requiredFile = _target.substr(0, _target.find('?'));
-	if (_requiredFile == "/")
-		_requiredFile = ROOT_DIRECTORY + string("/index.html");
-	else if (_requiredFile[0] == '/')
-		_requiredFile = ROOT_DIRECTORY + _requiredFile;
-	else
-		_requiredFile = ROOT_DIRECTORY + string("/") + _requiredFile;
-	struct stat fileInfos;
-	if (stat(_requiredFile.c_str(), &fileInfos) != 0)
-	{
-		setStatus(404, "Not Found");
-		_requiredFile = ROOT_DIRECTORY + string("/404.html"); // a changer
-		if (stat(_requiredFile.c_str(), &fileInfos) != 0)
-		{
-			cerr << "File 404.html not found" << endl;
-			_requiredFile.clear();
-		}
-	}
-}
-
-void
-HttpRequest::_setRequiredRealm(void)
-{
-	size_t queryPos = _target.find('?');
 	string root(_host.root);
 	struct stat fileInfos;
-
+	size_t queryPos = _target.find('?');
 	if (queryPos != string::npos)
 		_queryPart = _target.substr(queryPos + 1);
 	_requiredFile = _target.substr(0, _target.find('?'));
@@ -344,17 +317,42 @@ HttpRequest::_setRequiredRealm(void)
 		_requiredFile = root + _requiredFile;
 	else
 		_requiredFile = root + string("/") + _requiredFile;
-
 	if (stat(_requiredFile.c_str(), &fileInfos) != 0)
 	{
 		setStatus(404, "Not Found");
-		if (_config.http.find("error") != _config.http.end())
-			_requiredFile = _config.http.at("error") + string("/404.html");
+		_requiredFile = root + string("/404.html"); // a changer
 		if (stat(_requiredFile.c_str(), &fileInfos) != 0)
 		{
 			cerr << "File 404.html not found" << endl;
 			_requiredFile.clear();
 		}
+	}
+}
+
+void
+HttpRequest::_setRequiredRealm(void)
+{
+	string root(_host.root);
+	string analyzedFile(_requiredFile);
+	std::map<string, std::pair<string, string> >::iterator its = _realms.begin();
+	std::map<string, std::pair<string, string> >::iterator ite = _realms.end();
+	std::map<string, std::pair<string, string> >::iterator actual;
+	size_t slashPos;
+
+	analyzedFile.erase(0, strlen(root.c_str()));
+	while (analyzedFile.size())
+	{
+		for (actual = its; actual != ite; ++actual)
+			if (actual->first == analyzedFile)
+			{
+				_requiredRealm.name = actual->second.first;
+				_requiredRealm.userFile = actual->second.second;
+				return ;
+			}
+		slashPos = analyzedFile.find_last_of('/');
+		if (slashPos == string::npos)
+			return ;
+		analyzedFile.erase(slashPos);
 	}
 }
 
