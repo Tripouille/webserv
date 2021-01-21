@@ -126,7 +126,9 @@ Answer::sendAnswer(HttpRequest const & request) throw(sendException)
 void
 Answer::_copy(Answer const & other)
 {
-	static_cast<void>(other);
+	_client = other._client;
+	_fields = other._fields;
+	_body = other._body;
 }
 
 void
