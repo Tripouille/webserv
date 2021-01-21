@@ -22,8 +22,11 @@ TcpListener::tcpException::what(void) const throw()
 
 /* Constructors and destructor */
 
-TcpListener::TcpListener(in_addr_t const & ipAddress, uint16_t port)
-			: _ipAddress(ipAddress), _port(port), _backlog(BACKLOG), _clientNb(0)
+TcpListener::TcpListener(in_addr_t const & ipAddress, uint16_t port,
+							ServerConfig & config, Host & host)
+			: _ipAddress(ipAddress), _port(port), \
+			  _backlog(BACKLOG), _clientNb(0), \
+			  _config(config), _host(host)
 {
 }
 
@@ -130,7 +133,7 @@ void
 TcpListener::_handleRequest(SOCKET client) throw(tcpException)
 {
 	cout << endl << "Data arriving from socket " << client << endl;
-	HttpRequest request(_clientInfos[client]);
+	HttpRequest request(_clientInfos[client], _host, _port, _config);
 	try { request.analyze(); }
 	catch(HttpRequest::parseException const & e)
 	{ cerr << e.what() << endl; }
@@ -160,8 +163,8 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 	bool requiredFileNeedCGI = (extension == "php");
 	if (requiredFileNeedCGI)
 	{
-		CgiRequest cgiRequest(_port, request, _clientInfos[client]);
-		try { cgiRequest.doRequest(request, answer); }
+		CgiRequest cgiRequest(_port, request, _clientInfos[client], _host, extension);
+		try { cgiRequest.doRequest(answer); }
 		catch(std::exception const & e)
 		{
 			cerr << e.what() << endl;

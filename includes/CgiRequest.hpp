@@ -15,6 +15,7 @@
 # include "HttpRequest.hpp"
 # include "Client.hpp"
 # include "Answer.hpp"
+# include "ServerConfig.hpp"
 # define STDOUT 1
 # define STDIN 0
 
@@ -33,7 +34,8 @@ class CgiRequest
 	};
 
 	public:
-		CgiRequest(const unsigned short serverPort, HttpRequest const & request, Client const & client);
+		CgiRequest(const unsigned short serverPort, HttpRequest const & request, \
+					Client const & client, Host & host, string & extension);
 		~CgiRequest(void);
 		CgiRequest(CgiRequest const & other);
 
@@ -55,6 +57,8 @@ class CgiRequest
 
 		char *				_env[ENV_SIZE];
 		char *				_av[2];
+		Host &				_host;
+		string &			_extension;
 };
 
 #endif

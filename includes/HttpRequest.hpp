@@ -12,15 +12,14 @@
 # include <md5.hpp>
 # include <algorithm>
 # include "Client.hpp"
+# include "ServerConfig.hpp"
 # include "base64.hpp"
 
 # define CLIENT_MAX_BODY_SIZE 1000000
 # define REQUEST_LINE_MAX_SIZE 1024
-# define URI_MAX_SIZE 512
 # define HEADER_MAX_SIZE 8000
-# define MAX_EMPTY_LINE_BEFORE_REQUEST 1
-
-# define ROOT_DIRECTORY "www"
+//# define URI_MAX_SIZE 512
+//# define MAX_EMPTY_LINE_BEFORE_REQUEST 1
 
 typedef int SOCKET;
 
@@ -67,7 +66,7 @@ class HttpRequest
 				virtual const char * what(void) const throw();
 		};
 
-		HttpRequest(Client & client);
+		HttpRequest(Client & client, Host& host, uint16_t port, ServerConfig & config);
 		~HttpRequest(void);
 		HttpRequest(HttpRequest const & other);
 
@@ -85,6 +84,9 @@ class HttpRequest
 		char							_body[CLIENT_MAX_BODY_SIZE + 1];
 		size_t							_bodySize;
 		s_status						_status;
+		Host &							_host;
+		uint16_t						_port;
+		ServerConfig &					_config;
 		std::map<string, std::pair<string, string> > _realms;
 
 		HttpRequest(void);

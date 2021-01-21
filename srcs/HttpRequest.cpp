@@ -37,8 +37,9 @@ HttpRequest::closeOrderException::what(void) const throw()
 
 /* HttpRequest */
 
-HttpRequest::HttpRequest(Client & client)
-			: _client(client)
+HttpRequest::HttpRequest(Client & client, Host& host, uint16_t port,
+							ServerConfig & config)
+			: _client(client), _host(host), _port(port), _config(config)
 {
 	setStatus(200, "OK");
 	_realms["/private"] = std::make_pair("private_realm", "./conf/private.access");
@@ -49,7 +50,9 @@ HttpRequest::~HttpRequest(void)
 {
 }
 
-HttpRequest::HttpRequest(HttpRequest const & other) : _client(other._client)
+HttpRequest::HttpRequest(HttpRequest const & other)
+		: _client(other._client), _host(other._host), _port(other._port),
+			_config(other._config)
 {
 	HttpRequest::_copy(other);
 }
@@ -81,7 +84,7 @@ void
 HttpRequest::analyze(void) throw(parseException, closeOrderException)
 {
 	ssize_t headerSize = 0;
-	
+
 	_analyseRequestLine(headerSize);
 	_analyseHeader(headerSize);
 	//_debugFields();
@@ -118,7 +121,7 @@ HttpRequest::_analyseRequestLine(ssize_t & headerSize) throw(parseException, clo
 	char			buffer[REQUEST_LINE_MAX_SIZE + 1];
 	vector<string>	requestLine;
 
-	for (int i = 0; i <= MAX_EMPTY_LINE_BEFORE_REQUEST
+	for (int i = 0; i <= atoi(_config.http.at("max_empty_line_before_request").c_str())
 	&& (((headerSize = _getLine(buffer, REQUEST_LINE_MAX_SIZE)) == 2 && buffer[0] == 0)
 	|| headerSize == 1); ++i)
 		;
@@ -211,7 +214,7 @@ HttpRequest::_checkMethod(void) const throw(parseException)
 void
 HttpRequest::_checkTarget(void) const throw(parseException)
 {
-	if (_target.size() > URI_MAX_SIZE)
+	if (_target.size() > static_cast<unsigned int>(atoi(_config.http.at("uri_max_size").c_str())))
 	{
 		std::ostringstream oss; oss << _target.size();
 		throw parseException(*this, 414, "URI Too Long", oss.str());
@@ -293,21 +296,31 @@ HttpRequest::_checkHeader(void) throw(parseException)
 void
 HttpRequest::_setRequiredFile(void)
 {
+	string root(_host.root);
+	struct stat fileInfos;
 	size_t queryPos = _target.find('?');
 	if (queryPos != string::npos)
 		_queryPart = _target.substr(queryPos + 1);
 	_requiredFile = _target.substr(0, _target.find('?'));
 	if (_requiredFile == "/")
-		_requiredFile = ROOT_DIRECTORY + string("/index.html");
+	{
+		for (vector<string>::iterator index = _host.index.begin(); index != _host.index.end(); index++)
+		{
+			_requiredFile = root + string("/") + string(*index);
+			if (stat(_requiredFile.c_str(), &fileInfos) == 0)
+				break ;
+			else
+				_requiredFile.clear();
+		}
+	}
 	else if (_requiredFile[0] == '/')
-		_requiredFile = ROOT_DIRECTORY + _requiredFile;
+		_requiredFile = root + _requiredFile;
 	else
-		_requiredFile = ROOT_DIRECTORY + string("/") + _requiredFile;
-	struct stat fileInfos;
+		_requiredFile = root + string("/") + _requiredFile;
 	if (stat(_requiredFile.c_str(), &fileInfos) != 0)
 	{
 		setStatus(404, "Not Found");
-		_requiredFile = ROOT_DIRECTORY + string("/404.html"); // a changer
+		_requiredFile = root + string("/404.html"); // a changer
 		if (stat(_requiredFile.c_str(), &fileInfos) != 0)
 		{
 			cerr << "File 404.html not found" << endl;
@@ -319,13 +332,14 @@ HttpRequest::_setRequiredFile(void)
 void
 HttpRequest::_setRequiredRealm(void)
 {
+	string root(_host.root);
 	string analyzedFile(_requiredFile);
 	std::map<string, std::pair<string, string> >::iterator its = _realms.begin();
 	std::map<string, std::pair<string, string> >::iterator ite = _realms.end();
 	std::map<string, std::pair<string, string> >::iterator actual;
 	size_t slashPos;
 
-	analyzedFile.erase(0, strlen(ROOT_DIRECTORY));
+	analyzedFile.erase(0, strlen(root.c_str()));
 	while (analyzedFile.size())
 	{
 		for (actual = its; actual != ite; ++actual)

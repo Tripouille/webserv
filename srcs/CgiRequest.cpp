@@ -2,7 +2,7 @@
 
 
 /* Execption */
-CgiRequest::cgiException::cgiException(string str) throw() : _str(str) 
+CgiRequest::cgiException::cgiException(string str) throw() : _str(str)
 {
 }
 
@@ -18,12 +18,11 @@ CgiRequest::cgiException::what(void) const throw()
 
 
 /* CgiRequest */
-CgiRequest::CgiRequest(void)
-{
-}
 
 CgiRequest::CgiRequest(const unsigned short serverPort,
-	HttpRequest const & request, Client const & client)
+			HttpRequest const & request, Client const & client,
+			Host & host, string & extension)
+	:	_host(host), _extension(extension)
 {
 	Client::authentication authentication;
 	if (request._requiredRealm.name.size())
@@ -62,6 +61,7 @@ CgiRequest::~CgiRequest(void)
 }
 
 CgiRequest::CgiRequest(CgiRequest const & other)
+	: _host(other._host), _extension(other._extension)
 {
 	CgiRequest::_copy(other);
 }
@@ -75,9 +75,10 @@ CgiRequest::operator=(CgiRequest const & other)
 }
 
 /* Public method */
-void 
+void
 CgiRequest::doRequest(HttpRequest const & request, Answer & answer)
 {
+	string cgi;
 	int status;
 	int inPipe[2], outPipe[2];
 	if (pipe(inPipe) < 0 || pipe(outPipe) < 0)
@@ -92,7 +93,9 @@ CgiRequest::doRequest(HttpRequest const & request, Answer & answer)
 		write(inPipe[1], request._body, request._bodySize);
 		//if (execve("./cgitest/printenv", _av, _env) == -1)
 		//if (execve("./testers/cgi_tester", _av, _env) == -1)
-		if (execve("/Users/aalleman/.brew/bin/php-cgi", _av, _env) == -1)
+		if (_host.cgi.find(string("cgi_" + string(_extension))) != _host.cgi.end())
+			cgi = _host.cgi.at("cgi_" + string(_extension));
+		if (execve(cgi.c_str(), _av, _env) == -1)
 		//if (execve("/usr/bin/php-cgi", _av, _env) == -1)
 			exit(EXIT_FAILURE);
 	}
