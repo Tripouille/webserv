@@ -2,44 +2,20 @@
 #include <netinet/in.h>
 #include "TcpListener.hpp"
 #include "ServerConfig.hpp"
+#include "MultiServ.hpp"
 #define PORT 8080
 using std::cerr;
 using std::endl;
 
 int main(int ac, char *av[])
 {
-	//TcpListener webserv(INADDR_ANY, PORT);
-	ServerConfig config;
+	ServerConfig	config;
 
-	if (ac == 2)
-	{
-		config.checkConfigFile();
-		config.init();
-		if (!(strcmp("stop", av[1])))
-		{
-			ifstream	file;
-			string		arg;
-
-			if (config.http.find("pid") != config.http.end())
-			{
-				file.open(config.http.at("pid").c_str());
-				std::cout << "Extinction des serveurs !" << std::endl;
-				while (getline(file, arg))
-				{
-					pid_t tmp;
-
-					tmp = atoi(arg.c_str());
-					kill(tmp, 15);
-				}
-			}
-			file.close();
-		}
-		return (0);
-	}
 	try
 	{
 		config.checkConfigFile();
 		config.init();
+		MultiServ		serv(config, config.host);
 
 		/* Print debug ressource on class confi */
 		// for (std::vector<Host>::iterator i = config.host.begin(); i != config.host.end(); ++i)
@@ -58,47 +34,29 @@ int main(int ac, char *av[])
 		// 	}
 		// }
 
-		/* Test multi Serv */
-		ofstream			pids;
-		int status;
-
-		if (config.http.find("pid") != config.http.end())
-			pids.open(config.http.at("pid").c_str());
-		for (std::vector<Host>::iterator host = config.host.begin(); host != config.host.end(); host++)
+		/* Stop Serv */
+		if (ac == 2)
 		{
-			for (std::vector<uint16_t>::iterator port = host->port.begin(); port != host->port.end(); port++)
-			{
-				pid_t pid;
-				if ((pid = fork()) < 0)
-				{
-						std::cerr << "Error: fork failled" << std::endl;
-						exit(10);
-				}
-				if (pid == 0)
-				{
-					pids << getpid() << std::endl;
-					TcpListener webserv(INADDR_ANY, *port, config, *host);
-					webserv.init();
-					webserv.run();
-				}
-				else
-				{
-				}
-			}
+			serv.stopServ(av[1]);
+			return (0);
 		}
-		wait(&status);
-		pids.close();
-
-		//webserv.init();
-		//webserv.run();
+		/* Multi Serv */
+		serv.initServs();
 	}
 	catch (ServerConfig::configException const & e)
 	{
 		cerr << e.what() << endl;
+		exit(errno);
 	}
 	catch (TcpListener::tcpException const & e)
 	{
 		cerr << e.what() << endl;
+		exit(errno);
+	}
+	catch (MultiServ::servException const & e)
+	{
+		cerr << e.what() << endl;
+		exit(errno);
 	}
 	return (0);
 }

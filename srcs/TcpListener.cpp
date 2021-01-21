@@ -187,7 +187,7 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 	bool requiredFileNeedCGI = (extension == "php");
 	if (requiredFileNeedCGI)
 	{
-		CgiRequest cgiRequest(_port, request, _clientInfos[client]);
+		CgiRequest cgiRequest(_port, request, _clientInfos[client], _host, extension);
 		try { cgiRequest.doRequest(answer); }
 		catch(std::exception const & e)
 		{
@@ -197,6 +197,8 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 			return (_disconnectClient(client));
 		}
 		//answer.setBody(cgiRequest.getAnswer());
+
+		/* Debug Text Removed ? */
 		cout << "first buffer cgiRequest : " << endl;
 		write(1, answer._body.front()->b, (size_t)answer._body.front()->occupiedSize);
 		write(1, "\n", 1);
