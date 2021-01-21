@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/16 14:27:50 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/18 15:03:33 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -320,8 +320,23 @@ void					ServerConfig::init( void )
 		this->initConf();
 		this->readFolderHost();
 		configFile.close();
+		this->checkIfParamsExist();
 	} else {
 		throw configException("Error with config file", _pathConfFile);
+	}
+}
+
+void					ServerConfig::checkIfParamsExist( void )
+{
+	if (http.find("uri_max_size") == http.end())
+	{
+		errno = 22;
+		throw configException("Error in config file with params uri_max_size not exist");
+	}
+	if (http.find("max_empty_line_before_request") == http.end())
+	{
+		errno = 22;
+		throw configException("Error in config file with params max_empty_line_before_request not exist");
 	}
 }
 

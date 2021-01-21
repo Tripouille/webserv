@@ -76,7 +76,6 @@ void
 CgiRequest::doRequest(Answer & answer)
 {
 	string cgi;
-	std::cout << "DEBUG: " << string("cgi_" + string(_extension)) << std::endl;
 	int status;
 	int p[2]; pipe(p);
 	int child = fork();

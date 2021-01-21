@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/05 17:02:57 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/18 15:01:50 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,7 +97,7 @@ class ServerConfig
 		map<string, string> &	checkCgi( map<string, string> & p_map );
 		void					checkKeyExist( string const & p_key, map<string, string> const & p_tmp,
 												 string const & p_filename = "server.conf" );
-
+		void					checkIfParamsExist( void );
 
 };
 

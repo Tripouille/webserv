@@ -197,6 +197,8 @@ TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
 			return (_disconnectClient(client));
 		}
 		//answer.setBody(cgiRequest.getAnswer());
+
+		/* Debug Text Removed ? */
 		cout << "first buffer cgiRequest : " << endl;
 		write(1, answer._body.front()->b, (size_t)answer._body.front()->occupiedSize);
 		write(1, "\n", 1);

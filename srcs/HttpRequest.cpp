@@ -114,7 +114,7 @@ HttpRequest::_analyseRequestLine(ssize_t & headerSize) throw(parseException, clo
 	char			buffer[REQUEST_LINE_MAX_SIZE + 1];
 	vector<string>	requestLine;
 
-	for (int i = 0; i <= MAX_EMPTY_LINE_BEFORE_REQUEST
+	for (int i = 0; i <= atoi(_config.http.at("max_empty_line_before_request").c_str())
 	&& (((headerSize = _getLine(buffer, REQUEST_LINE_MAX_SIZE)) == 2 && buffer[0] == 0)
 	|| headerSize == 1); ++i)
 		;
@@ -207,7 +207,7 @@ HttpRequest::_checkMethod(void) const throw(parseException)
 void
 HttpRequest::_checkTarget(void) const throw(parseException)
 {
-	if (_target.size() > URI_MAX_SIZE)
+	if (_target.size() > static_cast<unsigned int>(atoi(_config.http.at("uri_max_size").c_str())))
 	{
 		std::ostringstream oss; oss << _target.size();
 		throw parseException(*this, 414, "URI Too Long", oss.str());
