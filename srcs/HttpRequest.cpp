@@ -89,6 +89,8 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException)
 	_analyseHeader(headerSize);
 	//_debugFields();
 	_setRequiredFile();
+	if (!_methodIsAuthorized())
+		throw(parseException(*this, 405, "Method Not Allowed", "from config"));
 	_setRequiredRealm();
 	if (_requiredRealm.name.size())
 		_setClientInfos();
@@ -302,7 +304,7 @@ HttpRequest::_setRequiredFile(void)
 	size_t queryPos = _target.find('?');
 	if (queryPos != string::npos)
 		_queryPart = _target.substr(queryPos + 1);
-	_requiredFile = _target.substr(0, _target.find('?'));
+	_requiredFile = _target.substr(0, queryPos);
 
 	// Add slash if not present, add root
 	if (_requiredFile[0] != '/')
@@ -311,19 +313,22 @@ HttpRequest::_setRequiredFile(void)
 
 	// If directory, take index in it
 	if (stat(_requiredFile.c_str(), &fileInfos) == 0
-	&& S_ISDIR(fileInfos.st_mode)) // is directory
+	&& S_ISDIR(fileInfos.st_mode))
 	{
-		vector<string>::iterator index;
-		for (index = _host.index.begin(); index != _host.index.end(); index++)
+		if (_requiredFile.back() != '/')
+			_requiredFile += '/';
+		vector<string>::iterator index = _host.index.begin();
+		vector<string>::iterator indexEnd = _host.index.end();
+		for (; index != indexEnd; ++index)
 		{
-			string result = _requiredFile + string("/") + *index;
-			if (stat(result.c_str(), &fileInfos) == 0)
+			string testedFile = _requiredFile + *index;
+			if (stat(testedFile.c_str(), &fileInfos) == 0)
 			{
-				_requiredFile = result;
+				_requiredFile = testedFile;
 				break ;
 			}
 		}
-		if (index == _host.index.end())
+		if (index == indexEnd)
 			_requiredFile.clear();
 	}
 
@@ -335,10 +340,43 @@ HttpRequest::_setRequiredFile(void)
 			_requiredFile = _host.root + _config.http.at("error_page");
 		if (stat(_requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
 		{
-			cerr << "File 404.html not found" << endl;
+			cerr << "Error file for 404 not found" << endl;
 			_requiredFile.clear();
 		}
 	}
+}
+
+bool
+HttpRequest::_methodIsAuthorized(void)
+{
+	string analyzedFile(_requiredFile);
+	size_t slashPos;
+	//? its = _host.locations.begin();
+	//? ite = _host.locations.end();
+	//? actual;
+
+	// temporaire :
+	//if (_method != "GET" && _method != "HEAD")
+	//	return (false);
+
+	analyzedFile.erase(0, strlen(_host.root.c_str()));
+	while (analyzedFile.size())
+	{
+		/*for (actual = its; actual != ite; ++actual)
+			if (... == analyzedFile)
+			{
+				// s'il y a un champ "limit_except"
+				// s'il y a _method dedans (/!\ GET inclut HEAD)
+				// si on est dans les "accept" : return (true)
+				// si on est dans les "deny" : return (false)
+			}*/
+
+		slashPos = analyzedFile.find_last_of('/');
+		if (slashPos == string::npos)
+			return (true);
+		analyzedFile.erase(slashPos);
+	}
+	return (true);
 }
 
 void

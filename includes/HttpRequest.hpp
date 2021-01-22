@@ -105,6 +105,7 @@ class HttpRequest
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
 		void _checkHeader(void) throw(parseException);
 		void _setRequiredFile(void);
+		bool _methodIsAuthorized(void);
 		void _setRequiredRealm(void);
 		void _setClientInfos(void) const;
 		bool _isAuthorized(void) const;
