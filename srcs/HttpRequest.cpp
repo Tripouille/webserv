@@ -320,7 +320,8 @@ HttpRequest::_setRequiredFile(void)
 	if (stat(_requiredFile.c_str(), &fileInfos) != 0)
 	{
 		setStatus(404, "Not Found");
-		_requiredFile = root + string("/404.html"); // a changer
+		if (_config.http.find("error_page") != _config.http.end())
+			_requiredFile = root + _config.http.at("error_page");
 		if (stat(_requiredFile.c_str(), &fileInfos) != 0)
 		{
 			cerr << "File 404.html not found" << endl;
