@@ -296,33 +296,44 @@ HttpRequest::_checkHeader(void) throw(parseException)
 void
 HttpRequest::_setRequiredFile(void)
 {
-	string root(_host.root);
 	struct stat fileInfos;
+
+	// Extract query part
 	size_t queryPos = _target.find('?');
 	if (queryPos != string::npos)
 		_queryPart = _target.substr(queryPos + 1);
 	_requiredFile = _target.substr(0, _target.find('?'));
-	if (_requiredFile == "/")
+
+	// Add slash if not present, add root
+	if (_requiredFile[0] != '/')
+		_requiredFile.insert(0, "/");
+	_requiredFile.insert(0, _host.root);
+
+	// If directory, take index in it
+	if (stat(_requiredFile.c_str(), &fileInfos) == 0
+	&& S_ISDIR(fileInfos.st_mode)) // is directory
 	{
-		for (vector<string>::iterator index = _host.index.begin(); index != _host.index.end(); index++)
+		vector<string>::iterator index;
+		for (index = _host.index.begin(); index != _host.index.end(); index++)
 		{
-			_requiredFile = root + string("/") + string(*index);
-			if (stat(_requiredFile.c_str(), &fileInfos) == 0)
+			string result = _requiredFile + string("/") + *index;
+			if (stat(result.c_str(), &fileInfos) == 0)
+			{
+				_requiredFile = result;
 				break ;
-			else
-				_requiredFile.clear();
+			}
 		}
+		if (index == _host.index.end())
+			_requiredFile.clear();
 	}
-	else if (_requiredFile[0] == '/')
-		_requiredFile = root + _requiredFile;
-	else
-		_requiredFile = root + string("/") + _requiredFile;
-	if (stat(_requiredFile.c_str(), &fileInfos) != 0)
+
+	// If file is invalid, search for error page
+	if (stat(_requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
 	{
 		setStatus(404, "Not Found");
 		if (_config.http.find("error_page") != _config.http.end())
-			_requiredFile = root + _config.http.at("error_page");
-		if (stat(_requiredFile.c_str(), &fileInfos) != 0)
+			_requiredFile = _host.root + _config.http.at("error_page");
+		if (stat(_requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
 		{
 			cerr << "File 404.html not found" << endl;
 			_requiredFile.clear();
