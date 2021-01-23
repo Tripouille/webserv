@@ -52,7 +52,6 @@ class Answer
 		void _sendToClient(char const * msg, size_t size)
 			const throw(sendException);
 		void _sendBody(void) throw(sendException);
-		void _clearBody(void);
 		void _fillServerField(void);
 		void _fillDateField(void);
 		void _fillContentFields(string const & fileName);

@@ -35,6 +35,7 @@ Answer::Answer(SOCKET client) : _client(client)
 
 Answer::~Answer()
 {
+	deleteQ(_body);
 }
 
 Answer::Answer(Answer const & other)
@@ -118,7 +119,7 @@ Answer::sendAnswer(HttpRequest const & request) throw(sendException)
 	if (request._method != "HEAD")
 		_sendBody();
 	else
-		_clearBody();
+		deleteQ(_body);
 }
 
 /* Private */
@@ -145,16 +146,6 @@ Answer::_sendBody(void) throw(sendException)
 	while (!_body.empty())
 	{
 		_sendToClient(_body.front()->b, static_cast<size_t>(_body.front()->occupiedSize));
-		delete _body.front();
-		_body.pop();
-	}
-}
-
-void
-Answer::_clearBody(void)
-{
-	while (!_body.empty())
-	{
 		delete _body.front();
 		_body.pop();
 	}

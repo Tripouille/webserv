@@ -196,7 +196,7 @@ TcpListener::_handleBadStatus(Answer & answer, HttpRequest const & request)
 	}
 	else if (request._status.code == 405)
 	{
-		answer._fields["Allow"] = "GET, POST"; // en ajouter ou en enlever selon la config
+		answer._fields["Allow"] = "GET, HEAD, POST"; // en ajouter ou en enlever selon la config
 		answer.sendHeader();
 	}
 	answer.sendEndOfHeader();

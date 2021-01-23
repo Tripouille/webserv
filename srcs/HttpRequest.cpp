@@ -209,7 +209,7 @@ HttpRequest::_fillAndCheckRequestLine(vector<string> const & requestLine) throw(
 void
 HttpRequest::_checkMethod(void) const throw(parseException)
 {
-	if (_method != "GET" && _method != "HEAD" && _method != "POST")
+	if (_method != "GET" && _method != "HEAD" && _method != "POST" && _method != "PUT")
 		throw parseException(*this, 501, "Not Implemented", "bad method : " + _method);
 }
 
@@ -349,47 +349,50 @@ HttpRequest::_setRequiredFile(void)
 bool
 HttpRequest::_methodIsAuthorized(void)
 {
-	string analyzedFile(_requiredFile);
+	std::map<string, vector<string> > locations;
+	locations["/"].push_back("GET");
+	locations["/put_test"].push_back("GET");
+	locations["/put_test"].push_back("PUT");
+	locations["/post_body"].push_back("GET");
+	locations["/post_body"].push_back("POST");
+
+	string analyzedFile(_requiredFile.substr(_host.root.size()));
 	size_t slashPos;
-	//? its = _host.locations.begin();
-	//? ite = _host.locations.end();
-	//? actual;
+	std::map<string, vector<string> >::iterator its = locations.begin();
+	std::map<string, vector<string> >::iterator ite = locations.end();
+	std::map<string, vector<string> >::iterator actual;
 
-	// temporaire :
-	//if (_method != "GET" && _method != "HEAD")
-	//	return (false);
-
-	analyzedFile.erase(0, strlen(_host.root.c_str()));
 	while (analyzedFile.size())
 	{
-		/*for (actual = its; actual != ite; ++actual)
-			if (... == analyzedFile)
+		for (actual = its; actual != ite; ++actual)
+			if (actual->first == analyzedFile)
 			{
-				// s'il y a un champ "limit_except"
-				// s'il y a _method dedans (/!\ GET inclut HEAD)
-				// si on est dans les "accept" : return (true)
-				// si on est dans les "deny" : return (false)
-			}*/
+				vector<string> const & allowedMethods = actual->second;
+				if (std::find(allowedMethods.begin(), allowedMethods.end(), _method) != allowedMethods.end())
+					return (true);
+				else
+					return (false);
+			}
 
 		slashPos = analyzedFile.find_last_of('/');
-		if (slashPos == string::npos)
-			return (true);
-		analyzedFile.erase(slashPos);
+		if (slashPos == 0 && analyzedFile != "/")
+			analyzedFile.erase(slashPos + 1);
+		else
+			analyzedFile.erase(slashPos);
 	}
-	return (true);
+	return (false);
 }
 
 void
 HttpRequest::_setRequiredRealm(void)
 {
 	string root(_host.root);
-	string analyzedFile(_requiredFile);
+	string analyzedFile(_requiredFile.substr(_host.root.size()));
 	std::map<string, std::pair<string, string> >::iterator its = _realms.begin();
 	std::map<string, std::pair<string, string> >::iterator ite = _realms.end();
 	std::map<string, std::pair<string, string> >::iterator actual;
 	size_t slashPos;
 
-	analyzedFile.erase(0, strlen(root.c_str()));
 	while (analyzedFile.size())
 	{
 		for (actual = its; actual != ite; ++actual)
