@@ -65,6 +65,13 @@ class HttpRequest
 				virtual ~closeOrderException(void) throw();
 				virtual const char * what(void) const throw();
 		};
+		class missingFileException : public std::exception
+		{
+			public:
+				missingFileException(void) throw();
+				virtual ~missingFileException(void) throw();
+				virtual const char * what(void) const throw();
+		};
 
 		HttpRequest(Client & client, Host& host, uint16_t port, ServerConfig & config);
 		~HttpRequest(void);
@@ -78,7 +85,8 @@ class HttpRequest
 	private:
 		Client &						_client;
 		string 							_method, _target, _httpVersion;
-		string							_requiredFile, _queryPart;
+		string							_requiredFile, _fileWithoutRoot;
+		string							_queryPart;
 		realmInfos						_requiredRealm;
 		map<string, vector<string> >	_fields;
 		char							_body[CLIENT_MAX_BODY_SIZE + 1];

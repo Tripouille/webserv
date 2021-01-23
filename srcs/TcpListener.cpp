@@ -134,14 +134,18 @@ TcpListener::_handleRequest(SOCKET client) throw(tcpException)
 {
 	cout << endl << "Data arriving from socket " << client << endl;
 	HttpRequest request(_clientInfos[client], _host, _port, _config);
+	Answer answer(client);
+
 	try { request.analyze(); }
-	catch(HttpRequest::parseException const & e)
+	catch (HttpRequest::parseException const & e)
 	{ cerr << e.what() << endl; }
-	catch(HttpRequest::closeOrderException const & e)
+	catch (HttpRequest::closeOrderException const & e)
 	{ _disconnectClient(client); return ; }
+	catch (HttpRequest::missingFileException const & e)
+	{ return (_handleBadStatus(answer, request)); }
 
 	// Request is valid, no close order
-	try { _answerToClient(client, request); }
+	try { _answerToClient(client, answer, request); }
 	catch (Answer::sendException const & e)
 	{
 		cerr << e.what() << endl;
@@ -150,11 +154,10 @@ TcpListener::_handleRequest(SOCKET client) throw(tcpException)
 }
 
 void
-TcpListener::_answerToClient(SOCKET client, HttpRequest & request)
+TcpListener::_answerToClient(SOCKET client, Answer & answer,
+	HttpRequest & request)
 	throw(tcpException, Answer::sendException)
 {
-	Answer answer(client);
-
 	if (request._status.info != "OK"
 	&& !(request._status.code == 404 && request._requiredFile.size()))
 		return (_handleBadStatus(answer, request));

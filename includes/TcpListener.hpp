@@ -75,7 +75,8 @@ class TcpListener
 		void _acceptNewClient(void) throw(tcpException);
 		void _disconnectClient(SOCKET client);
 		void _handleRequest(SOCKET client) throw(tcpException);
-		void _answerToClient(SOCKET client, HttpRequest & request)
+		void _answerToClient(SOCKET client, Answer & answer,
+			HttpRequest & request)
 			throw(tcpException,  Answer::sendException);
 		void _handleBadStatus(Answer & answer, HttpRequest const & request)
 			throw(Answer::sendException);

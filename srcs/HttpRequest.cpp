@@ -35,6 +35,21 @@ HttpRequest::closeOrderException::what(void) const throw()
 	return ("Client closed the connection");
 }
 
+
+HttpRequest::missingFileException::missingFileException(void) throw()
+{
+}
+
+HttpRequest::missingFileException::~missingFileException(void) throw()
+{
+}
+
+const char *
+HttpRequest::missingFileException::what(void) const throw()
+{
+	return ("No error page");
+}
+
 /* HttpRequest */
 
 HttpRequest::HttpRequest(Client & client, Host& host, uint16_t port,
@@ -309,7 +324,8 @@ HttpRequest::_setRequiredFile(void)
 	// Add slash if not present, add root
 	if (_requiredFile[0] != '/')
 		_requiredFile.insert(0, "/");
-	_requiredFile.insert(0, _host.root);
+	string root = _host.root;//_getRoot(_requiredFile);
+	_requiredFile = root + _requiredFile;
 
 	// If directory, take index in it
 	if (stat(_requiredFile.c_str(), &fileInfos) == 0
@@ -337,13 +353,14 @@ HttpRequest::_setRequiredFile(void)
 	{
 		setStatus(404, "Not Found");
 		if (_config.http.find("error_page") != _config.http.end())
-			_requiredFile = _host.root + _config.http.at("error_page");
-		if (stat(_requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
 		{
-			cerr << "Error file for 404 not found" << endl;
-			_requiredFile.clear();
+			root = _host.root;//_getRoot(_config.http.at("error_page"));
+			_requiredFile = root + _config.http.at("error_page");
 		}
+		if (stat(_requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
+			throw(missingFileException());
 	}
+	_fileWithoutRoot = _requiredFile.substr(root.size());
 }
 
 bool
@@ -356,7 +373,7 @@ HttpRequest::_methodIsAuthorized(void)
 	locations["/post_body"].push_back("GET");
 	locations["/post_body"].push_back("POST");
 
-	string analyzedFile(_requiredFile.substr(_host.root.size()));
+	string analyzedFile(_fileWithoutRoot);
 	size_t slashPos;
 	std::map<string, vector<string> >::iterator its = locations.begin();
 	std::map<string, vector<string> >::iterator ite = locations.end();
@@ -386,8 +403,7 @@ HttpRequest::_methodIsAuthorized(void)
 void
 HttpRequest::_setRequiredRealm(void)
 {
-	string root(_host.root);
-	string analyzedFile(_requiredFile.substr(_host.root.size()));
+	string analyzedFile(_fileWithoutRoot);
 	std::map<string, std::pair<string, string> >::iterator its = _realms.begin();
 	std::map<string, std::pair<string, string> >::iterator ite = _realms.end();
 	std::map<string, std::pair<string, string> >::iterator actual;
