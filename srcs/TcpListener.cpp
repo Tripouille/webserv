@@ -146,7 +146,9 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 		catch (HttpRequest::missingFileException const & e)
 		{ return (_handleBadStatus(answer, request)); }
 
-		// If it is a PUT request, update the files here and set status to 204
+		// If it is a PUT request, update the files here and set status to 204 (or 201 if created)
+		if (request._method == "PUT")
+			_put(request);
 
 		// Request is valid, no close order
 		_answerToClient(socket, answer, request);
@@ -159,11 +161,39 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 }
 
 void
+TcpListener::_put(HttpRequest & request) const
+{
+	struct stat fileInfos;
+
+	if (stat(request._requiredFile.c_str(), &fileInfos) == 0)
+	{
+		if (S_ISDIR(fileInfos.st_mode) /*|| !S_ISREG(fileInfos.st_mode)*/)
+		{
+			request.setStatus(409, "Conflict");
+			return ;
+		}
+		else
+			request.setStatus(204, "No Content");
+	}
+	else
+		request.setStatus(201, "Created");
+
+	std::ofstream file(request._requiredFile.c_str(), std::ofstream::out | std::ofstream::trunc);
+	if (!file)
+		request.setStatus(403, "Forbidden");
+	else
+	{
+		file << request._body;
+		file.close();
+	}
+}
+
+void
 TcpListener::_answerToClient(SOCKET socket, Answer & answer,
 	HttpRequest & request)
 	throw(tcpException, Answer::sendException)
 {
-	if (request._status.code == 204)
+	if (request._status.info == "Created" || request._status.info == "No Content")
 	{
 		answer.sendStatus(request._status);
 		answer.sendEndOfHeader();
@@ -200,7 +230,7 @@ TcpListener::_handleBadStatus(Answer & answer, HttpRequest const & request)
 	}
 	else if (request._status.code == 405)
 	{
-		answer._fields["Allow"] = "GET, HEAD, POST"; // en ajouter ou en enlever selon la config
+		answer._fields["Allow"] = "GET, HEAD"; // en ajouter ou en enlever selon la config
 		answer.sendHeader();
 	}
 	answer.sendEndOfHeader();

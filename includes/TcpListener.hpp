@@ -13,6 +13,8 @@
 # include <queue>
 # include <list>
 # include <sstream>
+# include <sys/stat.h>
+# include <fstream>
 
 # include "HttpRequest.hpp"
 # include "CgiRequest.hpp"
@@ -75,6 +77,7 @@ class TcpListener
 		void _acceptNewClient(void) throw(tcpException);
 		void _disconnectClient(SOCKET client);
 		void _handleRequest(SOCKET client) throw(tcpException);
+		void _put(HttpRequest & request) const;
 		void _answerToClient(SOCKET client, Answer & answer,
 			HttpRequest & request)
 			throw(tcpException,  Answer::sendException);
