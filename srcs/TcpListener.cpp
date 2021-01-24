@@ -121,62 +121,63 @@ TcpListener::_acceptNewClient(void) throw(tcpException)
 }
 
 void
-TcpListener::_disconnectClient(SOCKET client)
+TcpListener::_disconnectClient(SOCKET socket)
 {
-	cerr << "Killing socket " << client << endl;
-	FD_CLR(client, &_activeFdSet);
-	close(client);
+	cerr << "Killing socket " << socket << endl;
+	FD_CLR(socket, &_activeFdSet);
+	close(socket);
 	_clientNb--;
 }
 
 void
-TcpListener::_handleRequest(SOCKET client) throw(tcpException)
+TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 {
-	cout << endl << "Data arriving from socket " << client << endl;
-	HttpRequest request(_clientInfos[client], _host, _port, _config);
-	Answer answer(client);
+	cout << endl << "Data arriving from socket " << socket << endl;
+	HttpRequest request(_clientInfos[socket], _host, _port, _config);
+	Answer answer(socket);
 
-	try { request.analyze(); }
-	catch (HttpRequest::parseException const & e)
-	{ cerr << e.what() << endl; }
-	catch (HttpRequest::closeOrderException const & e)
-	{ _disconnectClient(client); return ; }
-	catch (HttpRequest::missingFileException const & e)
-	{ return (_handleBadStatus(answer, request)); }
+	try
+	{
+		try { request.analyze(); }
+		catch (HttpRequest::parseException const & e)
+		{ cerr << e.what() << endl; }
+		catch (HttpRequest::closeOrderException const & e)
+		{ _disconnectClient(socket); return ; }
+		catch (HttpRequest::missingFileException const & e)
+		{ return (_handleBadStatus(answer, request)); }
 
-	// Request is valid, no close order
-	try { _answerToClient(client, answer, request); }
+		// If it is a PUT request, update the files here and set status to 204
+
+		// Request is valid, no close order
+		_answerToClient(socket, answer, request);
+	}
 	catch (Answer::sendException const & e)
 	{
 		cerr << e.what() << endl;
-		_disconnectClient(client);
+		_disconnectClient(socket);
 	}
 }
 
 void
-TcpListener::_answerToClient(SOCKET client, Answer & answer,
+TcpListener::_answerToClient(SOCKET socket, Answer & answer,
 	HttpRequest & request)
 	throw(tcpException, Answer::sendException)
 {
-	if (request._status.info != "OK"
+	if (request._status.code == 204)
+	{
+		answer.sendStatus(request._status);
+		answer.sendEndOfHeader();
+		return ;
+	}
+	else if (request._status.info != "OK"
 	&& !(request._status.code == 404 && request._requiredFile.size()))
 		return (_handleBadStatus(answer, request));
 
 	string extension = request._requiredFile.substr(request._requiredFile.find_last_of('.') + 1, string::npos);
 	bool requiredFileNeedCGI = (extension == "php");
 	if (requiredFileNeedCGI)
-	{
-		CgiRequest cgiRequest(_port, request, _clientInfos[client], _host, extension);
-		try { cgiRequest.doRequest(request, answer); }
-		catch(std::exception const & e)
-		{
-			cerr << e.what() << endl;
-			request.setStatus(500, "Internal Server Error (CGI)");
-			answer.sendStatus(request._status);
-			answer.sendEndOfHeader();
-			return (_disconnectClient(client));
-		}
-	}
+		_doCgiRequest(CgiRequest(_port, request, _clientInfos[socket], _host, extension),
+			request, answer);
 	else
 	{
 		try { answer.getFile(request._requiredFile); }
@@ -204,4 +205,17 @@ TcpListener::_handleBadStatus(Answer & answer, HttpRequest const & request)
 	}
 	answer.sendEndOfHeader();
 	return (_disconnectClient(answer._client));
+}
+
+void
+TcpListener::_doCgiRequest(CgiRequest cgiRequest, HttpRequest & request, Answer & answer)
+{
+	try { cgiRequest.doRequest(request, answer); }
+	catch(CgiRequest::cgiException const & e)
+	{
+		request.setStatus(500, "Internal Server Error (CGI)");
+		answer.sendStatus(request._status);
+		answer.sendEndOfHeader();
+		throw(Answer::sendException("error in cgi"));
+	}
 }

@@ -78,6 +78,7 @@ class TcpListener
 		void _answerToClient(SOCKET client, Answer & answer,
 			HttpRequest & request)
 			throw(tcpException,  Answer::sendException);
+		void _doCgiRequest(CgiRequest cgiRequest, HttpRequest & request, Answer & answer);
 		void _handleBadStatus(Answer & answer, HttpRequest const & request)
 			throw(Answer::sendException);
 };

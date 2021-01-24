@@ -21,7 +21,8 @@ FLAGS					+= -g3
 endif
 
 test: all
-	leaks --atExit -- ./webserv
+#leaks --atExit -- ./webserv #leaks ne fonctionne pas sur mac ?
+	./webserv
 
 all: $(NAME)
 

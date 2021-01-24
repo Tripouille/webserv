@@ -327,6 +327,13 @@ HttpRequest::_setRequiredFile(void)
 	string root = _host.root;//_getRoot(_requiredFile);
 	_requiredFile = root + _requiredFile;
 
+	// Stop if it is a PUT request
+	if (_method == "PUT")
+	{
+		_fileWithoutRoot = _requiredFile.substr(root.size());
+		return ;
+	}
+
 	// If directory, take index in it
 	if (stat(_requiredFile.c_str(), &fileInfos) == 0
 	&& S_ISDIR(fileInfos.st_mode))
@@ -381,6 +388,7 @@ HttpRequest::_methodIsAuthorized(void)
 
 	while (analyzedFile.size())
 	{
+		cerr << "analyzedFile in _methodIsAuthorized = " << analyzedFile << endl;
 		for (actual = its; actual != ite; ++actual)
 			if (actual->first == analyzedFile)
 			{

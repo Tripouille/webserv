@@ -19,10 +19,13 @@
 # define STDOUT 1
 # define STDIN 0
 
+typedef int SOCKET;
+
 using std::cout; using std::endl; using std::string;
 
 class CgiRequest
 {
+	friend class TcpListener;
 	class cgiException : public std::exception
 	{
 		public:
@@ -59,6 +62,7 @@ class CgiRequest
 		char *				_av[2];
 		Host &				_host;
 		string &			_extension;
+		SOCKET				_socket;
 };
 
 #endif

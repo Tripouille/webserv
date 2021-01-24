@@ -22,7 +22,7 @@ CgiRequest::cgiException::what(void) const throw()
 CgiRequest::CgiRequest(const unsigned short serverPort,
 			HttpRequest const & request, Client const & client,
 			Host & host, string & extension)
-	:	_host(host), _extension(extension)
+	:	_host(host), _extension(extension), _socket(client.s)
 {
 	Client::authentication authentication;
 	if (request._requiredRealm.name.size())
@@ -61,7 +61,7 @@ CgiRequest::~CgiRequest(void)
 }
 
 CgiRequest::CgiRequest(CgiRequest const & other)
-	: _host(other._host), _extension(other._extension)
+	: _host(other._host), _extension(other._extension), _socket(other._socket)
 {
 	CgiRequest::_copy(other);
 }
