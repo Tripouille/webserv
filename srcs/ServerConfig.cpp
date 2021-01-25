@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jgambard <jgambard@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/22 12:56:41 by jgambard         ###   ########lyon.fr   */
+/*   Updated: 2021/01/25 17:17:33 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,21 +86,22 @@ void					ServerConfig::checkKeyExist( string const & p_key,
 	}
 }
 
-map<string, string> &	ServerConfig::checkCgi( map<string, string> & p_map )
+map<string, string>		ServerConfig::checkCgiTemp( )
 {
-	return p_map;
+	map<string, string> test;
+	return test;
 }
 
-vector<uint16_t> &			ServerConfig::checkPort( vector<uint16_t> & p_vector,
+uint16_t &				ServerConfig::checkPort( uint16_t & p_port,
 													string & p_fileName )
 {
-	if (p_vector.empty())
+	if (p_port != 0)
 	{
 		errno = 22;
 		throw configException("Error params \"server_name:\" not found on ",
 								p_fileName);
 	}
-	return p_vector;
+	return p_port;
 }
 
 string					ServerConfig::checkServerName( map<string, string> & p_map,
@@ -148,12 +149,43 @@ vector<string>			ServerConfig::convertIndex( map<string, string> & p_map,
 	return tmp;
 }
 
+map<string, string>		ServerConfig::isCgi( string const & p_key, ifstream & p_file )
+{
+	string		line;
+	string		key;
+	string		arg;
+	map<string, string>		tmp;
+	std::map<string, string>::iterator		it = tmp.begin();
+
+	while(getline(p_file, line))
+	{
+		std::stringstream	str(line);
+
+		str >> key;
+		if (str.eof() && key != "}")
+			continue;
+		if (key.at(0) == '#')
+			continue;
+		if (key == "}")
+			break ;
+		getline(str, arg);
+		if (arg.find_first_of(';') != string::npos)
+			arg.erase(arg.find_first_of(';'), arg.size());
+		if (arg.find_first_not_of(' ') != string::npos)
+			arg.erase(0, arg.find_first_not_of(' '));
+
+		tmp.insert(it, std::pair<string, string>(key, arg));
+	}
+	return tmp;
+}
+
+
 void					ServerConfig::initHost( vector<string> & p_filname )
 {
 	string				line;
 	string				key;
 	string				arg;
-	size_t				nb(0);
+	//size_t				nb(0);
 
 	for (size_t i = 0; i < p_filname.size(); i++)
 	{
@@ -164,9 +196,10 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 		{
 			map<string, string>	tmp;
 			std::map<string, string>::iterator		it = tmp.begin();
-			vector<uint16_t> port;
-			map<string, string> cgi;
-			std::map<string, string>::iterator		it2 = cgi.begin();
+			map<string, map<string, string> >	conf;
+			std::map<string, map<string, string> >::iterator	it2 = conf.begin();
+			uint16_t port;
+			string	 type;
 
 			while (getline(hostFile, line))
 			{
@@ -177,23 +210,43 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 					continue;
 				if (key.at(0) == '#')
 					continue;
-				if ((nb = key.find_first_of(':') != string::npos))
-					key.erase(key.find_first_of(':'), nb + 1);
 				getline(str, arg);
 				if (arg.find_first_of(';') != string::npos)
 					arg.erase(arg.find_first_of(';'), arg.size());
 				if (arg.find_first_not_of(' ') != string::npos)
 					arg.erase(0, arg.find_first_not_of(' '));
 				if (key == "port")
-					port.push_back(static_cast<unsigned short>(atoi(arg.c_str())));
-				else if (!strncmp(string(key).c_str(), "cgi", 3))
+					port = static_cast<unsigned short>(atoi(arg.c_str()));
+				else if ((!strncmp(string(key).c_str(), "cgi", 3)) && type == "")
+				{
+					type = key;
+					std::cout << "DEBUG CGI: " << type << " - " << arg << std::endl;
+					conf[key] = this->isCgi(key, hostFile);
+					for (it2 = conf.begin(); it2 != conf.end(); it2++)
+					{
+						std::cout << it2->first << ": " << std::endl;
+						for (map<string, string>::iterator test42 = it2->second.begin(); test42 != it2->second.end(); test42++)
+						{
+							std::cout << " - " << test42->first << " - " << test42->second << std::endl;
+						}
+					}
+				}
+				else if (!strncmp(string(key).c_str(), "location", 8))
 				{
 					str >> key;
-					cgi.insert(it2, std::pair<string, string>(key, arg));
+					std::cout << "DEBUG LOCATION: " << key << " - " << arg << std::endl;
+
+				}
+				else if (!strncmp(string(key).c_str(), "error_page", 10))
+				{
+					str >> key;
+					std::cout << "DEBUG ERROR: " << key << " - " << arg << std::endl;
+
 				}
 				else
 				{
-					this->checkKeyExist(key, tmp, p_filname[i]);
+					std::cout << "DEBUG SOLO: " << key << " - " << arg << std::endl;
+					//this->checkKeyExist(key, tmp, p_filname[i]);
 					tmp.insert(it, std::pair<string, string>(key, arg));
 				}
 			}
@@ -202,7 +255,8 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				this->checkRoot(tmp, p_filname[i]),
 				this->convertIndex(tmp, p_filname[i]),
 				this->checkServerName(tmp, p_filname[i]),
-				this->checkCgi(cgi)
+				this->checkCgiTemp()
+				//this->checkConf(cgi)
 			};
 			host.push_back(temp_host);
 		} else {

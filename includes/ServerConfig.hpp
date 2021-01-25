@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/18 15:01:50 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/25 17:13:30 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,12 +18,14 @@
 # include <fstream>
 # include <vector>
 # include <map>
+# include <list>
 # include <sys/types.h>
 # include <cstring>
 # include <cerrno>
 # include <dirent.h>
 
 using std::string;
+using std::list;
 using std::vector;
 using std::map;
 using std::ofstream;
@@ -31,11 +33,12 @@ using std::ifstream;
 
 struct Host
 {
-	vector<uint16_t>		port;
-	string					root;
-	vector<string>			index;
-	string					serverName;
-	map<string, string>		cgi;
+	uint16_t							port;
+	string								root;
+	vector<string>						index;
+	string								serverName;
+	//map<string, map<string, string> > 	conf;
+	map<string, string>					cgi;
 };
 
 class ServerConfig
@@ -93,11 +96,12 @@ class ServerConfig
 		vector<string>			convertIndex( map<string, string> & p_map, string & p_fileName );
 		string					checkRoot( map<string, string> & p_map, string & p_fileName );
 		string					checkServerName( map<string, string> & p_map, string & p_fileName );
-		vector<uint16_t> &		checkPort( vector<uint16_t> & p_vector, string & p_fileName );
-		map<string, string> &	checkCgi( map<string, string> & p_map );
+		uint16_t &				checkPort( uint16_t & p_port, string & p_fileName );
+		map<string, string> 	checkCgiTemp( );
 		void					checkKeyExist( string const & p_key, map<string, string> const & p_tmp,
 												 string const & p_filename = "server.conf" );
 		void					checkIfParamsExist( void );
+		map<string, string>		isCgi( string const & p_key, ifstream & p_file );
 
 };
 
