@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
+/*   By: jgambard <jgambard@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/18 15:03:33 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/22 12:56:41 by jgambard         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 

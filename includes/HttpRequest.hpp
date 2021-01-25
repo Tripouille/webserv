@@ -113,7 +113,11 @@ class HttpRequest
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
 		void _checkHeader(void) throw(parseException);
 		void _setRequiredFile(void);
+		void _extractQueryPart(void);
+		void _addIndexIfDirectory(string const & root);
+		void _updateFileIfInvalid(string & root);
 		bool _methodIsAuthorized(void);
+		bool _methodFound(vector<string> const & allowedMethods);
 		void _setRequiredRealm(void);
 		void _setClientInfos(void) const;
 		bool _isAuthorized(void) const;
