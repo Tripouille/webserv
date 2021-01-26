@@ -17,23 +17,6 @@ int main(int ac, char *av[])
 		config.init();
 		MultiServ		serv(config, config.host);
 
-		/* Print debug ressource on class confi */
-		// for (std::vector<Host>::iterator i = config.host.begin(); i != config.host.end(); ++i)
-		// {
-		// 	std::cout << "Server: " << i->serverName << std::endl << i->root << std::endl;
-		// 	for (std::vector<uint16_t>::iterator port = i->port.begin(); port != i->port.end(); port++)
-		// 		std::cout << *port << " - ";
-		// 	std::cout << std::endl;
-		// 	for (std::vector<string>::iterator index = i->index.begin(); index != i->index.end(); index++)
-		// 		std::cout << *index << " - ";
-		// 	std::cout << std::endl;
-		// 	for (std::map<string, string>::iterator cgi = i->cgi.begin(); cgi != i->cgi.end(); cgi++)
-		// 	{
-		// 		std::cout << cgi->first << " : ";
-		// 		std::cout << cgi->second << std::endl;
-		// 	}
-		// }
-
 		/* Stop Serv */
 		if (ac == 2)
 		{
