@@ -314,35 +314,39 @@ void
 HttpRequest::_setRequiredFile(void)
 {
 	_extractQueryPart();
-
 	if (_requiredFile[0] != '/')
 		_requiredFile.insert(0, "/");
 	_fileWithoutRoot = _requiredFile;
-
-	string root = _host.root; //_getRoot(_fileWithoutRoot);
-	_requiredFile = root + _fileWithoutRoot;
-
+	_requiredFile = _getPath(_fileWithoutRoot);
 	if (_method != "PUT")
 	{
-		_addIndexIfDirectory(root);
-		_updateFileIfInvalid(root);
-		_requiredFile = root + _fileWithoutRoot;
+		_addIndexIfDirectory();
+		_updateFileIfInvalid();
 	}
 }
 
-/*void
-HttpRequest::_getRoot(string file)
+string
+HttpRequest::_getPath(string file) const
 {
+	string originalFile(file);
+	std::map<string, std::map<string, string> > locations;
+	locations["/"]["root"] = "www/sites1";
+	locations["/directory"]["alias"] = "www/YoupiBanane";
+	locations["/404.html"]["root"] = "www";
+
+	std::map<string, map<string, string> >::iterator its = locations.begin();
+	std::map<string, map<string, string> >::iterator ite = locations.end();
+	std::map<string, map<string, string> >::iterator actual;
+	size_t slashPos;
 	while (file.size())
 	{
 		for (actual = its; actual != ite; ++actual)
 			if (actual->first == file)
 			{
-				vector<string> const & allowedMethods = actual->second;
-				if (std::find(allowedMethods.begin(), allowedMethods.end(), _method) != allowedMethods.end())
-					return (true);
-				else
-					return (false);
+				if (actual->second.find("root") != actual->second.end())
+					return (actual->second.at("root") + originalFile);
+				else if (actual->second.find("alias") != actual->second.end())
+					return (originalFile.replace(0, file.size(), actual->second.at("alias")));
 			}
 
 		slashPos = file.find_last_of('/');
@@ -351,7 +355,8 @@ HttpRequest::_getRoot(string file)
 		else
 			file.erase(slashPos);
 	}
-}*/
+	return (_host.root + file);
+}
 
 void
 HttpRequest::_extractQueryPart(void)
@@ -364,45 +369,42 @@ HttpRequest::_extractQueryPart(void)
 }
 
 void
-HttpRequest::_addIndexIfDirectory(string const & root)
+HttpRequest::_addIndexIfDirectory(void)
 {
 	struct stat fileInfos;
 
-	if (stat((root + _fileWithoutRoot).c_str(), &fileInfos) == 0
+	if (stat(_requiredFile.c_str(), &fileInfos) == 0
 	&& S_ISDIR(fileInfos.st_mode))
 	{
-		if (_fileWithoutRoot.back() != '/')
-			_fileWithoutRoot += '/';
+		if (_requiredFile.back() != '/')
+			_requiredFile += '/';
 		vector<string>::iterator index = _host.index.begin();
 		vector<string>::iterator indexEnd = _host.index.end();
 		for (; index != indexEnd; ++index)
 		{
-			string testedFile = _fileWithoutRoot + *index;
-			if (stat((root + testedFile).c_str(), &fileInfos) == 0)
+			string testedFile = _requiredFile + *index;
+			if (stat(testedFile.c_str(), &fileInfos) == 0)
 			{
-				_fileWithoutRoot = testedFile;
+				_requiredFile = testedFile;
 				break ;
 			}
 		}
 		if (index == indexEnd)
-			_fileWithoutRoot.clear();
+			_requiredFile.clear();
 	}
 }
 
 void
-HttpRequest::_updateFileIfInvalid(string & root)
+HttpRequest::_updateFileIfInvalid(void)
 {
 	struct stat fileInfos;
 
-	if (stat((root + _fileWithoutRoot).c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
+	if (stat(_requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
 	{
 		setStatus(404, "Not Found");
 		if (_config.http.find("error_page") != _config.http.end())
-		{
-			root = _host.root;//_getRoot(_config.http.at("error_page"));
-			_fileWithoutRoot = _config.http.at("error_page");
-		}
-		if (stat((root + _fileWithoutRoot).c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
+			_requiredFile = _getPath(_config.http.at("error_page"));
+		if (stat(_requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
 			throw(missingFileException());
 	}
 }
