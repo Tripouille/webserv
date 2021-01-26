@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/25 17:13:30 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/26 14:41:52 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@
 # include <cstring>
 # include <cerrno>
 # include <dirent.h>
+# include <sstream>
 
 using std::string;
 using std::list;
@@ -37,8 +38,7 @@ struct Host
 	string								root;
 	vector<string>						index;
 	string								serverName;
-	//map<string, map<string, string> > 	conf;
-	map<string, string>					cgi;
+	map<string, map<string, string> > 	conf;
 };
 
 class ServerConfig
@@ -97,11 +97,16 @@ class ServerConfig
 		string					checkRoot( map<string, string> & p_map, string & p_fileName );
 		string					checkServerName( map<string, string> & p_map, string & p_fileName );
 		uint16_t &				checkPort( uint16_t & p_port, string & p_fileName );
-		map<string, string> 	checkCgiTemp( );
+		map<string, map<string, string> > &
+								checkConf( map<string, map<string, string> > & p_map, string & p_fileName );
 		void					checkKeyExist( string const & p_key, map<string, string> const & p_tmp,
 												 string const & p_filename = "server.conf" );
 		void					checkIfParamsExist( void );
 		map<string, string>		isCgi( string const & p_key, ifstream & p_file );
+		map<string, string>		isErrorPage( string const & p_key, string & p_arg, \
+												ifstream & p_file, string const & p_root );
+		void					isLocation(	map<string, map<string, string> > & p_map, \
+											ifstream & p_file, string & p_arg, string const & p_root );
 
 };
 

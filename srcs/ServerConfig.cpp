@@ -6,12 +6,11 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/25 17:17:33 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/26 14:45:21 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ServerConfig.hpp"
-#include <sstream>
 #include <unistd.h>
 #include <algorithm>
 
@@ -86,12 +85,6 @@ void					ServerConfig::checkKeyExist( string const & p_key,
 	}
 }
 
-map<string, string>		ServerConfig::checkCgiTemp( )
-{
-	map<string, string> test;
-	return test;
-}
-
 uint16_t &				ServerConfig::checkPort( uint16_t & p_port,
 													string & p_fileName )
 {
@@ -149,6 +142,13 @@ vector<string>			ServerConfig::convertIndex( map<string, string> & p_map,
 	return tmp;
 }
 
+map<string, map<string, string> > &
+						ServerConfig::checkConf( map<string, map<string, string> > & p_map, \
+													 string & p_fileName)
+{
+	return p_map;
+}
+
 map<string, string>		ServerConfig::isCgi( string const & p_key, ifstream & p_file )
 {
 	string		line;
@@ -179,6 +179,80 @@ map<string, string>		ServerConfig::isCgi( string const & p_key, ifstream & p_fil
 	return tmp;
 }
 
+map<string, string>		ServerConfig::isErrorPage( string const & p_key, string & p_arg, \
+													ifstream & p_file, string const & p_root )
+{
+	size_t		len(0);
+	string		line;
+	string		key;
+	string		arg;
+	string		root(p_arg);
+	map<string, string>		tmp;
+	std::map<string, string>::iterator		it = tmp.begin();
+
+	if (root.find_first_of(' ') != string::npos)
+		root.erase(root.find_first_of(' '), root.size());
+	if (root.size() == 1 && root == "/")
+		root = p_root;
+	else if ((len = root.find_first_of('/')) != string::npos)
+		root.erase(len, len + 1);
+	while(getline(p_file, line))
+	{
+		std::stringstream		str(line);
+		str >> key;
+		if (str.eof() && key != "}")
+			continue;
+		if (key.at(0) == '#')
+			continue;
+		if (key == "}")
+			break ;
+		getline(str, arg);
+		if (arg.find_first_of(';') != string::npos)
+			arg.erase(arg.find_first_of(';'), arg.size());
+		if (arg.find_first_not_of(' ') != string::npos)
+			arg.erase(0, arg.find_first_not_of(' '));
+		root += arg;
+		tmp.insert(it, std::pair<string, string>(key, root));
+	}
+	return tmp;
+}
+
+void					ServerConfig::isLocation( map<string, map<string, string> > & p_map, \
+													ifstream & p_file, string & p_arg, string const & p_root)
+{
+	size_t		len(0);
+	string		key;
+	string		line;
+	string		root(p_arg);
+	string		arg;
+	map<string, string>		tmp;
+	std::map<string, string>::iterator		it = tmp.begin();
+
+	if (root.find_first_of(' ') != string::npos)
+		root.erase(root.find_first_of(' '), root.size());
+	if (root.size() == 1 && root == "/")
+		root = p_root;
+	else if ((len = root.find_first_of('/')) != string::npos)
+		root.erase(len, len + 1);
+	while(getline(p_file, line))
+	{
+		std::stringstream		str(line);
+		str >> key;
+		if (str.eof() && key != "}")
+			continue;
+		if (key.at(0) == '#')
+			continue;
+		if (key == "}")
+			break ;
+		getline(str, arg);
+		if (arg.find_first_of(';') != string::npos)
+			arg.erase(arg.find_first_of(';'), arg.size());
+		if (arg.find_first_not_of(' ') != string::npos)
+			arg.erase(0, arg.find_first_not_of(' '));
+		tmp.insert(it, std::pair<string, string>(key, arg));
+	}
+	p_map[root] = tmp;
+}
 
 void					ServerConfig::initHost( vector<string> & p_filname )
 {
@@ -199,7 +273,6 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 			map<string, map<string, string> >	conf;
 			std::map<string, map<string, string> >::iterator	it2 = conf.begin();
 			uint16_t port;
-			string	 type;
 
 			while (getline(hostFile, line))
 			{
@@ -217,46 +290,44 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 					arg.erase(0, arg.find_first_not_of(' '));
 				if (key == "port")
 					port = static_cast<unsigned short>(atoi(arg.c_str()));
-				else if ((!strncmp(string(key).c_str(), "cgi", 3)) && type == "")
-				{
-					type = key;
-					std::cout << "DEBUG CGI: " << type << " - " << arg << std::endl;
+				else if (key == "cgi")
 					conf[key] = this->isCgi(key, hostFile);
-					for (it2 = conf.begin(); it2 != conf.end(); it2++)
-					{
-						std::cout << it2->first << ": " << std::endl;
-						for (map<string, string>::iterator test42 = it2->second.begin(); test42 != it2->second.end(); test42++)
-						{
-							std::cout << " - " << test42->first << " - " << test42->second << std::endl;
-						}
-					}
-				}
-				else if (!strncmp(string(key).c_str(), "location", 8))
+				else if (key == "error_page")
 				{
-					str >> key;
-					std::cout << "DEBUG LOCATION: " << key << " - " << arg << std::endl;
-
+					if (tmp.find("root") != tmp.end())
+						conf[key] = this->isErrorPage(key, arg, hostFile, tmp.at("root"));
+					else
+						throw configException("Error params root does not exist on file", p_filname[i]);
 				}
-				else if (!strncmp(string(key).c_str(), "error_page", 10))
+				else if (key == "location")
 				{
-					str >> key;
-					std::cout << "DEBUG ERROR: " << key << " - " << arg << std::endl;
-
+					if (tmp.find("root") != tmp.end())
+						this->isLocation(conf, hostFile, arg, tmp.at("root"));
+					else
+						throw configException("Error params root does not exist on file", p_filname[i]);
 				}
 				else
 				{
-					std::cout << "DEBUG SOLO: " << key << " - " << arg << std::endl;
 					//this->checkKeyExist(key, tmp, p_filname[i]);
 					tmp.insert(it, std::pair<string, string>(key, arg));
 				}
 			}
+
+			for (it2 = conf.begin(); it2 != conf.end(); it2++)
+			{
+				std::cout << it2->first << ": " << std::endl;
+				for (map<string, string>::iterator test42 = it2->second.begin(); test42 != it2->second.end(); test42++)
+				{
+					std::cout << " - " << test42->first << " : " << test42->second << std::endl;
+				}
+			}
+
 			Host temp_host = {
 				this->checkPort(port, p_filname[i]),
 				this->checkRoot(tmp, p_filname[i]),
 				this->convertIndex(tmp, p_filname[i]),
 				this->checkServerName(tmp, p_filname[i]),
-				this->checkCgiTemp()
-				//this->checkConf(cgi)
+				this->checkConf(conf, p_filname[i])
 			};
 			host.push_back(temp_host);
 		} else {
