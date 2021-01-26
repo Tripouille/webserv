@@ -80,6 +80,8 @@ CgiRequest::doRequest(HttpRequest const & request, Answer & answer)
 {
 	string cgi;
 	int status;
+	if (_host.conf.at("cgi").find(_extension) == _host.conf.at("cgi").end())
+		throw(cgiException("Error cgi path \"" + string(_extension) + "\" does not exist"));
 	int inPipe[2], outPipe[2];
 	if (pipe(inPipe) < 0 || pipe(outPipe) < 0)
 		throw(cgiException("pipe failed"));
@@ -93,8 +95,7 @@ CgiRequest::doRequest(HttpRequest const & request, Answer & answer)
 		write(inPipe[1], request._body, request._bodySize);
 		//if (execve("./cgitest/printenv", _av, _env) == -1)
 		//if (execve("./testers/cgi_tester", _av, _env) == -1)
-		if (_host.cgi.find(string("cgi_" + string(_extension))) != _host.cgi.end())
-			cgi = _host.cgi.at("cgi_" + string(_extension));
+		cgi = _host.conf.at("cgi").at(_extension);
 		if (execve(cgi.c_str(), _av, _env) == -1)
 		//if (execve("/usr/bin/php-cgi", _av, _env) == -1)
 			exit(EXIT_FAILURE);

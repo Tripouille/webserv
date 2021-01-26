@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/26 14:45:21 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/26 14:59:21 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,7 +88,7 @@ void					ServerConfig::checkKeyExist( string const & p_key,
 uint16_t &				ServerConfig::checkPort( uint16_t & p_port,
 													string & p_fileName )
 {
-	if (p_port != 0)
+	if (p_port == 0)
 	{
 		errno = 22;
 		throw configException("Error params \"server_name:\" not found on ",
