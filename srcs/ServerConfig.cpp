@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/26 14:59:21 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/26 15:30:23 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -259,7 +259,6 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 	string				line;
 	string				key;
 	string				arg;
-	//size_t				nb(0);
 
 	for (size_t i = 0; i < p_filname.size(); i++)
 	{
@@ -308,11 +307,12 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				}
 				else
 				{
-					//this->checkKeyExist(key, tmp, p_filname[i]);
+					this->checkKeyExist(key, tmp, p_filname[i]);
 					tmp.insert(it, std::pair<string, string>(key, arg));
 				}
 			}
 
+			/* Debug text */
 			for (it2 = conf.begin(); it2 != conf.end(); it2++)
 			{
 				std::cout << it2->first << ": " << std::endl;
@@ -321,7 +321,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 					std::cout << " - " << test42->first << " : " << test42->second << std::endl;
 				}
 			}
-
+			/* Init stuct Host */
 			Host temp_host = {
 				this->checkPort(port, p_filname[i]),
 				this->checkRoot(tmp, p_filname[i]),
@@ -428,12 +428,6 @@ void					ServerConfig::readFile( ifstream & file )
 		this->checkKeyExist(key, http);
 		http.insert(it, std::pair<string, string>(key, arg));
 	}
-
-	// for (std::map<string, string>::iterator i = _http.begin(); i != _http.end(); ++i)
-	// {
-	// 	std::cout << i->first << " : ";
-	// 	std::cout << i->second << std::endl;
-	// }
 }
 
 void					ServerConfig::init( void )
