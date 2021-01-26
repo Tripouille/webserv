@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/19 10:39:00 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/21 13:34:32 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/25 15:28:44 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,24 +62,21 @@ void			MultiServ::initServs( void )
 	{
 		for (std::vector<Host>::iterator host = _host.begin(); host != _host.end(); host++)
 		{
-			for (std::vector<uint16_t>::iterator port = host->port.begin(); port != host->port.end(); port++)
+			pid_t pid;
+			if ((pid = fork()) < 0)
 			{
-				pid_t pid;
-				if ((pid = fork()) < 0)
-				{
-						std::cerr << "Error: fork failled" << std::endl;
-						exit(10);
-				}
-				if (pid == 0)
-				{
-					_pids << getpid() << std::endl;
-					TcpListener webserv(INADDR_ANY, *port, _config, *host);
-					webserv.init();
-					webserv.run();
-				}
-				else
-				{
-				}
+					std::cerr << "Error: fork failled" << std::endl;
+					exit(10);
+			}
+			if (pid == 0)
+			{
+				_pids << getpid() << std::endl;
+				TcpListener webserv(INADDR_ANY, host->port, _config, *host);
+				webserv.init();
+				webserv.run();
+			}
+			else
+			{
 			}
 		}
 		wait(&_status);
