@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/26 15:30:23 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/27 11:06:39 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,7 @@ DIR *					ServerConfig::directoryPath( void )
 {
 	if (http.find("host") == http.end())
 	{
-		errno = 113;
+		errno = EHOSTUNREACH;
 		throw configException("Error path \"host\" does not exist on conf file");
 	}
 	string name(http.at("host").c_str());
@@ -80,7 +80,7 @@ void					ServerConfig::checkKeyExist( string const & p_key,
 		error += "\" already exist in file \"";
 		error += p_filename;
 		error += "\".";
-		errno = 22;
+		errno = EINVAL;
 		throw configException(error);
 	}
 }
@@ -90,7 +90,7 @@ uint16_t &				ServerConfig::checkPort( uint16_t & p_port,
 {
 	if (p_port == 0)
 	{
-		errno = 22;
+		errno = EINVAL;
 		throw configException("Error params \"server_name:\" not found on ",
 								p_fileName);
 	}
@@ -102,7 +102,7 @@ string					ServerConfig::checkServerName( map<string, string> & p_map,
 {
 	if (p_map.find("server_name") == p_map.end())
 	{
-		errno = 22;
+		errno = EINVAL;
 		throw configException("Error params \"server_name:\" not found on ",
 								p_fileName);
 	}
@@ -114,7 +114,7 @@ string					ServerConfig::checkRoot( map<string, string> & p_map,
 {
 	if (p_map.find("root") == p_map.end())
 	{
-		errno = 22;
+		errno = EINVAL;
 		throw configException("Error params \"root:\" not found on ",
 								p_fileName);
 	}
@@ -129,7 +129,7 @@ vector<string>			ServerConfig::convertIndex( map<string, string> & p_map,
 
 	if (p_map.find("index") == p_map.end())
 	{
-		errno = 22;
+		errno = EINVAL;
 		throw configException("Error params \"index:\" not found in file ",
 								p_fileName);
 	}
@@ -217,8 +217,26 @@ map<string, string>		ServerConfig::isErrorPage( string const & p_key, string & p
 	return tmp;
 }
 
-void					ServerConfig::isLocation( map<string, map<string, string> > & p_map, \
-													ifstream & p_file, string & p_arg, string const & p_root)
+void					ServerConfig::checkKeyInvalid( string const & p_key, map<string, string> & p_map, \
+														string const & p_fileName )
+{
+	if (p_key == "root")
+	{
+		if (p_map.find("alias") != p_map.end())
+			throw configException("Error params \"alias:\" exist in params location on file ", p_fileName);
+	}
+	else if (p_key == "alias")
+	{
+		if (p_map.find("root") != p_map.end())
+		{
+			errno =
+			throw configException("Error params \"root:\" exist in params location on file ", p_fileName);
+		}
+	}
+}
+
+void					ServerConfig::isLocation( map<string, map<string, string> > & p_map, ifstream & p_file, \
+													string & p_arg, string const & p_root, string const & p_fileName )
 {
 	size_t		len(0);
 	string		key;
@@ -238,6 +256,7 @@ void					ServerConfig::isLocation( map<string, map<string, string> > & p_map, \
 	{
 		std::stringstream		str(line);
 		str >> key;
+		this->checkKeyInvalid(key, tmp, p_fileName);
 		if (str.eof() && key != "}")
 			continue;
 		if (key.at(0) == '#')
@@ -301,7 +320,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				else if (key == "location")
 				{
 					if (tmp.find("root") != tmp.end())
-						this->isLocation(conf, hostFile, arg, tmp.at("root"));
+						this->isLocation(conf, hostFile, arg, tmp.at("root"), p_filname[i]);
 					else
 						throw configException("Error params root does not exist on file", p_filname[i]);
 				}
@@ -373,7 +392,7 @@ void					ServerConfig::initConf( void )
 	/* Check if params Type_file exist */
 	if (http.find("type_file") == http.end())
 	{
-		errno = 22;
+		errno = EINVAL;
 		throw configException("Error params type_file does not exist on conf file");
 	}
 	ifstream 			mimeFile(http.at("type_file").c_str());
@@ -449,12 +468,12 @@ void					ServerConfig::checkIfParamsExist( void )
 {
 	if (http.find("uri_max_size") == http.end())
 	{
-		errno = 22;
+		errno = EINVAL;
 		throw configException("Error in config file with params uri_max_size not exist");
 	}
 	if (http.find("max_empty_line_before_request") == http.end())
 	{
-		errno = 22;
+		errno = EINVAL;
 		throw configException("Error in config file with params max_empty_line_before_request not exist");
 	}
 }
@@ -477,7 +496,7 @@ void					ServerConfig::checkConfigFile( void )
 				continue;
 			if (line.find_last_of(';') == string::npos)
 			{
-				errno = 22;
+				errno = EINVAL;
 				throw configException("Error in config file with params :", params);
 			}
 		}
