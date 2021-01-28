@@ -329,9 +329,9 @@ string
 HttpRequest::_getPath(string file) const
 {
 	string originalFile(file);
-	std::map<string, map<string, string> >::iterator its = _host.location.begin();
-	std::map<string, map<string, string> >::iterator ite = _host.location.end();
-	std::map<string, map<string, string> >::iterator actual;
+	std::map<string, map<string, vector<string> > >::iterator its = _host.location.begin();
+	std::map<string, map<string, vector<string> > >::iterator ite = _host.location.end();
+	std::map<string, map<string, vector<string> > >::iterator actual;
 	size_t slashPos;
 	while (file.size())
 	{
@@ -339,9 +339,9 @@ HttpRequest::_getPath(string file) const
 			if (actual->first == file)
 			{
 				if (actual->second.find("root") != actual->second.end())
-					return (actual->second.at("root") + originalFile);
+					return (actual->second["root"][0] + originalFile);
 				else if (actual->second.find("alias") != actual->second.end())
-					return (originalFile.replace(0, file.size(), actual->second.at("alias")));
+					return (originalFile.replace(0, file.size(), actual->second["alias"][0]));
 			}
 
 		slashPos = file.find_last_of('/');
@@ -387,9 +387,9 @@ HttpRequest::_searchForIndexInLocations(void)
 {
 	struct stat fileInfos;
 	string analyzedFile(_fileWithoutRoot);
-	std::map<string, map<string, string> >::iterator its = _host.location.begin();
-	std::map<string, map<string, string> >::iterator ite = _host.location.end();
-	std::map<string, map<string, string> >::iterator actual;
+	std::map<string, map<string, vector<string> > >::iterator its = _host.location.begin();
+	std::map<string, map<string, vector<string> > >::iterator ite = _host.location.end();
+	std::map<string, map<string, vector<string> > >::iterator actual;
 	size_t slashPos;
 	while (analyzedFile.size())
 	{
@@ -398,14 +398,15 @@ HttpRequest::_searchForIndexInLocations(void)
 			{
 				if (actual->second.find("index") != actual->second.end())
 				{
-					std::istringstream iss(actual->second["index"]);
-					for (string indexFile; iss >> indexFile;)
+					vector<string> indexFiles = actual->second["index"];
+					for (vector<string>::iterator indexFile = indexFiles.begin();
+					indexFile != indexFiles.end(); ++indexFile)
 					{
-						string testedFile = _requiredFile + indexFile;
+						string testedFile = _requiredFile + *indexFile;
 						if (stat(testedFile.c_str(), &fileInfos) == 0)
 						{
 							_requiredFile = testedFile;
-							_fileWithoutRoot += indexFile;
+							_fileWithoutRoot += *indexFile;
 							return (true);
 						}
 					}
@@ -463,9 +464,9 @@ HttpRequest::_methodIsAuthorized(void)
 {
 	string analyzedFile(_fileWithoutRoot);
 	size_t slashPos;
-	std::map<string, map<string, string> >::iterator its = _host.location.begin();
-	std::map<string, map<string, string> >::iterator ite = _host.location.end();
-	std::map<string, map<string, string> >::iterator actual;
+	std::map<string, map<string, vector<string> > >::iterator its = _host.location.begin();
+	std::map<string, map<string, vector<string> > >::iterator ite = _host.location.end();
+	std::map<string, map<string, vector<string> > >::iterator actual;
 
 	while (analyzedFile.size())
 	{
@@ -486,11 +487,11 @@ HttpRequest::_methodIsAuthorized(void)
 }
 
 bool
-HttpRequest::_methodFound(string const & allowedMethods)
+HttpRequest::_methodFound(vector<string> const & allowedMethods)
 {
-	std::istringstream iss(allowedMethods);
-	for (string allowedMethod; iss >> allowedMethod;)
-		if (_method == allowedMethod || (_method == "HEAD" && allowedMethod == "GET"))
+	for (vector<string>::const_iterator allowedMethod = allowedMethods.begin();
+	allowedMethod != allowedMethods.end(); ++allowedMethod)
+		if (_method == *allowedMethod || (_method == "HEAD" && *allowedMethod == "GET"))
 			return (true);
 	return (false);
 }
@@ -499,9 +500,9 @@ void
 HttpRequest::_setRequiredRealm(void)
 {
 	string analyzedFile(_fileWithoutRoot);
-	std::map<string, map<string, string> >::iterator its = _host.location.begin();
-	std::map<string, map<string, string> >::iterator ite = _host.location.end();
-	std::map<string, map<string, string> >::iterator actual;
+	std::map<string, map<string, vector<string> > >::iterator its = _host.location.begin();
+	std::map<string, map<string, vector<string> > >::iterator ite = _host.location.end();
+	std::map<string, map<string, vector<string> > >::iterator actual;
 	size_t slashPos;
 
 	while (analyzedFile.size())
@@ -511,8 +512,8 @@ HttpRequest::_setRequiredRealm(void)
 			{
 				if (actual->second.find("auth_basic") != actual->second.end())
 				{
-					_requiredRealm.name = actual->second["auth_basic"];
-					_requiredRealm.userFile = actual->second["auth_basic_user_file"];
+					_requiredRealm.name = actual->second["auth_basic"][0];
+					_requiredRealm.userFile = actual->second["auth_basic_user_file"][0];
 					return ;
 				}
 			}
