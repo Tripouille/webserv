@@ -120,7 +120,7 @@ class HttpRequest
 		void _searchForIndexInHost(void);
 		void _updateFileIfInvalid(void) throw(missingFileException);
 		bool _methodIsAuthorized(void);
-		bool _methodFound(string const & allowedMethods);
+		bool _methodFound(vector<string> const & allowedMethods);
 		void _setRequiredRealm(void);
 		void _setClientInfos(void) const;
 		bool _isAuthorized(void) const;
