@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/28 13:53:34 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/28 14:31:36 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,14 +95,14 @@ class ServerConfig
 		void					readFolderHost( void );
 		void					initHost( vector<string> & p_filname );
 		DIR *					directoryPath( void );
-		vector<string>			convertIndex( map<string, string> & p_map, string & p_fileName );
-		string					checkRoot( map<string, string> & p_map, string & p_fileName );
-		string					checkServerName( map<string, string> & p_map, string & p_fileName );
-		uint16_t &				checkPort( uint16_t & p_port, string & p_fileName );
+		vector<string>			convertIndex( map<string, string> & p_map, string const & p_fileName );
+		string					checkRoot( map<string, string> & p_map, string const & p_fileName );
+		string					checkServerName( map<string, string> & p_map, string const & p_fileName );
+		uint16_t &				checkPort( uint16_t & p_port, string const & p_fileName );
 		map<string, string>		checkCgi( map<string, string>& p_map, string const & p_fileName );
 		map<string, string>		checkErrorPage ( map<string, string> & p_map, string const & p_fileName );
 		map<string, map<string, vector<string> > > &
-								checkLocation( map<string, map<string, vector<string> > > & p_map, string & p_fileName );
+								checkLocation( map<string, map<string, vector<string> > > & p_map, string const & p_fileName );
 		void					checkKeyExist( string const & p_key, map<string, string> const & p_tmp,
 												 string const & p_filename = "server.conf" );
 		void					checkIfParamsExist( void );

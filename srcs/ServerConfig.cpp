@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/28 14:28:22 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/28 14:32:25 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,7 @@ void					ServerConfig::checkKeyExist( string const & p_key,
 }
 
 uint16_t &				ServerConfig::checkPort( uint16_t & p_port,
-													string & p_fileName )
+													string const & p_fileName )
 {
 	if (p_port == 0)
 	{
@@ -98,7 +98,7 @@ uint16_t &				ServerConfig::checkPort( uint16_t & p_port,
 }
 
 string					ServerConfig::checkServerName( map<string, string> & p_map,
-															string & p_fileName )
+															string const & p_fileName )
 {
 	if (p_map.find("server_name") == p_map.end())
 	{
@@ -110,7 +110,7 @@ string					ServerConfig::checkServerName( map<string, string> & p_map,
 }
 
 string					ServerConfig::checkRoot( map<string, string> & p_map,
-														string & p_fileName )
+														string const & p_fileName )
 {
 	if (p_map.find("root") == p_map.end())
 	{
@@ -122,7 +122,7 @@ string					ServerConfig::checkRoot( map<string, string> & p_map,
 }
 
 vector<string>			ServerConfig::convertIndex( map<string, string> & p_map,
-														string & p_fileName )
+														string const & p_fileName )
 {
 	std::string			word;
 	vector<string>		tmp;
@@ -144,7 +144,7 @@ vector<string>			ServerConfig::convertIndex( map<string, string> & p_map,
 
 map<string, map<string, vector<string> > > &
 ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map, \
-								string & p_fileName)
+								string const & p_fileName)
 {
 	for (map<string, map<string, vector<string> > >::iterator it = p_map.begin(); \
 			it != p_map.end(); it++)
