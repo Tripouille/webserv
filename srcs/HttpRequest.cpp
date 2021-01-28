@@ -110,7 +110,7 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException, missingFil
 	if (_requiredRealm.name.size())
 		_setClientInfos();
 	if (!_isAuthorized())
-		throw(parseException(*this, 401, "Unauthorized", ""));
+		throw(parseException(*this, 401, "Unauthorized", "wrong credentials"));
 	_analyseBody();
 }
 
@@ -413,11 +413,14 @@ HttpRequest::_searchForIndexInLocations(void)
 					return (true);
 				}
 			}
+
 		slashPos = analyzedFile.find_last_of('/');
 		if (slashPos == 0 && analyzedFile != "/")
 			analyzedFile.erase(slashPos + 1);
-		else
+		else if (slashPos != string::npos)
 			analyzedFile.erase(slashPos);
+		else
+			analyzedFile.clear();
 	}
 	return (false);
 }
@@ -474,8 +477,10 @@ HttpRequest::_methodIsAuthorized(void)
 		slashPos = analyzedFile.find_last_of('/');
 		if (slashPos == 0 && analyzedFile != "/")
 			analyzedFile.erase(slashPos + 1);
-		else
+		else if (slashPos != string::npos)
 			analyzedFile.erase(slashPos);
+		else
+			analyzedFile.clear();
 	}
 	return (false);
 }
@@ -494,9 +499,9 @@ void
 HttpRequest::_setRequiredRealm(void)
 {
 	string analyzedFile(_fileWithoutRoot);
-	std::map<string, std::pair<string, string> >::iterator its = _realms.begin();
-	std::map<string, std::pair<string, string> >::iterator ite = _realms.end();
-	std::map<string, std::pair<string, string> >::iterator actual;
+	std::map<string, map<string, string> >::iterator its = _host.location.begin();
+	std::map<string, map<string, string> >::iterator ite = _host.location.end();
+	std::map<string, map<string, string> >::iterator actual;
 	size_t slashPos;
 
 	while (analyzedFile.size())
@@ -504,14 +509,21 @@ HttpRequest::_setRequiredRealm(void)
 		for (actual = its; actual != ite; ++actual)
 			if (actual->first == analyzedFile)
 			{
-				_requiredRealm.name = actual->second.first;
-				_requiredRealm.userFile = actual->second.second;
-				return ;
+				if (actual->second.find("auth_basic") != actual->second.end())
+				{
+					_requiredRealm.name = actual->second["auth_basic"];
+					_requiredRealm.userFile = actual->second["auth_basic_user_file"];
+					return ;
+				}
 			}
+
 		slashPos = analyzedFile.find_last_of('/');
-		if (slashPos == string::npos)
-			return ;
-		analyzedFile.erase(slashPos);
+		if (slashPos == 0 && analyzedFile != "/")
+			analyzedFile.erase(slashPos + 1);
+		else if (slashPos != string::npos)
+			analyzedFile.erase(slashPos);
+		else
+			analyzedFile.clear();
 	}
 }
 

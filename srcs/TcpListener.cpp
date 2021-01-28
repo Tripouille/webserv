@@ -246,6 +246,6 @@ TcpListener::_doCgiRequest(CgiRequest cgiRequest, HttpRequest & request, Answer 
 		request.setStatus(500, "Internal Server Error (CGI)");
 		answer.sendStatus(request._status);
 		answer.sendEndOfHeader();
-		throw(Answer::sendException("error in cgi"));
+		throw(Answer::sendException("error in cgi : " + string(e.what())));
 	}
 }
