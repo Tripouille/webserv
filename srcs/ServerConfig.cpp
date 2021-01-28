@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/28 14:10:45 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/28 14:28:22 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -143,8 +143,8 @@ vector<string>			ServerConfig::convertIndex( map<string, string> & p_map,
 }
 
 map<string, map<string, vector<string> > > &
-						ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map, \
-													 string & p_fileName)
+ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map, \
+								string & p_fileName)
 {
 	for (map<string, map<string, vector<string> > >::iterator it = p_map.begin(); \
 			it != p_map.end(); it++)
@@ -165,12 +165,13 @@ map<string, map<string, vector<string> > > &
 	return p_map;
 }
 
-map<string, string>		ServerConfig::checkErrorPage( map<string, string>& p_map, string const & p_fileName )
+map<string, string>
+ServerConfig::checkErrorPage( map<string, string>& p_map, string const & p_fileName )
 {
 	return p_map;
 }
 
-map<string, string>		ServerConfig::checkCgi( map<string, string>& p_map, string const & p_fileName )
+map<string, string>ServerConfig::checkCgi( map<string, string>& p_map, string const & p_fileName )
 {
 	return p_map;
 }
@@ -205,8 +206,9 @@ map<string, string>		ServerConfig::isCgi( string const & p_key, ifstream & p_fil
 	return tmp;
 }
 
-map<string, string>		ServerConfig::isErrorPage( string const & p_key, string & p_arg, \
-													ifstream & p_file, string const & p_root )
+map<string, string>
+ServerConfig::isErrorPage( string const & p_key, string & p_arg, \
+							ifstream & p_file, string const & p_root )
 {
 	string		line;
 	string		key;
@@ -238,8 +240,9 @@ map<string, string>		ServerConfig::isErrorPage( string const & p_key, string & p
 	return tmp;
 }
 
-void					ServerConfig::checkKeyInvalid( string const & p_key, map<string, vector<string> > & p_map, \
-														string const & p_fileName )
+void
+ServerConfig::checkKeyInvalid( string const & p_key, map<string, vector<string> > & p_map, \
+									string const & p_fileName )
 {
 	if (p_key == "root")
 	{
@@ -273,8 +276,9 @@ vector<string>			ServerConfig::splitArg( string & p_arg )
 	return tmp;
 }
 
-void					ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \
-													string & p_arg, string const & p_root, string const & p_fileName )
+void
+ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \
+								string & p_arg, string const & p_root, string const & p_fileName )
 {
 	string		key;
 	string		line;
