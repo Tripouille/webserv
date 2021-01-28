@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/28 11:53:01 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/28 11:55:05 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -251,7 +251,6 @@ void					ServerConfig::checkKeyInvalid( string const & p_key, map<string, string
 void					ServerConfig::isLocation( map<string, map<string, string> > & p_map, ifstream & p_file, \
 													string & p_arg, string const & p_root, string const & p_fileName )
 {
-	size_t		len(0);
 	string		key;
 	string		line;
 	string		root(p_arg);
@@ -261,10 +260,6 @@ void					ServerConfig::isLocation( map<string, map<string, string> > & p_map, if
 
 	if (root.find_first_of(' ') != string::npos)
 		root.erase(root.find_first_of(' '), root.size());
-	if (root.size() == 1 && root == "/")
-		root = p_root;
-	else if ((len = root.find_first_of('/')) != string::npos)
-		root.erase(len, len + 1);
 	while(getline(p_file, line))
 	{
 		std::stringstream		str(line);
