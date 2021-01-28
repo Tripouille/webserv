@@ -80,7 +80,7 @@ class HttpRequest
 		s_status const & getStatus(void) const;
 		void setStatus(int c, string const & i);
 
-		void analyze(void) throw(parseException, closeOrderException);
+		void analyze(void) throw(parseException, closeOrderException, missingFileException);
 
 	private:
 		Client &						_client;
@@ -112,13 +112,15 @@ class HttpRequest
 		void _parseHeaderLine(string line) throw(parseException);
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
 		void _checkHeader(void) throw(parseException);
-		void _setRequiredFile(void);
+		void _setRequiredFile(void) throw(missingFileException);
 		string _getPath(string file) const;
 		void _extractQueryPart(void);
 		void _addIndexIfDirectory(void);
-		void _updateFileIfInvalid(void);
+		bool _searchForIndexInLocations(void);
+		void _searchForIndexInHost(void);
+		void _updateFileIfInvalid(void) throw(missingFileException);
 		bool _methodIsAuthorized(void);
-		bool _methodFound(vector<string> const & allowedMethods);
+		bool _methodFound(string const & allowedMethods);
 		void _setRequiredRealm(void);
 		void _setClientInfos(void) const;
 		bool _isAuthorized(void) const;
