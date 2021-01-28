@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/27 11:03:34 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/28 11:50:57 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,9 @@ struct Host
 	string								root;
 	vector<string>						index;
 	string								serverName;
-	map<string, map<string, string> > 	conf;
+	map<string, string>					cgi;
+	map<string, string>					errorPage;
+	map<string, map<string, string> > 	location;
 };
 
 class ServerConfig
@@ -97,6 +99,8 @@ class ServerConfig
 		string					checkRoot( map<string, string> & p_map, string & p_fileName );
 		string					checkServerName( map<string, string> & p_map, string & p_fileName );
 		uint16_t &				checkPort( uint16_t & p_port, string & p_fileName );
+		map<string, string>		checkCgi( map<string, string>& p_map, string const & p_fileName );
+		map<string, string>		checkErrorPage ( map<string, string> & p_map, string const & p_fileName );
 		map<string, map<string, string> > &
 								checkConf( map<string, map<string, string> > & p_map, string & p_fileName );
 		void					checkKeyExist( string const & p_key, map<string, string> const & p_tmp,

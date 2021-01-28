@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/28 10:59:37 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/28 11:53:01 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -145,6 +145,16 @@ vector<string>			ServerConfig::convertIndex( map<string, string> & p_map,
 map<string, map<string, string> > &
 						ServerConfig::checkConf( map<string, map<string, string> > & p_map, \
 													 string & p_fileName)
+{
+	return p_map;
+}
+
+map<string, string>		ServerConfig::checkErrorPage( map<string, string>& p_map, string const & p_fileName )
+{
+	return p_map;
+}
+
+map<string, string>		ServerConfig::checkCgi( map<string, string>& p_map, string const & p_fileName )
 {
 	return p_map;
 }
@@ -290,6 +300,8 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 		if (hostFile)
 		{
 			map<string, string>	tmp;
+			map<string, string>	errorTmp;
+			map<string, string> cgiTmp;
 			std::map<string, string>::iterator		it = tmp.begin();
 			map<string, map<string, string> >	conf;
 			std::map<string, map<string, string> >::iterator	it2 = conf.begin();
@@ -312,11 +324,11 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				if (key == "port")
 					port = static_cast<unsigned short>(atoi(arg.c_str()));
 				else if (key == "cgi")
-					conf[key] = this->isCgi(key, hostFile);
+					cgiTmp = this->isCgi(key, hostFile);
 				else if (key == "error_page")
 				{
 					if (tmp.find("root") != tmp.end())
-						conf[key] = this->isErrorPage(key, arg, hostFile, tmp.at("root"));
+						errorTmp = this->isErrorPage(key, arg, hostFile, tmp.at("root"));
 					else
 						throw configException("Error params root does not exist on file", p_filname[i]);
 				}
@@ -349,6 +361,8 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				this->checkRoot(tmp, p_filname[i]),
 				this->convertIndex(tmp, p_filname[i]),
 				this->checkServerName(tmp, p_filname[i]),
+				this->checkCgi(cgiTmp, p_filname[i]),
+				this->checkErrorPage(errorTmp, p_filname[i]),
 				this->checkConf(conf, p_filname[i])
 			};
 			host.push_back(temp_host);
