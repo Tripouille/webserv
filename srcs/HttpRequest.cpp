@@ -96,7 +96,7 @@ HttpRequest::setStatus(int c, string const & i)
 }
 
 void
-HttpRequest::analyze(void) throw(parseException, closeOrderException)
+HttpRequest::analyze(void) throw(parseException, closeOrderException, missingFileException)
 {
 	ssize_t headerSize = 0;
 
@@ -311,7 +311,7 @@ HttpRequest::_checkHeader(void) throw(parseException)
 }
 
 void
-HttpRequest::_setRequiredFile(void)
+HttpRequest::_setRequiredFile(void) throw(missingFileException)
 {
 	_extractQueryPart();
 	if (_requiredFile[0] != '/')
@@ -329,13 +329,8 @@ string
 HttpRequest::_getPath(string file) const
 {
 	string originalFile(file);
-	std::map<string, std::map<string, string> > locations;
-	locations["/"]["root"] = "www/sites1";
-	locations["/directory"]["alias"] = "www/YoupiBanane";
-	locations["/404.html"]["root"] = "www";
-
-	std::map<string, map<string, string> >::iterator its = locations.begin();
-	std::map<string, map<string, string> >::iterator ite = locations.end();
+	std::map<string, map<string, string> >::iterator its = _host.location.begin();
+	std::map<string, map<string, string> >::iterator ite = _host.location.end();
 	std::map<string, map<string, string> >::iterator actual;
 	size_t slashPos;
 	while (file.size())
@@ -352,10 +347,12 @@ HttpRequest::_getPath(string file) const
 		slashPos = file.find_last_of('/');
 		if (slashPos == 0 && file != "/")
 			file.erase(slashPos + 1);
-		else
+		else if (slashPos != string::npos)
 			file.erase(slashPos);
+		else
+			file.clear();
 	}
-	return (_host.root + file);
+	return (_host.root + originalFile);
 }
 
 void
@@ -372,38 +369,87 @@ void
 HttpRequest::_addIndexIfDirectory(void)
 {
 	struct stat fileInfos;
-
 	if (stat(_requiredFile.c_str(), &fileInfos) == 0
 	&& S_ISDIR(fileInfos.st_mode))
 	{
 		if (_requiredFile.back() != '/')
 			_requiredFile += '/';
-		vector<string>::iterator index = _host.index.begin();
-		vector<string>::iterator indexEnd = _host.index.end();
-		for (; index != indexEnd; ++index)
-		{
-			string testedFile = _requiredFile + *index;
-			if (stat(testedFile.c_str(), &fileInfos) == 0)
-			{
-				_requiredFile = testedFile;
-				break ;
-			}
-		}
-		if (index == indexEnd)
-			_requiredFile.clear();
+		if (_fileWithoutRoot.back() != '/')
+			_fileWithoutRoot += '/';
+		if (_searchForIndexInLocations())
+			return ;
+		_searchForIndexInHost();
 	}
 }
 
-void
-HttpRequest::_updateFileIfInvalid(void)
+bool
+HttpRequest::_searchForIndexInLocations(void)
 {
 	struct stat fileInfos;
+	string analyzedFile(_fileWithoutRoot);
+	std::map<string, map<string, string> >::iterator its = _host.location.begin();
+	std::map<string, map<string, string> >::iterator ite = _host.location.end();
+	std::map<string, map<string, string> >::iterator actual;
+	size_t slashPos;
+	while (analyzedFile.size())
+	{
+		for (actual = its; actual != ite; ++actual)
+			if (actual->first == analyzedFile)
+			{
+				if (actual->second.find("index") != actual->second.end())
+				{
+					std::istringstream iss(actual->second["index"]);
+					for (string indexFile; iss >> indexFile;)
+					{
+						string testedFile = _requiredFile + indexFile;
+						if (stat(testedFile.c_str(), &fileInfos) == 0)
+						{
+							_requiredFile = testedFile;
+							_fileWithoutRoot += indexFile;
+							return (true);
+						}
+					}
+					_requiredFile.clear();
+					return (true);
+				}
+			}
+		slashPos = analyzedFile.find_last_of('/');
+		if (slashPos == 0 && analyzedFile != "/")
+			analyzedFile.erase(slashPos + 1);
+		else
+			analyzedFile.erase(slashPos);
+	}
+	return (false);
+}
 
+void
+HttpRequest::_searchForIndexInHost(void)
+{
+	struct stat fileInfos;
+	vector<string>::iterator index = _host.index.begin();
+	vector<string>::iterator indexEnd = _host.index.end();
+	for (; index != indexEnd; ++index)
+	{
+		string testedFile = _requiredFile + *index;
+		if (stat(testedFile.c_str(), &fileInfos) == 0)
+		{
+			_requiredFile = testedFile;
+			break ;
+		}
+	}
+	if (index == indexEnd)
+		_requiredFile.clear();
+}
+
+void
+HttpRequest::_updateFileIfInvalid(void) throw(missingFileException)
+{
+	struct stat fileInfos;
 	if (stat(_requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
 	{
 		setStatus(404, "Not Found");
-		if (_config.http.find("error_page") != _config.http.end())
-			_requiredFile = _getPath(_config.http.at("error_page"));
+		if (_host.errorPage.find("404") != _host.errorPage.end())
+			_requiredFile = _getPath(_host.errorPage["404"]);
 		if (stat(_requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
 			throw(missingFileException());
 	}
@@ -412,24 +458,18 @@ HttpRequest::_updateFileIfInvalid(void)
 bool
 HttpRequest::_methodIsAuthorized(void)
 {
-	std::map<string, vector<string> > locations;
-	locations["/"].push_back("GET");
-	locations["/put_test"].push_back("GET");
-	locations["/put_test"].push_back("PUT");
-	locations["/post_body"].push_back("GET");
-	locations["/post_body"].push_back("POST");
-
 	string analyzedFile(_fileWithoutRoot);
 	size_t slashPos;
-	std::map<string, vector<string> >::iterator its = locations.begin();
-	std::map<string, vector<string> >::iterator ite = locations.end();
-	std::map<string, vector<string> >::iterator actual;
+	std::map<string, map<string, string> >::iterator its = _host.location.begin();
+	std::map<string, map<string, string> >::iterator ite = _host.location.end();
+	std::map<string, map<string, string> >::iterator actual;
 
 	while (analyzedFile.size())
 	{
 		for (actual = its; actual != ite; ++actual)
 			if (actual->first == analyzedFile)
-				return (_methodFound(actual->second));
+				if (actual->second.find("allowed_methods") != actual->second.end())
+					return (_methodFound(actual->second["allowed_methods"]));
 
 		slashPos = analyzedFile.find_last_of('/');
 		if (slashPos == 0 && analyzedFile != "/")
@@ -441,13 +481,13 @@ HttpRequest::_methodIsAuthorized(void)
 }
 
 bool
-HttpRequest::_methodFound(vector<string> const & allowedMethods)
+HttpRequest::_methodFound(string const & allowedMethods)
 {
-	if (_method == "HEAD")
-		return (std::find(allowedMethods.begin(), allowedMethods.end(), "HEAD") != allowedMethods.end()
-				|| std::find(allowedMethods.begin(), allowedMethods.end(), "GET") != allowedMethods.end());
-	else
-		return (std::find(allowedMethods.begin(), allowedMethods.end(), _method) != allowedMethods.end());
+	std::istringstream iss(allowedMethods);
+	for (string allowedMethod; iss >> allowedMethod;)
+		if (_method == allowedMethod || (_method == "HEAD" && allowedMethod == "GET"))
+			return (true);
+	return (false);
 }
 
 void

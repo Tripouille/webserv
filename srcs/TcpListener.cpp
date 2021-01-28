@@ -144,7 +144,7 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 		catch (HttpRequest::closeOrderException const & e)
 		{ _disconnectClient(socket); return ; }
 		catch (HttpRequest::missingFileException const & e)
-		{ return (_handleBadStatus(answer, request)); }
+		{ cerr << "missingFileException" << endl; return (_handleBadStatus(answer, request)); }
 
 		// If it is a PUT request, update the files here and set status to 204 (or 201 if created)
 		if (request._method == "PUT")
