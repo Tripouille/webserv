@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/28 11:55:05 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/28 12:32:34 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,7 +192,6 @@ map<string, string>		ServerConfig::isCgi( string const & p_key, ifstream & p_fil
 map<string, string>		ServerConfig::isErrorPage( string const & p_key, string & p_arg, \
 													ifstream & p_file, string const & p_root )
 {
-	size_t		len(0);
 	string		line;
 	string		key;
 	string		arg;
@@ -200,12 +199,8 @@ map<string, string>		ServerConfig::isErrorPage( string const & p_key, string & p
 	map<string, string>		tmp;
 	std::map<string, string>::iterator		it = tmp.begin();
 
-	if (root.find_first_of(' ') != string::npos)
-		root.erase(root.find_first_of(' '), root.size());
-	if (root.size() == 1 && root == "/")
-		root = p_root;
-	else if ((len = root.find_first_of('/')) != string::npos)
-		root.erase(len, len + 1);
+	if (root.find_first_of('/') != string::npos)
+		root.erase(root.find_first_of('/'), root.size());
 	while(getline(p_file, line))
 	{
 		std::stringstream		str(line);
@@ -223,6 +218,10 @@ map<string, string>		ServerConfig::isErrorPage( string const & p_key, string & p
 			arg.erase(0, arg.find_first_not_of(' '));
 		root += arg;
 		tmp.insert(it, std::pair<string, string>(key, root));
+	}
+	for (map<string, string>::iterator it = tmp.begin(); it != tmp.end(); it++)
+	{
+		std::cout << "Error Page: " << it->first << " " << it->second << std::endl;
 	}
 	return tmp;
 }
