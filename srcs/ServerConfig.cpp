@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/28 12:32:34 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/28 12:33:54 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -218,10 +218,6 @@ map<string, string>		ServerConfig::isErrorPage( string const & p_key, string & p
 			arg.erase(0, arg.find_first_not_of(' '));
 		root += arg;
 		tmp.insert(it, std::pair<string, string>(key, root));
-	}
-	for (map<string, string>::iterator it = tmp.begin(); it != tmp.end(); it++)
-	{
-		std::cout << "Error Page: " << it->first << " " << it->second << std::endl;
 	}
 	return tmp;
 }
