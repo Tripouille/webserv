@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/28 12:33:54 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/28 14:10:45 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -142,10 +142,26 @@ vector<string>			ServerConfig::convertIndex( map<string, string> & p_map,
 	return tmp;
 }
 
-map<string, map<string, string> > &
-						ServerConfig::checkConf( map<string, map<string, string> > & p_map, \
+map<string, map<string, vector<string> > > &
+						ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map, \
 													 string & p_fileName)
 {
+	for (map<string, map<string, vector<string> > >::iterator it = p_map.begin(); \
+			it != p_map.end(); it++)
+	{
+		for ( map<string, vector<string> >::iterator map = it->second.begin(); \
+				map != it->second.end(); map++)
+		{
+			if ((map->first != "allowed_methods" && map->first != "index" && map->first != "return") \
+				&& (map->second.size() > 1))
+			{
+				errno = EINVAL;
+				throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden in", \
+											p_fileName);
+			}
+
+		}
+	}
 	return p_map;
 }
 
@@ -222,7 +238,7 @@ map<string, string>		ServerConfig::isErrorPage( string const & p_key, string & p
 	return tmp;
 }
 
-void					ServerConfig::checkKeyInvalid( string const & p_key, map<string, string> & p_map, \
+void					ServerConfig::checkKeyInvalid( string const & p_key, map<string, vector<string> > & p_map, \
 														string const & p_fileName )
 {
 	if (p_key == "root")
@@ -243,15 +259,30 @@ void					ServerConfig::checkKeyInvalid( string const & p_key, map<string, string
 	}
 }
 
-void					ServerConfig::isLocation( map<string, map<string, string> > & p_map, ifstream & p_file, \
+vector<string>			ServerConfig::splitArg( string & p_arg )
+{
+	vector<string>		tmp;
+	std::stringstream	str(p_arg);
+	string				arg;
+
+	while(!str.eof())
+	{
+		str >> arg;
+		tmp.push_back(arg);
+	}
+	return tmp;
+}
+
+void					ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \
 													string & p_arg, string const & p_root, string const & p_fileName )
 {
 	string		key;
 	string		line;
 	string		root(p_arg);
 	string		arg;
-	map<string, string>		tmp;
-	std::map<string, string>::iterator		it = tmp.begin();
+	map<string, vector<string> >					tmp;
+	vector<string>									argV;
+	std::map<string, vector<string> >::iterator		it = tmp.begin();
 
 	if (root.find_first_of(' ') != string::npos)
 		root.erase(root.find_first_of(' '), root.size());
@@ -271,7 +302,8 @@ void					ServerConfig::isLocation( map<string, map<string, string> > & p_map, if
 			arg.erase(arg.find_first_of(';'), arg.size());
 		if (arg.find_first_not_of(' ') != string::npos)
 			arg.erase(0, arg.find_first_not_of(' '));
-		tmp.insert(it, std::pair<string, string>(key, arg));
+		vector<string> tmpV = this->splitArg(arg);
+		tmp.insert(it, std::pair<string, vector<string> >(key, tmpV));
 	}
 	p_map[root] = tmp;
 }
@@ -293,8 +325,8 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 			map<string, string>	errorTmp;
 			map<string, string> cgiTmp;
 			std::map<string, string>::iterator		it = tmp.begin();
-			map<string, map<string, string> >	conf;
-			std::map<string, map<string, string> >::iterator	it2 = conf.begin();
+			map<string, map<string, vector<string> > >	conf;
+			std::map<string, map<string, vector<string> > >::iterator	it2 = conf.begin();
 			uint16_t port;
 
 			while (getline(hostFile, line))
@@ -340,9 +372,12 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 			for (it2 = conf.begin(); it2 != conf.end(); it2++)
 			{
 				std::cout << it2->first << ": " << std::endl;
-				for (map<string, string>::iterator test42 = it2->second.begin(); test42 != it2->second.end(); test42++)
+				for (map<string, vector<string> >::iterator test42 = it2->second.begin(); test42 != it2->second.end(); test42++)
 				{
-					std::cout << " - " << test42->first << " : " << test42->second << std::endl;
+					std::cout << " - " << test42->first << " : ";
+					for (vector<string>::iterator test43 = test42->second.begin(); test43 != test42->second.end(); test43++)
+						std::cout << *test43 << " , ";
+					std::cout << std::endl;
 				}
 			}
 			/* Init stuct Host */
@@ -353,7 +388,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				this->checkServerName(tmp, p_filname[i]),
 				this->checkCgi(cgiTmp, p_filname[i]),
 				this->checkErrorPage(errorTmp, p_filname[i]),
-				this->checkConf(conf, p_filname[i])
+				this->checkLocation(conf, p_filname[i])
 			};
 			host.push_back(temp_host);
 		} else {

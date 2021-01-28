@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/28 11:50:57 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/28 13:53:34 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,13 +34,13 @@ using std::ifstream;
 
 struct Host
 {
-	uint16_t							port;
-	string								root;
-	vector<string>						index;
-	string								serverName;
-	map<string, string>					cgi;
-	map<string, string>					errorPage;
-	map<string, map<string, string> > 	location;
+	uint16_t									port;
+	string										root;
+	vector<string>								index;
+	string										serverName;
+	map<string, string>							cgi;
+	map<string, string>							errorPage;
+	map<string, map<string, vector<string> > > 	location;
 };
 
 class ServerConfig
@@ -101,18 +101,19 @@ class ServerConfig
 		uint16_t &				checkPort( uint16_t & p_port, string & p_fileName );
 		map<string, string>		checkCgi( map<string, string>& p_map, string const & p_fileName );
 		map<string, string>		checkErrorPage ( map<string, string> & p_map, string const & p_fileName );
-		map<string, map<string, string> > &
-								checkConf( map<string, map<string, string> > & p_map, string & p_fileName );
+		map<string, map<string, vector<string> > > &
+								checkLocation( map<string, map<string, vector<string> > > & p_map, string & p_fileName );
 		void					checkKeyExist( string const & p_key, map<string, string> const & p_tmp,
 												 string const & p_filename = "server.conf" );
 		void					checkIfParamsExist( void );
-		void					checkKeyInvalid( string const & p_key, map<string, string> & p_map, \
+		void					checkKeyInvalid( string const & p_key, map<string, vector<string> > & p_map, \
 													string const & p_fileName );
 		map<string, string>		isCgi( string const & p_key, ifstream & p_file );
 		map<string, string>		isErrorPage( string const & p_key, string & p_arg, \
 												ifstream & p_file, string const & p_root );
-		void					isLocation(	map<string, map<string, string> > & p_map, ifstream & p_file, \
+		void					isLocation(	map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \
 												string & p_arg, string const & p_root, string const & p_fileName );
+		vector<string>			splitArg( string & p_arg );
 
 };
 
