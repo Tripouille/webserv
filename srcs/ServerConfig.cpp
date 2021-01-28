@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/27 11:06:39 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/28 10:59:37 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -223,13 +223,16 @@ void					ServerConfig::checkKeyInvalid( string const & p_key, map<string, string
 	if (p_key == "root")
 	{
 		if (p_map.find("alias") != p_map.end())
+		{
+			errno = EINVAL;
 			throw configException("Error params \"alias:\" exist in params location on file ", p_fileName);
+		}
 	}
 	else if (p_key == "alias")
 	{
 		if (p_map.find("root") != p_map.end())
 		{
-			errno =
+			errno = EINVAL;
 			throw configException("Error params \"root:\" exist in params location on file ", p_fileName);
 		}
 	}
