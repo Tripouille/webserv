@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/29 14:53:50 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/29 14:59:58 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,7 +101,8 @@ class ServerConfig
 		string					checkServerName( map<string, string> & p_map, string const & p_fileName );
 		uint16_t &				checkPort( uint16_t & p_port, string const & p_fileName );
 		map<string, string> &	checkCgi( map<string, string>& p_map, string const & p_fileName );
-		map<string, string> &	checkErrorPage ( map<string, string> & p_map, string const & p_fileName );
+		map<string, string> &	checkErrorPage ( map<string, string> & p_map, string const & p_fileName, \
+													string const & p_root );
 		map<string, map<string, vector<string> > > &
 								checkLocation( map<string, map<string, vector<string> > > & p_map, string const & p_fileName );
 		void					checkKeyExist( string const & p_key, map<string, string> const & p_tmp,

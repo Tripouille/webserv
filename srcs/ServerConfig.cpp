@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/29 14:54:15 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/29 15:01:06 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,8 +166,18 @@ ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map,
 }
 
 map<string, string> &
-ServerConfig::checkErrorPage( map<string, string>& p_map, string const & p_fileName )
+ServerConfig::checkErrorPage( map<string, string> & p_map, string const & p_fileName, \
+								string const & p_root )
 {
+	for (map<string, string>::iterator it = p_map.begin(); \
+			it != p_map.end(); it++)
+	{
+		struct stat fileInfos;
+		if (stat(string(p_root + it->second).c_str(), &fileInfos) != 0)
+		{
+			throw configException("Error with error file " + string(p_root + it->second) + " in", p_fileName);
+		}
+	}
 	return p_map;
 }
 
@@ -400,7 +410,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				this->convertIndex(tmp, p_filname[i]),
 				this->checkServerName(tmp, p_filname[i]),
 				this->checkCgi(cgiTmp, p_filname[i]),
-				this->checkErrorPage(errorTmp, p_filname[i]),
+				this->checkErrorPage(errorTmp, p_filname[i], tmp.at("root")),
 				this->checkLocation(conf, p_filname[i])
 			};
 			host.push_back(temp_host);
