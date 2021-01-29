@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/28 14:32:25 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/29 14:26:03 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -173,6 +173,15 @@ ServerConfig::checkErrorPage( map<string, string>& p_map, string const & p_fileN
 
 map<string, string>ServerConfig::checkCgi( map<string, string>& p_map, string const & p_fileName )
 {
+	for (map<string, string>::iterator it = p_map.begin(); \
+			it != p_map.end(); it++)
+	{
+		struct stat fileInfos;
+		if (stat(it->second.c_str(), &fileInfos) != 0)
+		{
+			throw configException("Error with cgi path " + string(it->second) + " in", p_fileName);
+		}
+	}
 	return p_map;
 }
 
