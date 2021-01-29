@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/29 15:01:06 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/01/29 15:06:37 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -159,7 +159,18 @@ ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map,
 				throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden in", \
 											p_fileName);
 			}
-
+			if (map->first == "auth_basic" && (it->second.find("auth_basic_user_file") == it->second.end()))
+			{
+				errno = EINVAL;
+				throw configException("Error in params \"" + it->first + "\" need params \'auth_basic_user_file\' in", \
+											p_fileName);
+			}
+			if (map->first == "auth_basic_user_file" && (it->second.find("auth_basic") == it->second.end()))
+			{
+				errno = EINVAL;
+				throw configException("Error in params \"" + it->first + "\" need params \'auth_basic\' in", \
+											p_fileName);
+			}
 		}
 	}
 	return p_map;
