@@ -36,20 +36,6 @@ HttpRequest::closeOrderException::what(void) const throw()
 }
 
 
-HttpRequest::missingFileException::missingFileException(void) throw()
-{
-}
-
-HttpRequest::missingFileException::~missingFileException(void) throw()
-{
-}
-
-const char *
-HttpRequest::missingFileException::what(void) const throw()
-{
-	return ("No error page");
-}
-
 /* HttpRequest */
 
 HttpRequest::HttpRequest(Client & client, Host& host, uint16_t port,
@@ -96,7 +82,7 @@ HttpRequest::setStatus(int c, string const & i)
 }
 
 void
-HttpRequest::analyze(void) throw(parseException, closeOrderException, missingFileException)
+HttpRequest::analyze(void) throw(parseException, closeOrderException)
 {
 	ssize_t headerSize = 0;
 
@@ -153,10 +139,10 @@ HttpRequest::_analyseRequestLine(ssize_t & headerSize) throw(parseException, clo
 		throw(parseException(*this, 431, "Request Line Too Long", "request line too long"));
 
 	requestLine = _splitRequestLine(buffer);
-	std::ostringstream debug; debug << (int)*buffer;
+	//std::ostringstream debug; debug << (int)*buffer;
 	if (requestLine.size() != 3)
 		throw parseException(*this, 400, "Bad Request", "invalid request line : "
-		+ string(buffer) + " / " + debug.str());
+		+ string(buffer)); //+ " / " + debug.str());
 	_fillAndCheckRequestLine(requestLine);
 
 	cerr << "Request line : " << buffer << endl;
@@ -311,17 +297,16 @@ HttpRequest::_checkHeader(void) throw(parseException)
 }
 
 void
-HttpRequest::_setRequiredFile(void) throw(missingFileException)
+HttpRequest::_setRequiredFile(void)
 {
 	_extractQueryPart();
-	if (_requiredFile[0] != '/')
-		_requiredFile.insert(0, "/");
-	_fileWithoutRoot = _requiredFile;
+	if (_fileWithoutRoot[0] != '/')
+		_fileWithoutRoot.insert(0, "/");
 	_requiredFile = _getPath(_fileWithoutRoot);
 	if (_method != "PUT")
 	{
 		_addIndexIfDirectory();
-		_updateFileIfInvalid();
+		_updateStatusIfInvalid();
 	}
 }
 
@@ -362,7 +347,7 @@ HttpRequest::_extractQueryPart(void)
 
 	if (queryPos != string::npos)
 		_queryPart = _target.substr(queryPos + 1);
-	_requiredFile = _target.substr(0, queryPos);
+	_fileWithoutRoot = _target.substr(0, queryPos);
 }
 
 void
@@ -446,17 +431,11 @@ HttpRequest::_searchForIndexInHost(void)
 }
 
 void
-HttpRequest::_updateFileIfInvalid(void) throw(missingFileException)
+HttpRequest::_updateStatusIfInvalid(void)
 {
 	struct stat fileInfos;
 	if (stat(_requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
-	{
 		setStatus(404, "Not Found");
-		if (_host.errorPage.find("404") != _host.errorPage.end())
-			_requiredFile = _getPath(_host.errorPage["404"]);
-		if (stat(_requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
-			throw(missingFileException());
-	}
 }
 
 bool

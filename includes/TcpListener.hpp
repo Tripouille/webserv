@@ -84,6 +84,9 @@ class TcpListener
 		void _doCgiRequest(CgiRequest cgiRequest, HttpRequest & request, Answer & answer);
 		void _handleBadStatus(Answer & answer, HttpRequest const & request)
 			throw(Answer::sendException);
+
+		void _setErrorPage(HttpRequest & request) const;
+		template <class T> string _toStr(T const & value) const;
 };
 
 #endif

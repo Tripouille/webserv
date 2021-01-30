@@ -65,13 +65,6 @@ class HttpRequest
 				virtual ~closeOrderException(void) throw();
 				virtual const char * what(void) const throw();
 		};
-		class missingFileException : public std::exception
-		{
-			public:
-				missingFileException(void) throw();
-				virtual ~missingFileException(void) throw();
-				virtual const char * what(void) const throw();
-		};
 
 		HttpRequest(Client & client, Host& host, uint16_t port, ServerConfig & config);
 		~HttpRequest(void);
@@ -80,7 +73,7 @@ class HttpRequest
 		s_status const & getStatus(void) const;
 		void setStatus(int c, string const & i);
 
-		void analyze(void) throw(parseException, closeOrderException, missingFileException);
+		void analyze(void) throw(parseException, closeOrderException);
 
 	private:
 		Client &						_client;
@@ -112,13 +105,13 @@ class HttpRequest
 		void _parseHeaderLine(string line) throw(parseException);
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
 		void _checkHeader(void) throw(parseException);
-		void _setRequiredFile(void) throw(missingFileException);
+		void _setRequiredFile(void);
 		string _getPath(string file) const;
 		void _extractQueryPart(void);
 		void _addIndexIfDirectory(void);
 		bool _searchForIndexInLocations(void);
 		void _searchForIndexInHost(void);
-		void _updateFileIfInvalid(void) throw(missingFileException);
+		void _updateStatusIfInvalid(void);
 		bool _methodIsAuthorized(void);
 		bool _methodFound(vector<string> const & allowedMethods);
 		void _setRequiredRealm(void);

@@ -80,13 +80,14 @@ void
 TcpListener::run(void)
 {
 	fd_set setCopy;
-	bool running = true;
-	while (running)
+	int socketCount;
+
+	while (true)
 	{
-		setCopy = _activeFdSet;
 		timeval timeout = {60, 0}; // 60 seconds
-		int socketCount = select(FD_SETSIZE, &setCopy, NULL, NULL, &timeout);
-		if (socketCount < 0)
+		setCopy = _activeFdSet;
+
+		if ((socketCount = select(FD_SETSIZE, &setCopy, NULL, NULL, &timeout)) < 0)
 		{
 			close(_socket);
 			throw tcpException("Select failed");
@@ -111,19 +112,19 @@ TcpListener::_acceptNewClient(void) throw(tcpException)
 {
 	cout << endl << "New connection to the server" << endl;
 	struct sockaddr_in address; socklen_t address_len = sizeof(address);
-	SOCKET client = accept(_socket, reinterpret_cast<sockaddr*>(&address), &address_len);
-	if (client < 0)
+	SOCKET s = accept(_socket, reinterpret_cast<sockaddr*>(&address), &address_len);
+	if (s < 0)
 		throw tcpException("Accept failed");
-	_clientInfos[client] = Client(client, inet_ntoa(address.sin_addr));
-	std::cout << "client address: " << _clientInfos[client].addr << endl;
-	FD_SET(client, &_activeFdSet);
+	_clientInfos[s] = Client(s, inet_ntoa(address.sin_addr));
+	std::cout << "client address: " << _clientInfos[s].addr << endl;
+	FD_SET(s, &_activeFdSet);
 	cout << ++_clientNb << " clients connected" << endl;
 }
 
 void
 TcpListener::_disconnectClient(SOCKET socket)
 {
-	cerr << "Killing socket " << socket << endl;
+	cout << "Killing socket " << socket << endl;
 	FD_CLR(socket, &_activeFdSet);
 	close(socket);
 	_clientNb--;
@@ -143,15 +144,22 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 		{ cerr << e.what() << endl; }
 		catch (HttpRequest::closeOrderException const & e)
 		{ _disconnectClient(socket); return ; }
-		catch (HttpRequest::missingFileException const & e)
-		{ cerr << "missingFileException" << endl; return (_handleBadStatus(answer, request)); }
 
 		// If it is a PUT request, update the files here and set status to 204 (or 201 if created)
 		if (request._method == "PUT")
 			_put(request);
-
-		// Request is valid, no close order
-		_answerToClient(socket, answer, request);
+		if (request._status.info == "Created" || request._status.info == "No Content")
+		{
+			answer.sendStatus(request._status);
+			answer.sendEndOfHeader();
+			return ;
+		}
+		if (request._status.code / 100 != 2)
+			_setErrorPage(request);
+		if (request._requiredFile.size())
+			_answerToClient(socket, answer, request);
+		else
+			_handleBadStatus(answer, request);
 	}
 	catch (Answer::sendException const & e)
 	{
@@ -193,16 +201,6 @@ TcpListener::_answerToClient(SOCKET socket, Answer & answer,
 	HttpRequest & request)
 	throw(tcpException, Answer::sendException)
 {
-	if (request._status.info == "Created" || request._status.info == "No Content")
-	{
-		answer.sendStatus(request._status);
-		answer.sendEndOfHeader();
-		return ;
-	}
-	else if (request._status.info != "OK"
-	&& !(request._status.code == 404 && request._requiredFile.size()))
-		return (_handleBadStatus(answer, request));
-
 	string extension = request._requiredFile.substr(request._requiredFile.find_last_of('.') + 1, string::npos);
 	bool requiredFileNeedCGI = (extension == "php");
 	if (requiredFileNeedCGI)
@@ -248,4 +246,26 @@ TcpListener::_doCgiRequest(CgiRequest cgiRequest, HttpRequest & request, Answer 
 		answer.sendEndOfHeader();
 		throw(Answer::sendException("error in cgi : " + string(e.what())));
 	}
+}
+
+void
+TcpListener::_setErrorPage(HttpRequest & request) const
+{
+	struct stat fileInfos;
+	string code = _toStr(request._status.code);
+	if (_host.errorPage.find(code) != _host.errorPage.end())
+	{
+		request._requiredFile = request._getPath(_host.errorPage[code]);
+		if (stat(request._requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
+			request._requiredFile.clear();
+	}
+}
+
+template <class T>
+string
+TcpListener::_toStr(T const & value) const
+{
+	std::ostringstream ss;
+	ss << value;
+	return (ss.str());
 }

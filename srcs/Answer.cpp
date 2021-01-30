@@ -73,8 +73,8 @@ Answer::getFile(string const & fileName) throw(sendException)
 		try {indexFile.read(buffer->b, buffer->size);}
 		catch (std::exception const &)
 		{throw(sendException("Coud not read file " + fileName));}
-		_body.push(buffer);
 		buffer->occupiedSize = indexFile.gcount();
+		_body.push(buffer);
 	} while (buffer->occupiedSize == buffer->size && !indexFile.eof());
 	indexFile.close();
 }
@@ -91,12 +91,10 @@ Answer::sendStatus(HttpRequest::s_status const & status)
 void
 Answer::sendHeader(void) const throw(sendException)
 {
-	std::ostringstream headerStream;
+	string header;
 
 	for (map<string, string>::const_iterator it = _fields.begin(); it != _fields.end(); ++it)
-		headerStream << it->first << ": " << it->second << "\r\n";
-	string header = headerStream.str();
-	//cerr << "header sent : " << endl << header << endl;
+		header += it->first + ": " + it->second + "\r\n";
 	_sendToClient(header.c_str(), header.size());
 }
 
@@ -109,8 +107,6 @@ Answer::sendEndOfHeader(void) const throw(sendException)
 void
 Answer::sendAnswer(HttpRequest const & request) throw(sendException)
 {
-	/*for (map<string, string>::iterator it = _fields.begin(); it != _fields.end(); ++it)
-		cerr << "_fields[" << it->first << "] = " << it-> second << endl;*/
 	_fillServerField();
 	_fillDateField();
 	_fillContentFields(request._requiredFile);
