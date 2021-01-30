@@ -79,15 +79,16 @@ TcpListener::init(void)
 void
 TcpListener::run(void)
 {
-	fd_set setCopy;
+	fd_set setCopy, writeSetCopy;
 	int socketCount;
 
 	while (true)
 	{
 		timeval timeout = {60, 0}; // 60 seconds
 		setCopy = _activeFdSet;
+		writeSetCopy = _activeFdSet;
 
-		if ((socketCount = select(FD_SETSIZE, &setCopy, NULL, NULL, &timeout)) < 0)
+		if ((socketCount = select(FD_SETSIZE, &setCopy, &writeSetCopy, NULL, &timeout)) < 0)
 		{
 			close(_socket);
 			throw tcpException("Select failed");
@@ -99,7 +100,7 @@ TcpListener::run(void)
 			{
 				if (sock == _socket)
 					_acceptNewClient();
-				else
+				else if (FD_ISSET(sock, &writeSetCopy))
 					_handleRequest(sock);
 			}
 		}
@@ -110,7 +111,7 @@ TcpListener::run(void)
 void
 TcpListener::_acceptNewClient(void) throw(tcpException)
 {
-	cout << endl << "New connection to the server" << endl;
+	cout << endl << "New connection to the server, ";
 	struct sockaddr_in address; socklen_t address_len = sizeof(address);
 	SOCKET s = accept(_socket, reinterpret_cast<sockaddr*>(&address), &address_len);
 	if (s < 0)
@@ -134,8 +135,8 @@ void
 TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 {
 	cout << endl << "Data arriving from socket " << socket << endl;
-	HttpRequest request(_clientInfos[socket], _host, _port, _config);
-	Answer answer(socket);
+	HttpRequest request(_clientInfos[socket], _host, _config);
+	Answer answer(socket, _config);
 
 	try
 	{
@@ -228,7 +229,17 @@ TcpListener::_handleBadStatus(Answer & answer, HttpRequest const & request)
 	}
 	else if (request._status.code == 405)
 	{
-		answer._fields["Allow"] = "GET, HEAD"; // en ajouter ou en enlever selon la config
+		vector<string> const allowedMethods = request._getAllowedMethods();
+		vector<string>::const_iterator it = allowedMethods.begin();
+		while (it != allowedMethods.end())
+		{
+			answer._fields["Allow"] += *it++;
+			if (it != allowedMethods.end())
+				answer._fields["Allow"] += ", ";
+		}
+		if (std::find(allowedMethods.begin(), allowedMethods.end(), "GET") != allowedMethods.end()
+		&& std::find(allowedMethods.begin(), allowedMethods.end(), "HEAD") == allowedMethods.end())
+			answer._fields["Allow"] += ", HEAD";
 		answer.sendHeader();
 	}
 	answer.sendEndOfHeader();

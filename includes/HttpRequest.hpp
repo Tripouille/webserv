@@ -18,8 +18,6 @@
 # define CLIENT_MAX_BODY_SIZE 1000000
 # define REQUEST_LINE_MAX_SIZE 1024
 # define HEADER_MAX_SIZE 8000
-//# define URI_MAX_SIZE 512
-//# define MAX_EMPTY_LINE_BEFORE_REQUEST 1
 
 typedef int SOCKET;
 
@@ -66,7 +64,7 @@ class HttpRequest
 				virtual const char * what(void) const throw();
 		};
 
-		HttpRequest(Client & client, Host& host, uint16_t port, ServerConfig & config);
+		HttpRequest(Client & client, Host& host, ServerConfig & config);
 		~HttpRequest(void);
 		HttpRequest(HttpRequest const & other);
 
@@ -86,7 +84,6 @@ class HttpRequest
 		size_t							_bodySize;
 		s_status						_status;
 		Host &							_host;
-		uint16_t						_port;
 		ServerConfig &					_config;
 		std::map<string, std::pair<string, string> > _realms;
 
@@ -112,8 +109,8 @@ class HttpRequest
 		bool _searchForIndexInLocations(void);
 		void _searchForIndexInHost(void);
 		void _updateStatusIfInvalid(void);
-		bool _methodIsAuthorized(void);
-		bool _methodFound(vector<string> const & allowedMethods);
+		bool _methodIsAuthorized(void) const;
+		vector<string> const _getAllowedMethods(void) const;
 		void _setRequiredRealm(void);
 		void _setClientInfos(void) const;
 		bool _isAuthorized(void) const;
