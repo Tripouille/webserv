@@ -73,7 +73,7 @@ class HttpRequest
 				virtual const char * what(void) const throw();
 		};
 
-		HttpRequest(Client & client, Host& host, uint16_t port, ServerConfig & config);
+		HttpRequest(Client & client, Host& host, ServerConfig & config);
 		~HttpRequest(void);
 		HttpRequest(HttpRequest const & other);
 
@@ -93,7 +93,6 @@ class HttpRequest
 		size_t							_bodySize;
 		s_status						_status;
 		Host &							_host;
-		uint16_t						_port;
 		ServerConfig &					_config;
 		std::map<string, std::pair<string, string> > _realms;
 

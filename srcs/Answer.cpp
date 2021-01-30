@@ -25,11 +25,7 @@ Answer::sendException::what(void) const throw()
 
 /* Answer */
 
-Answer::Answer(void)
-{
-}
-
-Answer::Answer(SOCKET client) : _client(client)
+Answer::Answer(SOCKET client, ServerConfig const & config) : _client(client), _config(config)
 {
 }
 
@@ -38,7 +34,7 @@ Answer::~Answer()
 	deleteQ(_body);
 }
 
-Answer::Answer(Answer const & other)
+Answer::Answer(Answer const & other) : _config(other._config)
 {
 	Answer::_copy(other);
 }
@@ -170,12 +166,9 @@ Answer::_fillDateField(void)
 void
 Answer::_fillContentFields(string const & fileName)
 {
-	map<string, string> mimeTypes;
-	mimeTypes["html"] = "text/html";
-	mimeTypes["jpg"] = "image/jpeg";
 	string extension = fileName.substr(fileName.find_last_of('.') + 1, string::npos);
-	if (_fields.count("content-type") == 0 && mimeTypes.count(extension))
-		_fields["Content-Type"] = mimeTypes[extension];
+	if (_fields.count("content-type") == 0 && _config.mimeType.count(extension))
+		_fields["Content-Type"] = _config.mimeType.at(extension);
 
 	streamsize fileSize = static_cast<streamsize>(_body.size() - 1)
 							* _body.back()->size + _body.back()->occupiedSize;

@@ -52,13 +52,10 @@ HttpRequest::missingFileException::what(void) const throw()
 
 /* HttpRequest */
 
-HttpRequest::HttpRequest(Client & client, Host& host, uint16_t port,
-							ServerConfig & config)
-			: _client(client), _host(host), _port(port), _config(config)
+HttpRequest::HttpRequest(Client & client, Host& host, ServerConfig & config)
+			: _client(client), _host(host), _config(config)
 {
 	setStatus(200, "OK");
-	_realms["/private"] = std::make_pair("private_realm", "./conf/private.access");
-	_realms["/private/admin"] = std::make_pair("admin_realm", "./conf/admin.access");
 }
 
 HttpRequest::~HttpRequest(void)
@@ -66,8 +63,7 @@ HttpRequest::~HttpRequest(void)
 }
 
 HttpRequest::HttpRequest(HttpRequest const & other)
-		: _client(other._client), _host(other._host), _port(other._port),
-			_config(other._config)
+		: _client(other._client), _host(other._host), _config(other._config)
 {
 	HttpRequest::_copy(other);
 }
