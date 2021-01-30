@@ -105,8 +105,6 @@ Answer::sendEndOfHeader(void) const throw(sendException)
 void
 Answer::sendAnswer(HttpRequest const & request) throw(sendException)
 {
-	/*for (map<string, string>::iterator it = _fields.begin(); it != _fields.end(); ++it)
-		cerr << "_fields[" << it->first << "] = " << it-> second << endl;*/
 	_fillServerField();
 	_fillDateField();
 	_fillContentFields(request._requiredFile);

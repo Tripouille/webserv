@@ -79,13 +79,14 @@ TcpListener::init(void)
 void
 TcpListener::run(void)
 {
-	fd_set setCopy;
+	fd_set setCopy, writeSetCopy;
 	bool running = true;
 	while (running)
 	{
 		setCopy = _activeFdSet;
+		writeSetCopy = _activeFdSet;
 		timeval timeout = {60, 0}; // 60 seconds
-		int socketCount = select(FD_SETSIZE, &setCopy, NULL, NULL, &timeout);
+		int socketCount = select(FD_SETSIZE, &setCopy, &writeSetCopy, NULL, &timeout);
 		if (socketCount < 0)
 		{
 			close(_socket);
@@ -98,7 +99,7 @@ TcpListener::run(void)
 			{
 				if (sock == _socket)
 					_acceptNewClient();
-				else
+				else if (FD_ISSET(sock, &writeSetCopy))
 					_handleRequest(sock);
 			}
 		}
@@ -109,7 +110,7 @@ TcpListener::run(void)
 void
 TcpListener::_acceptNewClient(void) throw(tcpException)
 {
-	cout << endl << "New connection to the server" << endl;
+	cout << endl << "New connection to the server, ";
 	struct sockaddr_in address; socklen_t address_len = sizeof(address);
 	SOCKET client = accept(_socket, reinterpret_cast<sockaddr*>(&address), &address_len);
 	if (client < 0)
@@ -232,10 +233,8 @@ TcpListener::_handleBadStatus(Answer & answer, HttpRequest const & request)
 	{
 		vector<string> const allowedMethods = request._getAllowedMethods();
 		vector<string>::const_iterator it = allowedMethods.begin();
-		cerr << "_fileWithoutRoot = " << request._fileWithoutRoot << endl;
 		while (it != allowedMethods.end())
 		{
-			cerr << "allowedMethod = " << *it << endl;
 			answer._fields["Allow"] += *it++;
 			if (it != allowedMethods.end())
 				answer._fields["Allow"] += ", ";
