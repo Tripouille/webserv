@@ -2,8 +2,19 @@
 
 
 /* Execption */
-CgiRequest::cgiException::cgiException(string str) throw() : _str(str)
+CgiRequest::cgiException::cgiException(string str, CgiRequest & cgiRequest)
+throw() : _str(str)
 {
+	if (cgiRequest._inPipe[0] != 0)
+	{
+		close(cgiRequest._inPipe[0]);
+		close(cgiRequest._inPipe[1]);
+	}
+	if (cgiRequest._outPipe[0] != 0)
+	{
+		close(cgiRequest._outPipe[0]);
+		close(cgiRequest._outPipe[1]);
+	}
 }
 
 CgiRequest::cgiException::~cgiException(void) throw()
@@ -50,14 +61,17 @@ CgiRequest::CgiRequest(const unsigned short serverPort,
 
 	_setArg(0, request._requiredFile);
 	_av[1] = NULL;
+
+	_inPipe[0] = 0;
+	_outPipe[0] = 0;
 }
 
 CgiRequest::~CgiRequest(void)
 {
 	for (int i = 0; _env[i] != NULL; ++i)
-		delete _env[i];
+		delete[] _env[i];
 	for (int i = 0; _av[i] != NULL; ++i)
-		delete _av[i];
+		delete[] _av[i];
 }
 
 CgiRequest::CgiRequest(CgiRequest const & other)
@@ -78,48 +92,48 @@ CgiRequest::operator=(CgiRequest const & other)
 void
 CgiRequest::doRequest(HttpRequest const & request, Answer & answer)
 {
-	string cgi;
 	int status;
-	int inPipe[2], outPipe[2];
-	if (pipe(inPipe) < 0 || pipe(outPipe) < 0)
-		throw(cgiException("pipe failed"));
+	if (pipe(_inPipe) < 0 || pipe(_outPipe) < 0)
+		throw(cgiException("pipe failed", *this));
 	int child = fork();
 	if (child < 0)
-		throw(cgiException("fork failed"));
+		throw(cgiException("fork failed", *this));
 	if (child == 0)
 	{
-		dup2(inPipe[0], STDIN);
-		dup2(outPipe[1], STDOUT);
-		write(inPipe[1], request._body, request._bodySize);
-		cgi = _host.cgi.at(_extension);
+		dup2(_inPipe[0], STDIN);
+		dup2(_outPipe[1], STDOUT);
+		write(_inPipe[1], request._body, request._bodySize);
+		string cgi = _host.cgi.at(_extension);
 		if (execve(cgi.c_str(), _av, _env) == -1)
 			exit(EXIT_FAILURE);
 	}
-	else
+	usleep(TIMEOUT);
+	waitpid(child, &status, WNOHANG);
+	if (WEXITSTATUS(status) == EXIT_FAILURE)
+		throw(cgiException("execve fail", *this));
+	kill(child, SIGKILL);
+	fcntl(_outPipe[0], F_SETFL, O_NONBLOCK);
+	_analyzeHeader(_outPipe[0], answer);
+	//answer._debugFields();
+	s_buffer * buffer = NULL;
+	do
 	{
-		usleep(TIMEOUT);
-		waitpid(child, &status, WNOHANG);
-		if (WEXITSTATUS(status) == EXIT_FAILURE)
-			throw(cgiException("execve fail"));
-		kill(child, SIGKILL);
-		fcntl(outPipe[0], F_SETFL, O_NONBLOCK);
-		_analyzeHeader(outPipe[0], answer);
-		//answer._debugFields();
-		s_buffer * buffer = NULL;
-		do
-		{
-			buffer = new s_buffer(BUFF_SIZE);
-			buffer->occupiedSize = read(outPipe[0], buffer->b, static_cast<size_t>(buffer->size));
-			answer._body.push(buffer);
-			//cerr << "buffer = " << buffer->b << endl;
-		} while (buffer->occupiedSize == buffer->size);
-		if (buffer->occupiedSize == -1)
-		{
-			deleteQ(answer._body);
-			throw(cgiException("read fail"));
-		}
-		answer._body.back()->b[--answer._body.back()->occupiedSize] = 0;
+		buffer = new s_buffer(BUFF_SIZE);
+		buffer->occupiedSize = read(_outPipe[0], buffer->b, static_cast<size_t>(buffer->size));
+		answer._body.push(buffer);
+		//cerr << "occupedSize = " << buffer->occupiedSize << ", buffer = " << buffer->b << endl;
+	} while (buffer->occupiedSize == buffer->size);
+	if (buffer->occupiedSize == -1)
+	{
+		deleteQ(answer._body);
+		throw(cgiException("read fail", *this));
 	}
+	close(_inPipe[0]);
+	close(_inPipe[1]);
+	_inPipe[0] = 0;
+	close(_outPipe[0]);
+	close(_outPipe[1]);
+	_outPipe[0] = 0;
 }
 
 /* Private method */
@@ -170,9 +184,9 @@ CgiRequest::_analyzeHeader(int fd, Answer & answer)
 		_parseHeaderLine(line, answer);
 	}
 	if (lineSize < 0)
-		throw(cgiException("recv error"));
+		throw(cgiException("recv error", *this));
 	else if (headerSize > HEADER_MAX_SIZE)
-		throw(cgiException("header too large"));
+		throw(cgiException("header too large", *this));
 }
 
 ssize_t
@@ -208,11 +222,11 @@ CgiRequest::_parseHeaderLine(string line, Answer & answer) throw(cgiException)
 {
 	size_t colonPos = line.find(':', 0);
 	if (colonPos == string::npos)
-		throw(cgiException("no ':'"));
+		throw(cgiException("no ':'", *this));
 	string name = line.substr(0, colonPos);
 	std::transform(name.begin(), name.end(), name.begin(), tolower);
 	if (name.find(' ', 0) != string::npos)
-		throw(cgiException("space before ':'"));
+		throw(cgiException("space before ':'", *this));
 	string value = line.substr(colonPos + 1, string::npos);
 	answer._fields[name] = value;
 }

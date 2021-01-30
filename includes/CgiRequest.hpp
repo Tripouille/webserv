@@ -29,7 +29,7 @@ class CgiRequest
 	class cgiException : public std::exception
 	{
 		public:
-			cgiException(string str = "") throw();
+			cgiException(string str, CgiRequest & cgiRequest) throw();
 			virtual ~cgiException(void) throw();
 			virtual const char * what(void) const throw();
 		private:
@@ -63,6 +63,8 @@ class CgiRequest
 		Host &				_host;
 		string &			_extension;
 		SOCKET				_socket;
+		int					_inPipe[2];
+		int					_outPipe[2];
 };
 
 #endif

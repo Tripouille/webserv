@@ -42,6 +42,7 @@ HttpRequest::HttpRequest(Client & client, Host& host, ServerConfig & config)
 			: _client(client), _host(host), _config(config)
 {
 	setStatus(200, "OK");
+	_bodySize = 0;
 }
 
 HttpRequest::~HttpRequest(void)
