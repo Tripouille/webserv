@@ -3,6 +3,7 @@
 # include <queue>
 # include <list>
 # include <iostream>
+# include <string.h>
 
 using std::list; using std::queue; using std::streamsize;
 

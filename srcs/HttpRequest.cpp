@@ -353,9 +353,9 @@ HttpRequest::_addIndexIfDirectory(void)
 	if (stat(_requiredFile.c_str(), &fileInfos) == 0
 	&& S_ISDIR(fileInfos.st_mode))
 	{
-		if (_requiredFile.back() != '/')
+		if (_requiredFile[_requiredFile.size() - 1] != '/')
 			_requiredFile += '/';
-		if (_fileWithoutRoot.back() != '/')
+		if (_fileWithoutRoot[_fileWithoutRoot.size() - 1] != '/')
 			_fileWithoutRoot += '/';
 		if (_searchForIndexInLocations())
 			return ;
