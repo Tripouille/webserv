@@ -456,7 +456,18 @@ HttpRequest::_updateFileIfInvalid(void) throw(missingFileException)
 }
 
 bool
-HttpRequest::_methodIsAuthorized(void)
+HttpRequest::_methodIsAuthorized(void) const
+{
+	vector<string> const & allowedMethods = _getAllowedMethods();
+	if (_method == "HEAD")
+		return (std::find(allowedMethods.begin(), allowedMethods.end(), "GET") != allowedMethods.end()
+		|| std::find(allowedMethods.begin(), allowedMethods.end(), "HEAD") != allowedMethods.end());
+	else
+		return (std::find(allowedMethods.begin(), allowedMethods.end(), _method) != allowedMethods.end());
+}
+
+vector<string> const
+HttpRequest::_getAllowedMethods(void) const
 {
 	string analyzedFile(_fileWithoutRoot);
 	size_t slashPos;
@@ -469,7 +480,7 @@ HttpRequest::_methodIsAuthorized(void)
 		for (actual = its; actual != ite; ++actual)
 			if (actual->first == analyzedFile)
 				if (actual->second.find("allowed_methods") != actual->second.end())
-					return (_methodFound(actual->second["allowed_methods"]));
+					return (actual->second["allowed_methods"]);
 
 		slashPos = analyzedFile.find_last_of('/');
 		if (slashPos == 0 && analyzedFile != "/")
@@ -479,17 +490,7 @@ HttpRequest::_methodIsAuthorized(void)
 		else
 			analyzedFile.clear();
 	}
-	return (false);
-}
-
-bool
-HttpRequest::_methodFound(vector<string> const & allowedMethods)
-{
-	for (vector<string>::const_iterator allowedMethod = allowedMethods.begin();
-	allowedMethod != allowedMethods.end(); ++allowedMethod)
-		if (_method == *allowedMethod || (_method == "HEAD" && *allowedMethod == "GET"))
-			return (true);
-	return (false);
+	return (vector<string>());
 }
 
 void

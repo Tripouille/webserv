@@ -18,8 +18,6 @@
 # define CLIENT_MAX_BODY_SIZE 1000000
 # define REQUEST_LINE_MAX_SIZE 1024
 # define HEADER_MAX_SIZE 8000
-//# define URI_MAX_SIZE 512
-//# define MAX_EMPTY_LINE_BEFORE_REQUEST 1
 
 typedef int SOCKET;
 
@@ -118,8 +116,8 @@ class HttpRequest
 		bool _searchForIndexInLocations(void);
 		void _searchForIndexInHost(void);
 		void _updateFileIfInvalid(void) throw(missingFileException);
-		bool _methodIsAuthorized(void);
-		bool _methodFound(vector<string> const & allowedMethods);
+		bool _methodIsAuthorized(void) const;
+		vector<string> const _getAllowedMethods(void) const;
 		void _setRequiredRealm(void);
 		void _setClientInfos(void) const;
 		bool _isAuthorized(void) const;

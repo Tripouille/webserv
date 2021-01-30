@@ -230,7 +230,19 @@ TcpListener::_handleBadStatus(Answer & answer, HttpRequest const & request)
 	}
 	else if (request._status.code == 405)
 	{
-		answer._fields["Allow"] = "GET, HEAD"; // en ajouter ou en enlever selon la config
+		vector<string> const allowedMethods = request._getAllowedMethods();
+		vector<string>::const_iterator it = allowedMethods.begin();
+		cerr << "_fileWithoutRoot = " << request._fileWithoutRoot << endl;
+		while (it != allowedMethods.end())
+		{
+			cerr << "allowedMethod = " << *it << endl;
+			answer._fields["Allow"] += *it++;
+			if (it != allowedMethods.end())
+				answer._fields["Allow"] += ", ";
+		}
+		if (std::find(allowedMethods.begin(), allowedMethods.end(), "GET") != allowedMethods.end()
+		&& std::find(allowedMethods.begin(), allowedMethods.end(), "HEAD") == allowedMethods.end())
+			answer._fields["Allow"] += ", HEAD";
 		answer.sendHeader();
 	}
 	answer.sendEndOfHeader();
