@@ -18,6 +18,7 @@
 # include "ServerConfig.hpp"
 # define STDOUT 1
 # define STDIN 0
+# define UNSET_PIPE -1
 
 typedef int SOCKET;
 
@@ -38,7 +39,7 @@ class CgiRequest
 
 	public:
 		CgiRequest(const unsigned short serverPort, HttpRequest const & request, \
-					Client const & client, Host & host, string & extension);
+					Client const & client, string & cgi);
 		~CgiRequest(void);
 		CgiRequest(CgiRequest const & other);
 
@@ -60,8 +61,7 @@ class CgiRequest
 
 		char *				_env[ENV_SIZE];
 		char *				_av[2];
-		Host &				_host;
-		string &			_extension;
+		string &			_cgi;
 		SOCKET				_socket;
 		int					_inPipe[2];
 		int					_outPipe[2];

@@ -5,12 +5,12 @@
 CgiRequest::cgiException::cgiException(string str, CgiRequest & cgiRequest)
 throw() : _str(str)
 {
-	if (cgiRequest._inPipe[0] != 0)
+	if (cgiRequest._inPipe[0] != UNSET_PIPE)
 	{
 		close(cgiRequest._inPipe[0]);
 		close(cgiRequest._inPipe[1]);
 	}
-	if (cgiRequest._outPipe[0] != 0)
+	if (cgiRequest._outPipe[0] != UNSET_PIPE)
 	{
 		close(cgiRequest._outPipe[0]);
 		close(cgiRequest._outPipe[1]);
@@ -31,9 +31,8 @@ CgiRequest::cgiException::what(void) const throw()
 /* CgiRequest */
 
 CgiRequest::CgiRequest(const unsigned short serverPort,
-			HttpRequest const & request, Client const & client,
-			Host & host, string & extension)
-	:	_host(host), _extension(extension), _socket(client.s)
+			HttpRequest const & request, Client const & client, string & cgi)
+	: _cgi(cgi), _socket(client.s)
 {
 	Client::authentication authentication;
 	if (request._requiredRealm.name.size())
@@ -62,8 +61,8 @@ CgiRequest::CgiRequest(const unsigned short serverPort,
 	_setArg(0, request._requiredFile);
 	_av[1] = NULL;
 
-	_inPipe[0] = 0;
-	_outPipe[0] = 0;
+	_inPipe[0] = UNSET_PIPE;
+	_outPipe[0] = UNSET_PIPE;
 }
 
 CgiRequest::~CgiRequest(void)
@@ -75,7 +74,7 @@ CgiRequest::~CgiRequest(void)
 }
 
 CgiRequest::CgiRequest(CgiRequest const & other)
-	: _host(other._host), _extension(other._extension), _socket(other._socket)
+	:  _cgi(other._cgi), _socket(other._socket)
 {
 	CgiRequest::_copy(other);
 }
@@ -103,8 +102,7 @@ CgiRequest::doRequest(HttpRequest const & request, Answer & answer)
 		dup2(_inPipe[0], STDIN);
 		dup2(_outPipe[1], STDOUT);
 		write(_inPipe[1], request._body, request._bodySize);
-		string cgi = _host.cgi.at(_extension);
-		if (execve(cgi.c_str(), _av, _env) == -1)
+		if (execve(_cgi.c_str(), _av, _env) == -1)
 			exit(EXIT_FAILURE);
 	}
 	usleep(TIMEOUT);
@@ -130,10 +128,8 @@ CgiRequest::doRequest(HttpRequest const & request, Answer & answer)
 	}
 	close(_inPipe[0]);
 	close(_inPipe[1]);
-	_inPipe[0] = 0;
 	close(_outPipe[0]);
 	close(_outPipe[1]);
-	_outPipe[0] = 0;
 }
 
 /* Private method */

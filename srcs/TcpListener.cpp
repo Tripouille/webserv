@@ -202,12 +202,10 @@ TcpListener::_answerToClient(SOCKET socket, Answer & answer,
 	HttpRequest & request)
 	throw(tcpException, Answer::sendException)
 {
-	string extension = request._requiredFile.substr(request._requiredFile.find_last_of('.') + 1, string::npos);
-	bool requiredFileNeedCGI = (extension == "php");
-	if (requiredFileNeedCGI)
-		_doCgiRequest(CgiRequest(_port, request, _clientInfos[socket], _host, extension),
-			request, answer);
-	else
+	string extension = request._requiredFile.substr(request._requiredFile.find_last_of('.') + 1);
+
+	try { _doCgiRequest(CgiRequest(_port, request, _clientInfos[socket], _host.cgi.at(extension)), request, answer); }
+	catch (std::out_of_range)
 	{
 		try { answer.getFile(request._requiredFile); }
 		catch (Answer::sendException const &) { throw(tcpException("File reading failed")); }
