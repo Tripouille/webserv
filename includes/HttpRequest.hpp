@@ -103,8 +103,9 @@ class HttpRequest
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
 		void _checkHeader(void) throw(parseException);
 		void _setRequiredFile(void);
-		string _getPath(string file) const;
 		void _extractQueryPart(void);
+		string _getPath(string file) const;
+		void _updatePutDirectory(void);
 		void _addIndexIfDirectory(void);
 		bool _searchForIndexInLocations(void);
 		void _searchForIndexInHost(void);
