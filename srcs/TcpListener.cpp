@@ -284,10 +284,12 @@ TcpListener::_toStr(T const & value) const
 void
 TcpListener::_handleNoErrorPage(Answer & answer, HttpRequest const & request)
 {
+	std::ostringstream ss; ss << request._status.code << " " << request._status.info;
+	answer._fields["Content-Length"] = _toStr(ss.str().size());
+
 	answer.sendStatus(request._status);
-	answer._fields["Content-Length"] = "3";
 	answer.sendHeader();
 	answer.sendEndOfHeader();
-	answer._sendToClient(_toStr(request._status.code).c_str(), 3);
+	answer._sendToClient(ss.str().c_str(), ss.str().size());
 	return (_disconnectClient(answer._client));
 }
