@@ -146,21 +146,20 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 		catch (HttpRequest::closeOrderException const & e)
 		{ _disconnectClient(socket); return ; }
 
-		// If it is a PUT request, update the files here and set status to 204 (or 201 if created)
-		if (request._method == "PUT")
-			_put(request);
-		if (request._status.info == "Created" || request._status.info == "No Content")
+		if (request._method == "PUT" && _put(request))
 		{
 			answer.sendStatus(request._status);
 			answer.sendEndOfHeader();
 			return ;
 		}
+
 		if (request._status.code / 100 != 2)
-			_setErrorPage(request);
+			if (!_setErrorPage(request))
+				return (_handleNoErrorPage(answer, request));
 		if (request._requiredFile.size())
 			_answerToClient(socket, answer, request);
 		else
-			_handleBadStatus(answer, request);
+			_handleNoBody(answer, request);
 	}
 	catch (Answer::sendException const & e)
 	{
@@ -169,7 +168,7 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 	}
 }
 
-void
+bool
 TcpListener::_put(HttpRequest & request) const
 {
 	struct stat fileInfos;
@@ -179,7 +178,7 @@ TcpListener::_put(HttpRequest & request) const
 		if (S_ISDIR(fileInfos.st_mode) /*|| !S_ISREG(fileInfos.st_mode)*/)
 		{
 			request.setStatus(409, "Conflict");
-			return ;
+			return (false);
 		}
 		else
 			request.setStatus(204, "No Content");
@@ -195,6 +194,7 @@ TcpListener::_put(HttpRequest & request) const
 		file << request._body;
 		file.close();
 	}
+	return (request._status.info == "Created" || request._status.info == "No Content");
 }
 
 void
@@ -215,7 +215,7 @@ TcpListener::_answerToClient(SOCKET socket, Answer & answer,
 }
 
 void
-TcpListener::_handleBadStatus(Answer & answer, HttpRequest const & request)
+TcpListener::_handleNoBody(Answer & answer, HttpRequest const & request)
 	throw(Answer::sendException)
 {
 	answer.sendStatus(request._status);
@@ -257,7 +257,7 @@ TcpListener::_doCgiRequest(CgiRequest cgiRequest, HttpRequest & request, Answer 
 	}
 }
 
-void
+bool
 TcpListener::_setErrorPage(HttpRequest & request) const
 {
 	struct stat fileInfos;
@@ -266,8 +266,10 @@ TcpListener::_setErrorPage(HttpRequest & request) const
 	{
 		request._requiredFile = request._getPath(_host.errorPage[code]);
 		if (stat(request._requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
-			request._requiredFile.clear();
+			return (false);
+		return (true);
 	}
+	return (false);
 }
 
 template <class T>
@@ -277,4 +279,15 @@ TcpListener::_toStr(T const & value) const
 	std::ostringstream ss;
 	ss << value;
 	return (ss.str());
+}
+
+void
+TcpListener::_handleNoErrorPage(Answer & answer, HttpRequest const & request)
+{
+	answer.sendStatus(request._status);
+	answer._fields["Content-Length"] = "3";
+	answer.sendHeader();
+	answer.sendEndOfHeader();
+	answer._sendToClient(_toStr(request._status.code).c_str(), 3);
+	return (_disconnectClient(answer._client));
 }
