@@ -299,12 +299,24 @@ HttpRequest::_setRequiredFile(void)
 	_extractQueryPart();
 	if (_fileWithoutRoot[0] != '/')
 		_fileWithoutRoot.insert(0, "/");
-	_requiredFile = _getPath(_fileWithoutRoot);
-	if (_method != "PUT")
+	if (_method == "PUT")
+		_updatePutDirectory();
+	else
 	{
+		_requiredFile = _getPath(_fileWithoutRoot);
 		_addIndexIfDirectory();
 		_updateStatusIfInvalid();
 	}
+}
+
+void
+HttpRequest::_extractQueryPart(void)
+{
+	size_t queryPos = _target.find('?');
+
+	if (queryPos != string::npos)
+		_queryPart = _target.substr(queryPos + 1);
+	_fileWithoutRoot = _target.substr(0, queryPos);
 }
 
 string
@@ -338,13 +350,35 @@ HttpRequest::_getPath(string file) const
 }
 
 void
-HttpRequest::_extractQueryPart(void)
+HttpRequest::_updatePutDirectory(void)
 {
-	size_t queryPos = _target.find('?');
+	string analyzedFile(_fileWithoutRoot);
+	std::map<string, map<string, vector<string> > >::iterator its = _host.location.begin();
+	std::map<string, map<string, vector<string> > >::iterator ite = _host.location.end();
+	std::map<string, map<string, vector<string> > >::iterator actual;
+	size_t slashPos;
+	while (analyzedFile.size())
+	{
+		for (actual = its; actual != ite; ++actual)
+			if (actual->first == analyzedFile)
+			{
+				if (actual->second.find("upload_store") != actual->second.end())
+				{
+					_requiredFile = _fileWithoutRoot;
+					_requiredFile.replace(0, analyzedFile.size(), actual->second["upload_store"][0]);
+					return ;
+				}
+			}
 
-	if (queryPos != string::npos)
-		_queryPart = _target.substr(queryPos + 1);
-	_fileWithoutRoot = _target.substr(0, queryPos);
+		slashPos = analyzedFile.find_last_of('/');
+		if (slashPos == 0 && analyzedFile != "/")
+			analyzedFile.erase(slashPos + 1);
+		else if (slashPos != string::npos)
+			analyzedFile.erase(slashPos);
+		else
+			analyzedFile.clear();
+	}
+	_requiredFile = _getPath(_fileWithoutRoot);
 }
 
 void
