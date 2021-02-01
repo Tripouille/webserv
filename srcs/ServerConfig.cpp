@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/29 15:06:37 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/01 12:39:28 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -206,7 +206,7 @@ map<string, string> &	ServerConfig::checkCgi( map<string, string>& p_map, string
 	return p_map;
 }
 
-map<string, string>		ServerConfig::isCgi( string const & p_key, ifstream & p_file )
+map<string, string>		ServerConfig::isCgi( ifstream & p_file )
 {
 	string		line;
 	string		key;
@@ -237,8 +237,7 @@ map<string, string>		ServerConfig::isCgi( string const & p_key, ifstream & p_fil
 }
 
 map<string, string>
-ServerConfig::isErrorPage( string const & p_key, string & p_arg, \
-							ifstream & p_file, string const & p_root )
+ServerConfig::isErrorPage( string & p_arg, ifstream & p_file )
 {
 	string		line;
 	string		key;
@@ -308,7 +307,7 @@ vector<string>			ServerConfig::splitArg( string & p_arg )
 
 void
 ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \
-								string & p_arg, string const & p_root, string const & p_fileName )
+								string & p_arg, string const & p_fileName )
 {
 	string		key;
 	string		line;
@@ -380,18 +379,18 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				if (key == "port")
 					port = static_cast<unsigned short>(atoi(arg.c_str()));
 				else if (key == "cgi")
-					cgiTmp = this->isCgi(key, hostFile);
+					cgiTmp = this->isCgi(hostFile);
 				else if (key == "error_page")
 				{
 					if (tmp.find("root") != tmp.end())
-						errorTmp = this->isErrorPage(key, arg, hostFile, tmp.at("root"));
+						errorTmp = this->isErrorPage(arg, hostFile);
 					else
 						throw configException("Error params root does not exist on file", p_filname[i]);
 				}
 				else if (key == "location")
 				{
 					if (tmp.find("root") != tmp.end())
-						this->isLocation(conf, hostFile, arg, tmp.at("root"), p_filname[i]);
+						this->isLocation(conf, hostFile, arg, p_filname[i]);
 					else
 						throw configException("Error params root does not exist on file", p_filname[i]);
 				}

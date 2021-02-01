@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/29 14:59:58 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/01 12:39:20 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,11 +110,10 @@ class ServerConfig
 		void					checkIfParamsExist( void );
 		void					checkKeyInvalid( string const & p_key, map<string, vector<string> > & p_map, \
 													string const & p_fileName );
-		map<string, string>		isCgi( string const & p_key, ifstream & p_file );
-		map<string, string>		isErrorPage( string const & p_key, string & p_arg, \
-												ifstream & p_file, string const & p_root );
+		map<string, string>		isCgi( ifstream & p_file );
+		map<string, string>		isErrorPage( string & p_arg, ifstream & p_file );
 		void					isLocation(	map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \
-												string & p_arg, string const & p_root, string const & p_fileName );
+												string & p_arg, string const & p_fileName );
 		vector<string>			splitArg( string & p_arg );
 
 };
