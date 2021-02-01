@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/01 13:33:02 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/01 13:34:51 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -165,7 +165,7 @@ ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map,
 				throw configException("Error in params \"" + it->first + "\" need params \'auth_basic_user_file\' in", \
 											p_fileName);
 			}
-			if (map->first == "auth_basic_user_file" && (it->second.find("auth_basic") == it->second.end()))
+			else if (map->first == "auth_basic_user_file" && (it->second.find("auth_basic") == it->second.end()))
 			{
 				errno = EINVAL;
 				throw configException("Error in params \"" + it->first + "\" need params \'auth_basic\' in", \
