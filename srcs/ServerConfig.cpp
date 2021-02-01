@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/01 12:42:38 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/01 13:33:02 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -381,19 +381,9 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				else if (key == "cgi")
 					cgiTmp = this->isCgi(hostFile);
 				else if (key == "error_page")
-				{
-					if (tmp.find("root") != tmp.end())
-						errorTmp = this->isErrorPage(arg, hostFile);
-					else
-						throw configException("Error params root does not exist on file", p_filname[i]);
-				}
+					errorTmp = this->isErrorPage(arg, hostFile);
 				else if (key == "location")
-				{
-					if (tmp.find("root") != tmp.end())
-						this->isLocation(conf, hostFile, arg, p_filname[i]);
-					else
-						throw configException("Error params root does not exist on file", p_filname[i]);
-				}
+					this->isLocation(conf, hostFile, arg, p_filname[i]);
 				else
 				{
 					this->checkKeyExist(key, tmp, p_filname[i]);
