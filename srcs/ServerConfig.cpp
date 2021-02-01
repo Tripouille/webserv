@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/01 12:39:28 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/01 12:40:58 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -208,6 +208,7 @@ map<string, string> &	ServerConfig::checkCgi( map<string, string>& p_map, string
 
 map<string, string>		ServerConfig::isCgi( ifstream & p_file )
 {
+	(void)p_key;
 	string		line;
 	string		key;
 	string		arg;
@@ -239,6 +240,8 @@ map<string, string>		ServerConfig::isCgi( ifstream & p_file )
 map<string, string>
 ServerConfig::isErrorPage( string & p_arg, ifstream & p_file )
 {
+	(void)p_key;
+	(void)p_root;
 	string		line;
 	string		key;
 	string		arg;
@@ -309,6 +312,7 @@ void
 ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \
 								string & p_arg, string const & p_fileName )
 {
+	(void)p_root;
 	string		key;
 	string		line;
 	string		root(p_arg);

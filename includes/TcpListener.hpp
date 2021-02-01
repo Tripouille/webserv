@@ -77,13 +77,17 @@ class TcpListener
 		void _acceptNewClient(void) throw(tcpException);
 		void _disconnectClient(SOCKET client);
 		void _handleRequest(SOCKET client) throw(tcpException);
-		void _put(HttpRequest & request) const;
+		bool _put(HttpRequest & request) const;
 		void _answerToClient(SOCKET client, Answer & answer,
 			HttpRequest & request)
 			throw(tcpException,  Answer::sendException);
 		void _doCgiRequest(CgiRequest cgiRequest, HttpRequest & request, Answer & answer);
-		void _handleBadStatus(Answer & answer, HttpRequest const & request)
+		void _handleNoBody(Answer & answer, HttpRequest const & request)
 			throw(Answer::sendException);
+
+		bool _setErrorPage(HttpRequest & request) const;
+		template <class T> string _toStr(T const & value) const;
+		void _handleNoErrorPage(Answer & answer, HttpRequest const & request);
 };
 
 #endif

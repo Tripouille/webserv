@@ -26,17 +26,7 @@ int main(int ac, char *av[])
 		/* Multi Serv */
 		serv.initServs();
 	}
-	catch (ServerConfig::configException const & e)
-	{
-		cerr << e.what() << endl;
-		exit(errno);
-	}
-	catch (TcpListener::tcpException const & e)
-	{
-		cerr << e.what() << endl;
-		exit(errno);
-	}
-	catch (MultiServ::servException const & e)
+	catch (std::exception const & e)
 	{
 		cerr << e.what() << endl;
 		exit(errno);

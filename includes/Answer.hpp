@@ -6,6 +6,7 @@
 # include <errno.h>
 # include "BufferQ.hpp"
 # include "HttpRequest.hpp"
+# include "ServerConfig.hpp"
 
 # define HTTP_VERSION "HTTP/1.1"
 # define BUFFER_SIZE 1024
@@ -29,7 +30,7 @@ class Answer
 				string _str;
 		};
 
-		Answer(SOCKET client);
+		Answer(SOCKET client, ServerConfig const & config);
 		~Answer();
 		Answer(Answer const & other);
 
@@ -46,6 +47,7 @@ class Answer
 		SOCKET						_client;
 		std::map<string, string>	_fields;
 		t_bufferQ					_body;
+		ServerConfig const &		_config;
 
 		Answer(void);
 		void _copy(Answer const & other);

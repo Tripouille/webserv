@@ -18,8 +18,6 @@
 # define CLIENT_MAX_BODY_SIZE 1000000
 # define REQUEST_LINE_MAX_SIZE 1024
 # define HEADER_MAX_SIZE 8000
-//# define URI_MAX_SIZE 512
-//# define MAX_EMPTY_LINE_BEFORE_REQUEST 1
 
 typedef int SOCKET;
 
@@ -65,22 +63,15 @@ class HttpRequest
 				virtual ~closeOrderException(void) throw();
 				virtual const char * what(void) const throw();
 		};
-		class missingFileException : public std::exception
-		{
-			public:
-				missingFileException(void) throw();
-				virtual ~missingFileException(void) throw();
-				virtual const char * what(void) const throw();
-		};
 
-		HttpRequest(Client & client, Host& host, uint16_t port, ServerConfig & config);
+		HttpRequest(Client & client, Host& host, ServerConfig & config);
 		~HttpRequest(void);
 		HttpRequest(HttpRequest const & other);
 
 		s_status const & getStatus(void) const;
 		void setStatus(int c, string const & i);
 
-		void analyze(void) throw(parseException, closeOrderException, missingFileException);
+		void analyze(void) throw(parseException, closeOrderException);
 
 	private:
 		Client &						_client;
@@ -93,7 +84,6 @@ class HttpRequest
 		size_t							_bodySize;
 		s_status						_status;
 		Host &							_host;
-		uint16_t						_port;
 		ServerConfig &					_config;
 		std::map<string, std::pair<string, string> > _realms;
 
@@ -112,15 +102,16 @@ class HttpRequest
 		void _parseHeaderLine(string line) throw(parseException);
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
 		void _checkHeader(void) throw(parseException);
-		void _setRequiredFile(void) throw(missingFileException);
-		string _getPath(string file) const;
+		void _setRequiredFile(void);
 		void _extractQueryPart(void);
+		string _getPath(string file) const;
+		void _updatePutDirectory(void);
 		void _addIndexIfDirectory(void);
 		bool _searchForIndexInLocations(void);
 		void _searchForIndexInHost(void);
-		void _updateFileIfInvalid(void) throw(missingFileException);
-		bool _methodIsAuthorized(void);
-		bool _methodFound(vector<string> const & allowedMethods);
+		void _updateStatusIfInvalid(void);
+		bool _methodIsAuthorized(void) const;
+		vector<string> const _getAllowedMethods(void) const;
 		void _setRequiredRealm(void);
 		void _setClientInfos(void) const;
 		bool _isAuthorized(void) const;

@@ -36,29 +36,13 @@ HttpRequest::closeOrderException::what(void) const throw()
 }
 
 
-HttpRequest::missingFileException::missingFileException(void) throw()
-{
-}
-
-HttpRequest::missingFileException::~missingFileException(void) throw()
-{
-}
-
-const char *
-HttpRequest::missingFileException::what(void) const throw()
-{
-	return ("No error page");
-}
-
 /* HttpRequest */
 
-HttpRequest::HttpRequest(Client & client, Host& host, uint16_t port,
-							ServerConfig & config)
-			: _client(client), _host(host), _port(port), _config(config)
+HttpRequest::HttpRequest(Client & client, Host& host, ServerConfig & config)
+			: _client(client), _host(host), _config(config)
 {
 	setStatus(200, "OK");
-	_realms["/private"] = std::make_pair("private_realm", "./conf/private.access");
-	_realms["/private/admin"] = std::make_pair("admin_realm", "./conf/admin.access");
+	_bodySize = 0;
 }
 
 HttpRequest::~HttpRequest(void)
@@ -66,8 +50,7 @@ HttpRequest::~HttpRequest(void)
 }
 
 HttpRequest::HttpRequest(HttpRequest const & other)
-		: _client(other._client), _host(other._host), _port(other._port),
-			_config(other._config)
+		: _client(other._client), _host(other._host), _config(other._config)
 {
 	HttpRequest::_copy(other);
 }
@@ -96,7 +79,7 @@ HttpRequest::setStatus(int c, string const & i)
 }
 
 void
-HttpRequest::analyze(void) throw(parseException, closeOrderException, missingFileException)
+HttpRequest::analyze(void) throw(parseException, closeOrderException)
 {
 	ssize_t headerSize = 0;
 
@@ -153,10 +136,10 @@ HttpRequest::_analyseRequestLine(ssize_t & headerSize) throw(parseException, clo
 		throw(parseException(*this, 431, "Request Line Too Long", "request line too long"));
 
 	requestLine = _splitRequestLine(buffer);
-	std::ostringstream debug; debug << (int)*buffer;
+	//std::ostringstream debug; debug << (int)*buffer;
 	if (requestLine.size() != 3)
 		throw parseException(*this, 400, "Bad Request", "invalid request line : "
-		+ string(buffer) + " / " + debug.str());
+		+ string(buffer)); //+ " / " + debug.str());
 	_fillAndCheckRequestLine(requestLine);
 
 	cerr << "Request line : " << buffer << endl;
@@ -311,18 +294,29 @@ HttpRequest::_checkHeader(void) throw(parseException)
 }
 
 void
-HttpRequest::_setRequiredFile(void) throw(missingFileException)
+HttpRequest::_setRequiredFile(void)
 {
 	_extractQueryPart();
-	if (_requiredFile[0] != '/')
-		_requiredFile.insert(0, "/");
-	_fileWithoutRoot = _requiredFile;
-	_requiredFile = _getPath(_fileWithoutRoot);
-	if (_method != "PUT")
+	if (_fileWithoutRoot[0] != '/')
+		_fileWithoutRoot.insert(0, "/");
+	if (_method == "PUT")
+		_updatePutDirectory();
+	else
 	{
+		_requiredFile = _getPath(_fileWithoutRoot);
 		_addIndexIfDirectory();
-		_updateFileIfInvalid();
+		_updateStatusIfInvalid();
 	}
+}
+
+void
+HttpRequest::_extractQueryPart(void)
+{
+	size_t queryPos = _target.find('?');
+
+	if (queryPos != string::npos)
+		_queryPart = _target.substr(queryPos + 1);
+	_fileWithoutRoot = _target.substr(0, queryPos);
 }
 
 string
@@ -356,13 +350,35 @@ HttpRequest::_getPath(string file) const
 }
 
 void
-HttpRequest::_extractQueryPart(void)
+HttpRequest::_updatePutDirectory(void)
 {
-	size_t queryPos = _target.find('?');
+	string analyzedFile(_fileWithoutRoot);
+	std::map<string, map<string, vector<string> > >::iterator its = _host.location.begin();
+	std::map<string, map<string, vector<string> > >::iterator ite = _host.location.end();
+	std::map<string, map<string, vector<string> > >::iterator actual;
+	size_t slashPos;
+	while (analyzedFile.size())
+	{
+		for (actual = its; actual != ite; ++actual)
+			if (actual->first == analyzedFile)
+			{
+				if (actual->second.find("upload_store") != actual->second.end())
+				{
+					_requiredFile = _fileWithoutRoot;
+					_requiredFile.replace(0, analyzedFile.size(), actual->second["upload_store"][0]);
+					return ;
+				}
+			}
 
-	if (queryPos != string::npos)
-		_queryPart = _target.substr(queryPos + 1);
-	_requiredFile = _target.substr(0, queryPos);
+		slashPos = analyzedFile.find_last_of('/');
+		if (slashPos == 0 && analyzedFile != "/")
+			analyzedFile.erase(slashPos + 1);
+		else if (slashPos != string::npos)
+			analyzedFile.erase(slashPos);
+		else
+			analyzedFile.clear();
+	}
+	_requiredFile = _getPath(_fileWithoutRoot);
 }
 
 void
@@ -372,9 +388,9 @@ HttpRequest::_addIndexIfDirectory(void)
 	if (stat(_requiredFile.c_str(), &fileInfos) == 0
 	&& S_ISDIR(fileInfos.st_mode))
 	{
-		if (_requiredFile.back() != '/')
+		if (_requiredFile[_requiredFile.size() - 1] != '/')
 			_requiredFile += '/';
-		if (_fileWithoutRoot.back() != '/')
+		if (_fileWithoutRoot[_fileWithoutRoot.size() - 1] != '/')
 			_fileWithoutRoot += '/';
 		if (_searchForIndexInLocations())
 			return ;
@@ -446,21 +462,26 @@ HttpRequest::_searchForIndexInHost(void)
 }
 
 void
-HttpRequest::_updateFileIfInvalid(void) throw(missingFileException)
+HttpRequest::_updateStatusIfInvalid(void)
 {
 	struct stat fileInfos;
 	if (stat(_requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
-	{
 		setStatus(404, "Not Found");
-		if (_host.errorPage.find("404") != _host.errorPage.end())
-			_requiredFile = _getPath(_host.errorPage["404"]);
-		if (stat(_requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
-			throw(missingFileException());
-	}
 }
 
 bool
-HttpRequest::_methodIsAuthorized(void)
+HttpRequest::_methodIsAuthorized(void) const
+{
+	vector<string> const & allowedMethods = _getAllowedMethods();
+	if (_method == "HEAD")
+		return (std::find(allowedMethods.begin(), allowedMethods.end(), "GET") != allowedMethods.end()
+		|| std::find(allowedMethods.begin(), allowedMethods.end(), "HEAD") != allowedMethods.end());
+	else
+		return (std::find(allowedMethods.begin(), allowedMethods.end(), _method) != allowedMethods.end());
+}
+
+vector<string> const
+HttpRequest::_getAllowedMethods(void) const
 {
 	string analyzedFile(_fileWithoutRoot);
 	size_t slashPos;
@@ -473,7 +494,7 @@ HttpRequest::_methodIsAuthorized(void)
 		for (actual = its; actual != ite; ++actual)
 			if (actual->first == analyzedFile)
 				if (actual->second.find("allowed_methods") != actual->second.end())
-					return (_methodFound(actual->second["allowed_methods"]));
+					return (actual->second["allowed_methods"]);
 
 		slashPos = analyzedFile.find_last_of('/');
 		if (slashPos == 0 && analyzedFile != "/")
@@ -483,17 +504,7 @@ HttpRequest::_methodIsAuthorized(void)
 		else
 			analyzedFile.clear();
 	}
-	return (false);
-}
-
-bool
-HttpRequest::_methodFound(vector<string> const & allowedMethods)
-{
-	for (vector<string>::const_iterator allowedMethod = allowedMethods.begin();
-	allowedMethod != allowedMethods.end(); ++allowedMethod)
-		if (_method == *allowedMethod || (_method == "HEAD" && *allowedMethod == "GET"))
-			return (true);
-	return (false);
+	return (vector<string>());
 }
 
 void
