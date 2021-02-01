@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/01 14:32:30 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/01 14:42:07 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -247,17 +247,15 @@ map<string, string>		ServerConfig::isCgi( ifstream & p_file )
 }
 
 map<string, string>
-ServerConfig::isErrorPage( string & p_arg, ifstream & p_file )
+ServerConfig::isErrorPage( ifstream & p_file )
 {
 	string		line;
 	string		key;
 	string		arg;
-	string		root(p_arg);
+
 	map<string, string>		tmp;
 	std::map<string, string>::iterator		it = tmp.begin();
 
-	if (root.find_first_of('/') != string::npos)
-		root.erase(root.find_first_of('/'), root.size());
 	while(getline(p_file, line))
 	{
 		std::stringstream		str(line);
@@ -273,8 +271,7 @@ ServerConfig::isErrorPage( string & p_arg, ifstream & p_file )
 			arg.erase(arg.find_first_of(';'), arg.size());
 		if (arg.find_first_not_of(' ') != string::npos)
 			arg.erase(0, arg.find_first_not_of(' '));
-		root += arg;
-		tmp.insert(it, std::pair<string, string>(key, root));
+		tmp.insert(it, std::pair<string, string>(key, arg));
 	}
 	return tmp;
 }
@@ -369,7 +366,6 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 			map<string, string> cgiTmp;
 			std::map<string, string>::iterator		it = tmp.begin();
 			map<string, map<string, vector<string> > >	conf;
-			std::map<string, map<string, vector<string> > >::iterator	it2 = conf.begin();
 			uint16_t port;
 
 			while (getline(hostFile, line))
@@ -391,7 +387,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				else if (key == "cgi")
 					cgiTmp = this->isCgi(hostFile);
 				else if (key == "error_page")
-					errorTmp = this->isErrorPage(arg, hostFile);
+					errorTmp = this->isErrorPage(hostFile);
 				else if (key == "location")
 					this->isLocation(conf, hostFile, arg, p_filname[i]);
 				else
