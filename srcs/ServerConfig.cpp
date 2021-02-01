@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/01 14:30:38 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/01 14:32:30 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -398,19 +398,6 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				{
 					this->checkKeyExist(key, tmp, p_filname[i]);
 					tmp.insert(it, std::pair<string, string>(key, arg));
-				}
-			}
-
-			/* Debug text */
-			for (it2 = conf.begin(); it2 != conf.end(); it2++)
-			{
-				std::cout << it2->first << ": " << std::endl;
-				for (map<string, vector<string> >::iterator test42 = it2->second.begin(); test42 != it2->second.end(); test42++)
-				{
-					std::cout << " - " << test42->first << " : ";
-					for (vector<string>::iterator test43 = test42->second.begin(); test43 != test42->second.end(); test43++)
-						std::cout << *test43 << " , ";
-					std::cout << std::endl;
 				}
 			}
 			/* Init stuct Host */
