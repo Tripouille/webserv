@@ -287,6 +287,7 @@ TcpListener::_handleNoErrorPage(Answer & answer, HttpRequest const & request)
 	answer.sendStatus(request._status);
 	answer.sendHeader();
 	answer.sendEndOfHeader();
-	answer._sendToClient(ss.str().c_str(), ss.str().size());
+	if (request._method != "HEAD")
+		answer._sendToClient(ss.str().c_str(), ss.str().size());
 	return (_disconnectClient(answer._client));
 }
