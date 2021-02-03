@@ -235,9 +235,6 @@ TcpListener::_handleNoBody(Answer & answer, HttpRequest const & request)
 			if (it != allowedMethods.end())
 				answer._fields["Allow"] += ", ";
 		}
-		if (std::find(allowedMethods.begin(), allowedMethods.end(), "GET") != allowedMethods.end()
-		&& std::find(allowedMethods.begin(), allowedMethods.end(), "HEAD") == allowedMethods.end())
-			answer._fields["Allow"] += ", HEAD";
 		answer.sendHeader();
 	}
 	answer.sendEndOfHeader();
