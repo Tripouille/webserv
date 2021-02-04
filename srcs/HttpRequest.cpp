@@ -305,6 +305,7 @@ HttpRequest::_setRequiredFile(void)
 	{
 		_requiredFile = _getPath(_fileWithoutRoot);
 		_addIndexIfDirectory();
+		_requiredFile = _chooseFileWithLanguageAndEncoding();
 		_updateStatusIfInvalid();
 	}
 }
@@ -459,6 +460,159 @@ HttpRequest::_searchForIndexInHost(void)
 	}
 	if (index == indexEnd)
 		_requiredFile.clear();
+}
+
+struct compareExtensions
+{
+    string language, charset;
+    compareExtensions(string l, string c) : language(l), charset(c) {}
+    bool operator()(vector<string> const & extensions)
+	{
+		string firstFileExtension = extensions[0];
+		size_t firstDashPos = firstFileExtension.find('-');
+		if (language == "")
+			return (extensions.size() == 1 && charset == firstFileExtension);
+		if (charset == "")
+			return (extensions.size() == 1
+					&& (language == firstFileExtension || language == firstFileExtension.substr(0, firstDashPos)));
+		if (extensions.size() == 1)
+			return (false);
+		string secondFileExtension = extensions[1];
+		size_t secondDashPos = secondFileExtension.find('-');
+		if (language == "*" && (charset == firstFileExtension || charset == secondFileExtension))
+			return (true);
+		if (charset == "*" &&
+		((language == firstFileExtension || language == firstFileExtension.substr(0, firstDashPos))
+		|| (language == secondFileExtension || language == secondFileExtension.substr(0, secondDashPos))))
+			return (true);
+		if ((language == firstFileExtension || language == firstFileExtension.substr(0, firstDashPos))
+		&& charset == secondFileExtension)
+			return (true);
+		if (charset == firstFileExtension
+		&& (language == secondFileExtension || language == secondFileExtension.substr(0, secondDashPos)))
+			return (true);
+		return (false);
+	}
+};
+
+string
+HttpRequest::_chooseFileWithLanguageAndEncoding(void)
+{
+	struct stat fileInfos;
+	if (stat(_requiredFile.c_str(), &fileInfos) != 0)
+	{
+		vector<vector<string> > extensionsInDirectory = _getVariantFilesInDirectory();
+		if (extensionsInDirectory.empty())
+			return (_requiredFile);
+
+		vector<std::pair<string, double> > acceptedLanguages = _getAcceptedExtensions("accept-language");
+		vector<std::pair<string, double> > acceptedCharsets = _getAcceptedExtensions("accept-charset");
+
+		// Search for the best file according to accepted languages and charsets
+		vector<vector<string> >::iterator fileIt;
+		for (vector<std::pair<string, double> >::iterator languageIt = acceptedLanguages.begin();
+		languageIt != acceptedLanguages.end(); ++languageIt)
+		{
+			for (vector<std::pair<string, double> >::iterator charsetIt = acceptedCharsets.begin();
+			charsetIt != acceptedCharsets.end(); ++charsetIt)
+			{
+				fileIt = std::find_if(extensionsInDirectory.begin(), extensionsInDirectory.end(),
+																			compareExtensions(languageIt->first, charsetIt->first));
+				if (fileIt != extensionsInDirectory.end())
+					return (_requiredFile + '.' + (*fileIt)[0] + '.' + (*fileIt)[1]);
+			}
+			fileIt = std::find_if(extensionsInDirectory.begin(), extensionsInDirectory.end(),
+																		compareExtensions(languageIt->first, ""));
+			if (fileIt != extensionsInDirectory.end())
+				return (_requiredFile + '.' + (*fileIt)[0]);
+			fileIt = std::find_if(extensionsInDirectory.begin(), extensionsInDirectory.end(),
+																		compareExtensions(languageIt->first, "*"));
+			if (fileIt != extensionsInDirectory.end())
+				return (_requiredFile + '.' + (*fileIt)[0] + '.' + (*fileIt)[1]);
+		}
+		for (vector<std::pair<string, double> >::iterator charsetIt = acceptedCharsets.begin();
+		charsetIt != acceptedCharsets.end(); ++charsetIt)
+		{
+			fileIt = std::find_if(extensionsInDirectory.begin(), extensionsInDirectory.end(),
+																		compareExtensions("", charsetIt->first));
+			if (fileIt != extensionsInDirectory.end())
+				return (_requiredFile + '.' + (*fileIt)[0]);
+			fileIt = std::find_if(extensionsInDirectory.begin(), extensionsInDirectory.end(),
+																		compareExtensions("*", charsetIt->first));
+			if (fileIt != extensionsInDirectory.end())
+				return (_requiredFile + '.' + (*fileIt)[0] + '.' + (*fileIt)[1]);
+		}
+		return (_requiredFile + '.' + extensionsInDirectory[0][0] +
+										(extensionsInDirectory[0].size() == 2 ? extensionsInDirectory[0][1] : ""));
+	}
+	return (_requiredFile);
+}
+
+static bool
+extensionComp(vector<string> const & v1, vector<string> const & v2)
+{
+	return (v1.size() < v2.size());
+}
+vector<vector<string> >
+HttpRequest::_getVariantFilesInDirectory(void)
+{
+	struct stat fileInfos;
+	vector<vector<string> > extensionsInDirectory;
+	string directoryName(_requiredFile);
+	directoryName.erase(_requiredFile.find_last_of('/'));
+	string baseFileName(_requiredFile);
+	baseFileName.erase(0, directoryName.size() + 1);
+	DIR *dir;
+	if ((dir = opendir(directoryName.c_str())) != NULL)
+	{
+		struct dirent *ent;
+		while ((ent = readdir(dir)) != NULL)
+		{
+			string fileName = ent->d_name;
+			if (stat((directoryName + '/' + ent->d_name).c_str(), &fileInfos) == 0 && S_ISREG(fileInfos.st_mode)
+			&& fileName.substr(0, baseFileName.size() + 1) == baseFileName + '.')
+			{
+				string extensionsString = fileName.substr(baseFileName.size() + 1);
+				vector<string> extensions;
+				size_t pointPos = extensionsString.find('.');
+				extensions.push_back(extensionsString.substr(0, pointPos));
+				if (pointPos != string::npos)
+					extensions.push_back(extensionsString.substr(pointPos + 1));
+				extensionsInDirectory.push_back(extensions);
+			}
+		}
+		closedir(dir);
+	}
+	std::sort(extensionsInDirectory.begin(), extensionsInDirectory.end(), extensionComp);
+	return (extensionsInDirectory);
+}
+
+static bool
+priorityComp(std::pair<string, double> const & p1, std::pair<string, double> const & p2)
+{
+	if (p1.second == p2.second)
+		return (p1.first.size() < p2.first.size());
+	return (p1.second >= p2.second);
+}
+vector<std::pair<string, double> >
+HttpRequest::_getAcceptedExtensions(string const & fieldKey)
+{
+	vector<std::pair<string, double> > acceptedExtensions;
+	if (_fields.find(fieldKey) != _fields.end())
+	{
+		for (vector<string>::iterator it = _fields[fieldKey].begin();
+		it != _fields[fieldKey].end(); ++it)
+		{
+			string extension = it->substr(0, it->find(';'));
+			double priority = 1.0;
+			size_t priorityPos = it->find(";q=");
+			if (priorityPos != string::npos)
+				priority = atof(it->substr(priorityPos + 3).c_str());
+			acceptedExtensions.push_back(std::make_pair(extension, priority));
+		}
+		std::sort(acceptedExtensions.begin(), acceptedExtensions.end(), priorityComp);
+	}
+	return (acceptedExtensions);
 }
 
 void

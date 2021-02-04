@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
+/*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/01 14:42:07 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/01 14:47:34 by aalleman         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -163,9 +163,7 @@ ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map,
 			{
 				struct stat fileInfos;
 
-				if (stat(map->second.at(0).c_str(), &fileInfos) == 0 && S_ISDIR(fileInfos.st_mode))
-					;
-				else
+				if (stat(map->second.at(0).c_str(), &fileInfos) != 0 || !S_ISDIR(fileInfos.st_mode))
 					throw configException("Error in params \"" + map->first + "\" on Location \"" + it->first + \
 								"\", " + map->second.at(0) + "\" is not a Directory in file", p_fileName);
 			}

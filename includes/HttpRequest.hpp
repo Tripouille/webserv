@@ -109,6 +109,9 @@ class HttpRequest
 		void _addIndexIfDirectory(void);
 		bool _searchForIndexInLocations(void);
 		void _searchForIndexInHost(void);
+		string _chooseFileWithLanguageAndEncoding(void);
+		vector<vector<string> > _getVariantFilesInDirectory(void);
+		vector<std::pair<string, double> > _getAcceptedExtensions(string const & fieldKey);
 		void _updateStatusIfInvalid(void);
 		bool _methodIsAuthorized(void) const;
 		vector<string> const _getAllowedMethods(void) const;
