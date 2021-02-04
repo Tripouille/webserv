@@ -627,11 +627,7 @@ bool
 HttpRequest::_methodIsAuthorized(void) const
 {
 	vector<string> const & allowedMethods = _getAllowedMethods();
-	if (_method == "HEAD")
-		return (std::find(allowedMethods.begin(), allowedMethods.end(), "GET") != allowedMethods.end()
-		|| std::find(allowedMethods.begin(), allowedMethods.end(), "HEAD") != allowedMethods.end());
-	else
-		return (std::find(allowedMethods.begin(), allowedMethods.end(), _method) != allowedMethods.end());
+	return (std::find(allowedMethods.begin(), allowedMethods.end(), _method) != allowedMethods.end());
 }
 
 vector<string> const

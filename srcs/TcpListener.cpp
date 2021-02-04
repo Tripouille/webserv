@@ -235,9 +235,6 @@ TcpListener::_handleNoBody(Answer & answer, HttpRequest const & request)
 			if (it != allowedMethods.end())
 				answer._fields["Allow"] += ", ";
 		}
-		if (std::find(allowedMethods.begin(), allowedMethods.end(), "GET") != allowedMethods.end()
-		&& std::find(allowedMethods.begin(), allowedMethods.end(), "HEAD") == allowedMethods.end())
-			answer._fields["Allow"] += ", HEAD";
 		answer.sendHeader();
 	}
 	answer.sendEndOfHeader();
@@ -290,6 +287,7 @@ TcpListener::_handleNoErrorPage(Answer & answer, HttpRequest const & request)
 	answer.sendStatus(request._status);
 	answer.sendHeader();
 	answer.sendEndOfHeader();
-	answer._sendToClient(ss.str().c_str(), ss.str().size());
+	if (request._method != "HEAD")
+		answer._sendToClient(ss.str().c_str(), ss.str().size());
 	return (_disconnectClient(answer._client));
 }
