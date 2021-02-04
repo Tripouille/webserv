@@ -305,7 +305,8 @@ HttpRequest::_setRequiredFile(void)
 	{
 		_requiredFile = _getPath(_fileWithoutRoot);
 		_addIndexIfDirectory();
-		_requiredFile = _chooseFileWithLanguageAndEncoding();
+		if (!(_extensionPart = _getLanguageAndEncodingExtension()).empty())
+			_requiredFile += _extensionPart;
 		_updateStatusIfInvalid();
 	}
 }
@@ -496,14 +497,14 @@ struct compareExtensions
 };
 
 string
-HttpRequest::_chooseFileWithLanguageAndEncoding(void)
+HttpRequest::_getLanguageAndEncodingExtension(void)
 {
 	struct stat fileInfos;
 	if (stat(_requiredFile.c_str(), &fileInfos) != 0)
 	{
 		vector<vector<string> > extensionsInDirectory = _getVariantFilesInDirectory();
 		if (extensionsInDirectory.empty())
-			return (_requiredFile);
+			return ("");
 
 		vector<std::pair<string, double> > acceptedLanguages = _getAcceptedExtensions("accept-language");
 		vector<std::pair<string, double> > acceptedCharsets = _getAcceptedExtensions("accept-charset");
@@ -519,16 +520,16 @@ HttpRequest::_chooseFileWithLanguageAndEncoding(void)
 				fileIt = std::find_if(extensionsInDirectory.begin(), extensionsInDirectory.end(),
 																			compareExtensions(languageIt->first, charsetIt->first));
 				if (fileIt != extensionsInDirectory.end())
-					return (_requiredFile + '.' + (*fileIt)[0] + '.' + (*fileIt)[1]);
+					return ('.' + (*fileIt)[0] + '.' + (*fileIt)[1]);
 			}
 			fileIt = std::find_if(extensionsInDirectory.begin(), extensionsInDirectory.end(),
 																		compareExtensions(languageIt->first, ""));
 			if (fileIt != extensionsInDirectory.end())
-				return (_requiredFile + '.' + (*fileIt)[0]);
+				return ('.' + (*fileIt)[0]);
 			fileIt = std::find_if(extensionsInDirectory.begin(), extensionsInDirectory.end(),
 																		compareExtensions(languageIt->first, "*"));
 			if (fileIt != extensionsInDirectory.end())
-				return (_requiredFile + '.' + (*fileIt)[0] + '.' + (*fileIt)[1]);
+				return ('.' + (*fileIt)[0] + '.' + (*fileIt)[1]);
 		}
 		for (vector<std::pair<string, double> >::iterator charsetIt = acceptedCharsets.begin();
 		charsetIt != acceptedCharsets.end(); ++charsetIt)
@@ -536,16 +537,16 @@ HttpRequest::_chooseFileWithLanguageAndEncoding(void)
 			fileIt = std::find_if(extensionsInDirectory.begin(), extensionsInDirectory.end(),
 																		compareExtensions("", charsetIt->first));
 			if (fileIt != extensionsInDirectory.end())
-				return (_requiredFile + '.' + (*fileIt)[0]);
+				return ('.' + (*fileIt)[0]);
 			fileIt = std::find_if(extensionsInDirectory.begin(), extensionsInDirectory.end(),
 																		compareExtensions("*", charsetIt->first));
 			if (fileIt != extensionsInDirectory.end())
-				return (_requiredFile + '.' + (*fileIt)[0] + '.' + (*fileIt)[1]);
+				return ('.' + (*fileIt)[0] + '.' + (*fileIt)[1]);
 		}
-		return (_requiredFile + '.' + extensionsInDirectory[0][0] +
+		return ('.' + extensionsInDirectory[0][0] +
 										(extensionsInDirectory[0].size() == 2 ? extensionsInDirectory[0][1] : ""));
 	}
-	return (_requiredFile);
+	return ("");
 }
 
 static bool
@@ -559,7 +560,8 @@ HttpRequest::_getVariantFilesInDirectory(void)
 	struct stat fileInfos;
 	vector<vector<string> > extensionsInDirectory;
 	string directoryName(_requiredFile);
-	directoryName.erase(_requiredFile.find_last_of('/'));
+	size_t slashPos = _requiredFile.find_last_of('/');
+	directoryName.erase(slashPos == string::npos ? 0 : slashPos);
 	string baseFileName(_requiredFile);
 	baseFileName.erase(0, directoryName.size() + 1);
 	DIR *dir;

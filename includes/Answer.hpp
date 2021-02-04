@@ -57,7 +57,7 @@ class Answer
 		void _sendBody(void) throw(sendException);
 		void _fillServerField(void);
 		void _fillDateField(void);
-		void _fillContentFields(string const & fileName);
+		void _fillContentFields(HttpRequest const & request);
 		void _debugFields(void);
 };
 

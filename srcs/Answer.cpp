@@ -106,7 +106,7 @@ Answer::sendAnswer(HttpRequest const & request) throw(sendException)
 {
 	_fillServerField();
 	_fillDateField();
-	_fillContentFields(request._requiredFile);
+	_fillContentFields(request);
 	sendHeader();
 	sendEndOfHeader();
 	if (request._method != "HEAD")
@@ -161,9 +161,9 @@ Answer::_fillDateField(void)
 }
 
 void
-Answer::_fillContentFields(string const & fileName)
+Answer::_fillContentFields(HttpRequest const & request)
 {
-	string extension = fileName.substr(fileName.find_last_of('.') + 1, string::npos);
+	string extension = request._requiredFile.substr(request._requiredFile.find_last_of('.') + 1, string::npos);
 	if (_fields.count("content-type") == 0 && _config.mimeType.count(extension))
 		_fields["Content-Type"] = _config.mimeType.at(extension);
 
@@ -172,8 +172,11 @@ Answer::_fillContentFields(string const & fileName)
 	std::ostringstream fileSizeStream; fileSizeStream << fileSize;
 	_fields["Content-Length"] = fileSizeStream.str();
 
+	if (!request._extensionPart.empty())
+		_fields["Content-Location"] = request._fileWithoutRoot + request._extensionPart;
+
 	struct stat fileInfos;
-	stat(fileName.c_str(), &fileInfos);
+	stat(request._requiredFile.c_str(), &fileInfos);
 	time_t lastModified = fileInfos.st_mtime;
 	struct tm tm = *gmtime(&lastModified);
 	char date[50];

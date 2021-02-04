@@ -77,7 +77,7 @@ class HttpRequest
 		Client &						_client;
 		string 							_method, _target, _httpVersion;
 		string							_requiredFile, _fileWithoutRoot;
-		string							_queryPart;
+		string							_queryPart, _extensionPart;
 		realmInfos						_requiredRealm;
 		map<string, vector<string> >	_fields;
 		char							_body[CLIENT_MAX_BODY_SIZE + 1];
@@ -109,7 +109,7 @@ class HttpRequest
 		void _addIndexIfDirectory(void);
 		bool _searchForIndexInLocations(void);
 		void _searchForIndexInHost(void);
-		string _chooseFileWithLanguageAndEncoding(void);
+		string _getLanguageAndEncodingExtension(void);
 		vector<vector<string> > _getVariantFilesInDirectory(void);
 		vector<std::pair<string, double> > _getAcceptedExtensions(string const & fieldKey);
 		void _updateStatusIfInvalid(void);
