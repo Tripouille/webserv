@@ -25,7 +25,8 @@ Answer::sendException::what(void) const throw()
 
 /* Answer */
 
-Answer::Answer(SOCKET client, ServerConfig const & config) : _client(client), _config(config)
+Answer::Answer(SOCKET client, Host const & host, ServerConfig const & config)
+	   : _client(client), _host(host), _config(config)
 {
 }
 
@@ -34,7 +35,7 @@ Answer::~Answer()
 	deleteQ(_body);
 }
 
-Answer::Answer(Answer const & other) : _config(other._config)
+Answer::Answer(Answer const & other) : _host(other._host), _config(other._config)
 {
 	Answer::_copy(other);
 }
@@ -146,7 +147,7 @@ Answer::_sendBody(void) throw(sendException)
 void
 Answer::_fillServerField(void)
 {
-	_fields["Server"] = "webserv";
+	_fields["Server"] = _host.serverName;
 }
 
 void

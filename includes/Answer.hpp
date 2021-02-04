@@ -30,7 +30,7 @@ class Answer
 				string _str;
 		};
 
-		Answer(SOCKET client, ServerConfig const & config);
+		Answer(SOCKET client, Host const & host, ServerConfig const & config);
 		~Answer();
 		Answer(Answer const & other);
 
@@ -47,6 +47,7 @@ class Answer
 		SOCKET						_client;
 		std::map<string, string>	_fields;
 		t_bufferQ					_body;
+		Host const &				_host;
 		ServerConfig const &		_config;
 
 		Answer(void);

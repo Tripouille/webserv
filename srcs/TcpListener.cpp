@@ -136,7 +136,7 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 {
 	cout << endl << "Data arriving from socket " << socket << endl;
 	HttpRequest request(_clientInfos[socket], _host, _config);
-	Answer answer(socket, _config);
+	Answer answer(socket, _host, _config);
 
 	try
 	{

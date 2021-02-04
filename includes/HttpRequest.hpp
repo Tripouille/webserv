@@ -34,7 +34,7 @@ class HttpRequest
 	friend class CgiRequest;
 	friend class Answer;
 	public:
-		struct s_status //déplacer dans private puisque friend ?
+		struct s_status
 		{
 			int		code;
 			string	info;
