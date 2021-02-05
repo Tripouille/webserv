@@ -14,6 +14,7 @@
 # include "Client.hpp"
 # include "ServerConfig.hpp"
 # include "base64.hpp"
+# include "utils.hpp"
 
 # define CLIENT_MAX_BODY_SIZE 1000000
 # define REQUEST_LINE_MAX_SIZE 1024
@@ -89,6 +90,7 @@ class HttpRequest
 		map<string, vector<string> >	_fields;
 		char							_body[CLIENT_MAX_BODY_SIZE + 1];
 		size_t							_bodySize;
+		ssize_t							_headerSize;
 		s_status						_status;
 		Host &							_host;
 		ServerConfig &					_config;
@@ -98,14 +100,14 @@ class HttpRequest
 		HttpRequest & operator=(HttpRequest const & other);
 
 		void _copy(HttpRequest const & other);
-		void _analyseRequestLine(ssize_t & headerSize) throw(parseException, closeOrderException);
+		void _analyseRequestLine() throw(parseException, closeOrderException);
 		ssize_t _getLine(char * buffer, ssize_t limit) const throw(parseException);
 		vector<string> _splitRequestLine(string s) const;
 		void _fillAndCheckRequestLine(vector<string> const & requestLine) throw(parseException);
 		void _checkMethod(void) const throw(parseException);
 		void _checkTarget(void) const throw(parseException);
 		void _checkHttpVersion(void) const throw(parseException);
-		void _analyseHeader(ssize_t & headerSize) throw(parseException);
+		void _analyseHeader() throw(parseException);
 		void _parseHeaderLine(string line) throw(parseException);
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
 		void _checkHeader(void) throw(parseException);
@@ -127,6 +129,8 @@ class HttpRequest
 		void _setClientInfos(void) const;
 		bool _isAuthorized(void) const;
 		void _analyseBody(void) throw(parseException);
+		void _analyseNormalBody(void) throw(parseException);
+		void _analyseChunkedBody(void) throw(parseException);
 		void _checkContentLength(vector<string> const & contentLengthField) const throw(parseException);
 		void _debugFields(void);
 };
