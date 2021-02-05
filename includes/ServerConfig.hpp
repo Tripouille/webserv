@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/01 14:41:13 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/05 15:30:36 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ struct Host
 {
 	uint16_t									port;
 	string										root;
+	bool										autoIndex;
 	vector<string>								index;
 	string										serverName;
 	map<string, string>							cgi;
@@ -99,6 +100,7 @@ class ServerConfig
 		DIR *					directoryPath( void );
 		vector<string>			convertIndex( map<string, string> & p_map, string const & p_fileName );
 		string					checkRoot( map<string, string> & p_map, string const & p_fileName );
+		bool					checkAutoIndex( map<string, string> & p_map, string const & p_filename );
 		string					checkServerName( map<string, string> & p_map, string const & p_fileName );
 		uint16_t &				checkPort( uint16_t & p_port, string const & p_fileName );
 		map<string, string> &	checkCgi( map<string, string>& p_map, string const & p_fileName );
