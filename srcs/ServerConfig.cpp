@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/01 14:47:34 by aalleman         ###   ########lyon.fr   */
+/*   Updated: 2021/02/05 15:55:02 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -142,6 +142,24 @@ vector<string>			ServerConfig::convertIndex( map<string, string> & p_map,
 	return tmp;
 }
 
+bool					ServerConfig::checkAutoIndex( map<string, string> & p_map, \
+														string const & p_filename )
+{
+	if (p_map.find("autoindex") != p_map.end())
+	{
+		string tmp = p_map.at("autoindex");
+		if (tmp == "on" || tmp == "off")
+			return (tmp == "on") ? true : false;
+		else
+		{
+			errno = EINVAL;
+			throw configException("Error params \"autoindex\" value is not valid on",
+									p_filename);
+		}
+	}
+	return false;
+}
+
 map<string, map<string, vector<string> > > &
 ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map, \
 								string const & p_fileName)
@@ -178,6 +196,15 @@ ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map,
 				errno = EINVAL;
 				throw configException("Error in params \"" + it->first + "\" need params \'auth_basic\' in", \
 											p_fileName);
+			}
+			if (map->first == "autoindex")
+			{
+				if (map->second[0] != "on" && map->second[0] != "off")
+				{
+					errno = EINVAL;
+					throw configException("Error in params \"" + it->first + "\" \'autoindex\' value cannot \'on\' or \'off\' in", \
+											p_fileName);
+				}
 			}
 		}
 	}
@@ -398,6 +425,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 			Host temp_host = {
 				this->checkPort(port, p_filname[i]),
 				this->checkRoot(tmp, p_filname[i]),
+				this->checkAutoIndex(tmp, p_filname[i]),
 				this->convertIndex(tmp, p_filname[i]),
 				this->checkServerName(tmp, p_filname[i]),
 				this->checkCgi(cgiTmp, p_filname[i]),
