@@ -56,6 +56,13 @@ class HttpRequest
 			private:
 				string _str;
 		};
+		class directoryListingException : public std::exception
+		{
+			public:
+				directoryListingException(void) throw();
+				virtual ~directoryListingException(void) throw();
+				virtual const char * what(void) const throw();
+		};
 		class closeOrderException : public std::exception
 		{
 			public:
@@ -71,7 +78,7 @@ class HttpRequest
 		s_status const & getStatus(void) const;
 		void setStatus(int c, string const & i);
 
-		void analyze(void) throw(parseException, closeOrderException);
+		void analyze(void) throw(parseException, closeOrderException, directoryListingException);
 
 	private:
 		Client &						_client;
@@ -108,7 +115,8 @@ class HttpRequest
 		void _updatePutDirectory(void);
 		void _addIndexIfDirectory(void);
 		bool _searchForIndexInLocations(void);
-		void _searchForIndexInHost(void);
+		bool _searchForIndexInHost(void);
+		bool _directoryListingIsActivated(void) const;
 		string _getLanguageAndEncodingExtension(void);
 		vector<vector<string> > _getVariantFilesInDirectory(void);
 		vector<std::pair<string, double> > _getAcceptedExtensions(string const & fieldKey);

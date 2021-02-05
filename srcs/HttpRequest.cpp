@@ -20,6 +20,19 @@ HttpRequest::parseException::what(void) const throw()
 	return (_str.c_str());
 }
 
+HttpRequest::directoryListingException::directoryListingException(void) throw()
+{
+}
+
+HttpRequest::directoryListingException::~directoryListingException(void) throw()
+{
+}
+
+const char *
+HttpRequest::directoryListingException::what(void) const throw()
+{
+	return ("Directory Listing");
+}
 
 HttpRequest::closeOrderException::closeOrderException(void) throw()
 {
@@ -79,7 +92,7 @@ HttpRequest::setStatus(int c, string const & i)
 }
 
 void
-HttpRequest::analyze(void) throw(parseException, closeOrderException)
+HttpRequest::analyze(void) throw(parseException, closeOrderException, directoryListingException)
 {
 	ssize_t headerSize = 0;
 
@@ -396,7 +409,11 @@ HttpRequest::_addIndexIfDirectory(void)
 			_fileWithoutRoot += '/';
 		if (_searchForIndexInLocations())
 			return ;
-		_searchForIndexInHost();
+		if (_searchForIndexInHost())
+			return ;
+		if (_directoryListingIsActivated())
+			throw(directoryListingException());
+		_requiredFile.clear();
 	}
 }
 
@@ -444,7 +461,7 @@ HttpRequest::_searchForIndexInLocations(void)
 	return (false);
 }
 
-void
+bool
 HttpRequest::_searchForIndexInHost(void)
 {
 	struct stat fileInfos;
@@ -456,11 +473,38 @@ HttpRequest::_searchForIndexInHost(void)
 		if (stat(testedFile.c_str(), &fileInfos) == 0)
 		{
 			_requiredFile = testedFile;
-			break ;
+			return (true);
 		}
 	}
-	if (index == indexEnd)
-		_requiredFile.clear();
+	return (false);
+}
+
+bool
+HttpRequest::_directoryListingIsActivated(void) const
+{
+	string analyzedFile(_fileWithoutRoot);
+	std::map<string, map<string, vector<string> > >::iterator its = _host.location.begin();
+	std::map<string, map<string, vector<string> > >::iterator ite = _host.location.end();
+	std::map<string, map<string, vector<string> > >::iterator actual;
+	size_t slashPos;
+	while (analyzedFile.size())
+	{
+		for (actual = its; actual != ite; ++actual)
+			if (actual->first == analyzedFile)
+				if (actual->second.find("autoindex") != actual->second.end())
+					return (actual->second["autoindex"][0] == "on");
+
+		slashPos = analyzedFile.find_last_of('/');
+		if (slashPos == 0 && analyzedFile != "/")
+			analyzedFile.erase(slashPos + 1);
+		else if (slashPos != string::npos)
+			analyzedFile.erase(slashPos);
+		else
+			analyzedFile.clear();
+	}
+	/*if (_host.autoindex)
+		return (true);*/
+	return (false);
 }
 
 struct compareExtensions
