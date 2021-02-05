@@ -38,7 +38,7 @@ CgiRequest::CgiRequest(const unsigned short serverPort,
 	if (request._requiredRealm.name.size())
 		authentication = client.authentications.at(request._requiredRealm.name);
 	_setEnv(0, string("AUTH_TYPE=") + authentication.scheme);
-	_setEnv(1, string("CONTENT_LENGTH=") + _toString(request._bodySize));
+	_setEnv(1, string("CONTENT_LENGTH=") + toStr(request._bodySize));
 	try { _setEnv(2, string("CONTENT_TYPE=") + request._fields.at("content-type")[0]); }
 	catch (std::out_of_range) {_setEnv(2, string("CONTENT_TYPE="));}
 	_setEnv(3, string("GATEWAY_INTERFACE=CGI/1.1"));
@@ -52,7 +52,7 @@ CgiRequest::CgiRequest(const unsigned short serverPort,
 	_setEnv(11, string("REQUEST_URI=") + request._requiredFile);
 	_setEnv(12, string("SCRIPT_NAME=") + request._requiredFile);
 	_setEnv(13, string("SERVER_NAME=127.0.0.1"));
-	_setEnv(14, string("SERVER_PORT=") + _toString(serverPort));
+	_setEnv(14, string("SERVER_PORT=") + toStr(serverPort));
 	_setEnv(15, string("SERVER_PROTOCOL=HTTP/1.1"));
 	_setEnv(16, string("SERVER_SOFTWARE=Webserv/1.0"));
 	_setEnv(17, string("REDIRECT_STATUS=200"));
@@ -153,15 +153,6 @@ CgiRequest::_setArg(int pos, string const & value)
 	_av[pos] = new char[value.size() + 1];
 	std::copy(value.begin(), value.end(), _av[pos]);
 	_av[pos][value.size()] = 0;
-}
-
-template <class T>
-string
-CgiRequest::_toString(T number) const
-{
-	std::ostringstream ss;
-	ss << number;
-	return (ss.str());
 }
 
 void

@@ -14,8 +14,8 @@
 # include <list>
 # include <sstream>
 # include <sys/stat.h>
-# include <fstream>
 
+# include "utils.hpp"
 # include "HttpRequest.hpp"
 # include "CgiRequest.hpp"
 # include "BufferQ.hpp"
@@ -87,7 +87,6 @@ class TcpListener
 			throw(Answer::sendException);
 
 		bool _setErrorPage(HttpRequest & request) const;
-		template <class T> string _toStr(T const & value) const;
 		void _handleNoErrorPage(Answer & answer, HttpRequest const & request);
 };
 

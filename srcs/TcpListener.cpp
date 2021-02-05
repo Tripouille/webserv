@@ -175,49 +175,48 @@ TcpListener::_listDirectory(HttpRequest & request, Answer & answer) const
 {
 	string page;
 	page += "<html><head>";
-	page += "<style type=\"text/css\">table{font-size: 18px; border-collapse: collapse;} \
-										th {border-bottom: 1px black solid;} \
-										td {height: 26px;}</style>";
+	page += "<style type=\"text/css\">table{font-size: 18px; border-collapse: collapse;} "
+										"th {border-bottom: 1px black solid;} "
+										"td {height: 26px; padding-right: 20px;}</style>";
 	page += "</head><body>";
-	page += "<h1>Index of " + request._fileWithoutRoot + "</h1>\n";
+	page += "<h1>Index of " + request._fileWithoutRoot + "</h1>";
 	page += "<table>";
-	page += "<tr style=\"height: 40px;\">";
-	page += "<th>Name</th>";
-	page += "<th>Last Modified</th>";
-	page += "<th>Size</th>";
-	page += "</tr>";
-	struct stat fileInfos;
+	page += "<tr style=\"height: 40px;\"><th>Name</th><th>Last Modified</th><th>Size</th></tr>";
 	DIR *dir;
-	cerr << "requiredFile = " << request._requiredFile << endl;
 	if ((dir = opendir(request._requiredFile.c_str())) != NULL)
 	{
+		struct stat fileInfos;
 		struct dirent *ent;
 		while ((ent = readdir(dir)) != NULL)
 		{
 			string fileName = ent->d_name;
 			if (fileName == ".")
 				continue ;
-			stat(fileName.c_str(), &fileInfos);
+			stat(string(request._requiredFile + fileName).c_str(), &fileInfos);
 			time_t lastModified = fileInfos.st_mtime;
 			struct tm tm = *gmtime(&lastModified);
 			char date[50];
 			strftime(date, sizeof(date), "%d-%b-%Y %H:%M", &tm);
 			page += "<tr>";
-			page += "<td><a href=\"" + fileName + "\">" + (fileName == ".." ? "Parent Directory" : fileName) + "</a></td>";
-			page += "<td>" + string(date) + "</td>";
-			page += string("<td>") + (fileName == ".." ? "-" : toString(fileInfos.st_size)) + string("</td>");
+			if (fileName == "..")
+				page += "<td><a href=\"" + request._fileWithoutRoot + fileName + "\">Parent Directory</a></td><td></td><td>-</td>";
+			else
+			{
+				page += "<td><a href=\"" + request._fileWithoutRoot + fileName + "\">" + fileName + "</a></td>";
+				page += "<td>" + string(date) + "</td>";
+				page += string("<td>") + toStr(fileInfos.st_size) + string("</td>");
+			}
 			page += "</tr>";
 		}
 		closedir(dir);
 	}
-	page += "</table>";
-	page += "</body></html>";
+	page += "</table></body></html>";
 
 	answer.sendStatus(request._status);
 	answer.sendHeader();
 	answer.sendEndOfHeader();
 	if (request._method != "HEAD")
-		answer._sendToClient(page.str().c_str(), page.str().size());
+		answer._sendToClient(page.c_str(), page.size());
 }
 
 bool
@@ -310,7 +309,7 @@ bool
 TcpListener::_setErrorPage(HttpRequest & request) const
 {
 	struct stat fileInfos;
-	string code = _toStr(request._status.code);
+	string code = toStr(request._status.code);
 	if (_host.errorPage.find(code) != _host.errorPage.end())
 	{
 		request._requiredFile = request._getPath(_host.errorPage[code]);
@@ -321,20 +320,11 @@ TcpListener::_setErrorPage(HttpRequest & request) const
 	return (false);
 }
 
-template <class T>
-string
-TcpListener::_toStr(T const & value) const
-{
-	std::ostringstream ss;
-	ss << value;
-	return (ss.str());
-}
-
 void
 TcpListener::_handleNoErrorPage(Answer & answer, HttpRequest const & request)
 {
 	std::ostringstream ss; ss << request._status.code << " " << request._status.info;
-	answer._fields["Content-Length"] = _toStr(ss.str().size());
+	answer._fields["Content-Length"] = toStr(ss.str().size());
 
 	answer.sendStatus(request._status);
 	answer.sendHeader();

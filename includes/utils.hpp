@@ -4,7 +4,12 @@
 # include <sstream>
 
 template<class T>
-std::string toStr(T const & value);
+std::string toStr(T const & value)
+{
+	std::ostringstream ss;
+	ss << value;
+	return (ss.str());
+}
 
 std::string intToHex(int const & value);
 

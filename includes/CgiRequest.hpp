@@ -16,6 +16,7 @@
 # include "Client.hpp"
 # include "Answer.hpp"
 # include "ServerConfig.hpp"
+# include "utils.hpp"
 # define STDOUT 1
 # define STDIN 0
 # define UNSET_PIPE -1
@@ -51,8 +52,6 @@ class CgiRequest
 		void _copy(CgiRequest const & other);
 		void _setEnv(int pos, string const & value);
 		void _setArg(int pos, string const & value);
-		template <class T>
-		string _toString(T number) const;
 		void _analyzeHeader(int fd, Answer & answer);
 		ssize_t _getLine(int fd, char * buffer, ssize_t limit) const;
 		void _parseHeaderLine(string line, Answer & answer) throw(cgiException);

@@ -100,14 +100,14 @@ class HttpRequest
 		HttpRequest & operator=(HttpRequest const & other);
 
 		void _copy(HttpRequest const & other);
-		void _analyseRequestLine() throw(parseException, closeOrderException);
+		void _analyseRequestLine(void) throw(parseException, closeOrderException);
 		ssize_t _getLine(char * buffer, ssize_t limit) const throw(parseException);
 		vector<string> _splitRequestLine(string s) const;
 		void _fillAndCheckRequestLine(vector<string> const & requestLine) throw(parseException);
 		void _checkMethod(void) const throw(parseException);
 		void _checkTarget(void) const throw(parseException);
 		void _checkHttpVersion(void) const throw(parseException);
-		void _analyseHeader() throw(parseException);
+		void _analyseHeader(void) throw(parseException);
 		void _parseHeaderLine(string line) throw(parseException);
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
 		void _checkHeader(void) throw(parseException);

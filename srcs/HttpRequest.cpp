@@ -130,7 +130,7 @@ HttpRequest::_copy(HttpRequest const & other)
 */
 
 void
-HttpRequest::_analyseRequestLine() throw(parseException, closeOrderException)
+HttpRequest::_analyseRequestLine(void) throw(parseException, closeOrderException)
 {
 	char			buffer[REQUEST_LINE_MAX_SIZE + 1];
 	vector<string>	requestLine;
@@ -243,7 +243,7 @@ HttpRequest::_checkHttpVersion(void) const throw(parseException)
 }
 
 void
-HttpRequest::_analyseHeader() throw(parseException)
+HttpRequest::_analyseHeader(void) throw(parseException)
 {
 	//+1 pour pouvoir lire un char supplémentaire et dépasser la limite
 	char			line[HEADER_MAX_SIZE + 1];
@@ -503,8 +503,8 @@ HttpRequest::_directoryListingIsActivated(void) const
 		else
 			analyzedFile.clear();
 	}
-	/*if (_host.autoindex)
-		return (true);*/
+	if (_host.autoIndex)
+		return (true);
 	return (false);
 }
 
