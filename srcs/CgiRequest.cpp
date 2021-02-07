@@ -102,11 +102,12 @@ CgiRequest::doRequest(HttpRequest const & request, Answer & answer)
 		dup2(_inPipe[0], STDIN);
 		dup2(_outPipe[1], STDOUT);
 		write(_inPipe[1], request._body, request._bodySize);
+		//char eof = -1; write(_inPipe[1], &eof, 1); //?
 		if (execve(_cgi.c_str(), _av, _env) == -1)
 			exit(EXIT_FAILURE);
 	}
 	usleep(TIMEOUT);
-	waitpid(child, &status, WNOHANG);
+	waitpid(child, &status, WNOHANG); //?
 	if (WEXITSTATUS(status) == EXIT_FAILURE)
 		throw(cgiException("execve fail", *this));
 	kill(child, SIGKILL);
@@ -119,7 +120,7 @@ CgiRequest::doRequest(HttpRequest const & request, Answer & answer)
 		buffer = new s_buffer(BUFF_SIZE);
 		buffer->occupiedSize = read(_outPipe[0], buffer->b, static_cast<size_t>(buffer->size));
 		answer._body.push(buffer);
-		//cerr << "occupedSize = " << buffer->occupiedSize << ", buffer = " << buffer->b << endl;
+		//write(2, buffer->b, static_cast<size_t>(buffer->occupiedSize));
 	} while (buffer->occupiedSize == buffer->size);
 	if (buffer->occupiedSize == -1)
 	{

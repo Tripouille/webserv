@@ -33,6 +33,7 @@ Answer::Answer(SOCKET client, Host const & host, ServerConfig const & config)
 Answer::~Answer()
 {
 	deleteQ(_body);
+	_debugFields();
 }
 
 Answer::Answer(Answer const & other) : _host(other._host), _config(other._config)

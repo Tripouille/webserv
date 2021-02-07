@@ -6,8 +6,9 @@
     </head>
     <body>
     
-        <?php
-    if (isset($_POST['mot_de_passe']) AND $_POST['mot_de_passe'] ==  "kangourou") // Si le mot de passe est bon
+		<?php
+	print_r($_POST);
+	if (isset($_POST['mot_de_passe']) AND $_POST['mot_de_passe'] ==  "kangourou") // Si le mot de passe est bon
     {
     // On affiche les codes
     ?>
@@ -19,10 +20,14 @@
         La NASA vous remercie de votre visite.
         </p>
         <?php
-    }
+	}
     else // Sinon, on affiche un message d'erreur
     {
-        echo '<p>Mot de passe incorrect</p>';
+		echo '<p>Mot de passe incorrect</p>';
+		if (isset($_POST['mot_de_passe']))
+			echo '<p>Mot de passe essayé : ' . $_POST['mot_de_passe'];
+		else
+			echo '<p>Aucun mot de passe envoyé<p>';
     }
     ?>
         

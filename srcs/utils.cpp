@@ -27,5 +27,5 @@ ssize_t hexToDec(std::string const & str)
 
 bool isHex(std::string const & str)
 {
-	return (str.find_first_not_of("0123456789abcdefABCDEF", 2) == std::string::npos);
+	return (str.find_first_not_of("0123456789abcdefABCDEF") == std::string::npos);
 }

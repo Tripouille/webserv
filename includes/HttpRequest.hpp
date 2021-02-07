@@ -101,9 +101,11 @@ class HttpRequest
 
 		void _copy(HttpRequest const & other);
 		void _analyseRequestLine(void) throw(parseException, closeOrderException);
-		ssize_t _getLine(char * buffer, ssize_t limit) const throw(parseException);
+		ssize_t _getLine(char * buffer, ssize_t limit, bool LFAllowed = true)
+		const throw(parseException);
 		vector<string> _splitRequestLine(string s) const;
-		void _fillAndCheckRequestLine(vector<string> const & requestLine) throw(parseException);
+		void _fillAndCheckRequestLine(vector<string> const & requestLine)
+		throw(parseException);
 		void _checkMethod(void) const throw(parseException);
 		void _checkTarget(void) const throw(parseException);
 		void _checkHttpVersion(void) const throw(parseException);
@@ -111,6 +113,11 @@ class HttpRequest
 		void _parseHeaderLine(string line) throw(parseException);
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
 		void _checkHeader(void) throw(parseException);
+		void _analyseBody(void) throw(parseException);
+		void _analyseNormalBody(void) throw(parseException);
+		void _analyseChunkedBody(void) throw(parseException);
+		void _checkContentLength(vector<string> const & contentLengthField)
+		const throw(parseException);
 		void _setRequiredFile(void);
 		void _extractQueryPart(void);
 		string _getPath(string file) const;
@@ -128,10 +135,6 @@ class HttpRequest
 		void _setRequiredRealm(void);
 		void _setClientInfos(void) const;
 		bool _isAuthorized(void) const;
-		void _analyseBody(void) throw(parseException);
-		void _analyseNormalBody(void) throw(parseException);
-		void _analyseChunkedBody(void) throw(parseException);
-		void _checkContentLength(vector<string> const & contentLengthField) const throw(parseException);
 		void _debugFields(void);
 };
 

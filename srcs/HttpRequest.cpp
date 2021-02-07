@@ -150,17 +150,16 @@ HttpRequest::_analyseRequestLine(void) throw(parseException, closeOrderException
 		throw(parseException(*this, 431, "Request Line Too Long", "request line too long"));
 
 	requestLine = _splitRequestLine(buffer);
-	//std::ostringstream debug; debug << (int)*buffer;
 	if (requestLine.size() != 3)
 		throw parseException(*this, 400, "Bad Request", "invalid request line : "
-		+ string(buffer)); //+ " / " + debug.str());
+		+ string(buffer));
 	_fillAndCheckRequestLine(requestLine);
 
-	cerr << "Request line : " << buffer << endl;
+	cout << "Request line : " << buffer << endl;
 }
 
 ssize_t
-HttpRequest::_getLine(char * buffer, ssize_t limit) const throw(parseException)
+HttpRequest::_getLine(char * buffer, ssize_t limit, bool LFAllowed) const throw(parseException)
 {
 	ssize_t lineSize = 1;
 	ssize_t	recvReturn = recv(_client.s, buffer, 1, 0);
@@ -181,6 +180,8 @@ HttpRequest::_getLine(char * buffer, ssize_t limit) const throw(parseException)
 		return (lineSize);
 
 	buffer[lineSize - 1] = 0;
+	if (!LFAllowed && (lineSize < 2 || buffer[lineSize - 2] != '\r'))
+		throw(parseException(*this, 400, "Bad Request", "Missing CRLF"));
 	if (lineSize >= 2 && buffer[lineSize - 2] == '\r')
 		buffer[lineSize - 2] = 0;
 	return (lineSize);
@@ -305,6 +306,89 @@ HttpRequest::_checkHeader(void) throw(parseException)
 		throw(parseException(*this, 400, "Bad Request", "no Host header field"));
 	if (_fields["host"].size() > 1)
 		throw(parseException(*this, 400, "Bad Request", "too many Host header fields"));
+}
+
+#include <unistd.h>
+void
+HttpRequest::_analyseBody(void) throw(parseException)
+{
+	_body[0] = 0;
+	if (_fields["transfer-encoding"].size() == 1 && _fields["transfer-encoding"][0] == "chunked")
+		_analyseChunkedBody();
+	else if (_fields["content-length"].size())
+		_analyseNormalBody();
+}
+
+void
+HttpRequest::_analyseChunkedBody(void) throw(parseException)
+{
+	ssize_t			chunkSizeBufferMaxSize = static_cast<ssize_t>(intToHex(CLIENT_MAX_BODY_SIZE).size());
+	ssize_t			chunkSizeBufferSize = 0;
+	char			chunkSizeBuffer[chunkSizeBufferMaxSize + 1];
+	ssize_t			chunkSize = 0, chunkLineSize = 0;
+	char			crlf[3] = {0};
+
+	do
+	{
+		chunkSizeBufferSize = _getLine(chunkSizeBuffer, chunkSizeBufferMaxSize, false);
+		chunkSizeBuffer[chunkSizeBufferSize] = 0;
+		if (chunkSizeBufferSize < 0)
+			throw(parseException(*this, 500, "Internal Server Error", "recv error"));
+		else if (chunkSizeBufferSize > chunkSizeBufferMaxSize)
+			throw(parseException(*this, 413, "Payload Too Large", "Chunk size is too large"));
+		else if (!chunkSizeBuffer[0])
+			throw(parseException(*this, 400, "Bad Request", "Missing chunk size"));
+		else if (!isHex(chunkSizeBuffer))
+			throw(parseException(*this, 400, "Bad Request", "Chunk size is not hex"));
+		chunkSize = hexToDec(chunkSizeBuffer);
+		if (static_cast<ssize_t>(_bodySize) + chunkSize > CLIENT_MAX_BODY_SIZE)
+			throw(parseException(*this, 413, "Payload Too Large", "Chunked body is too large"));
+		else if (chunkSize)
+		{
+			chunkLineSize = recv(_client.s, _body + _bodySize, static_cast<size_t>(chunkSize), 0);
+			if (chunkLineSize < 0)
+				throw(parseException(*this, 500, "Internal Server Error", "recv error"));
+			else if (chunkLineSize != chunkSize)
+				throw(parseException(*this, 500, "Internal Server Error", "Chunked body smaller than chunk size"));
+			_bodySize += static_cast<size_t>(chunkSize);
+		}
+		chunkLineSize = recv(_client.s, crlf, 2, 0);
+		if (chunkLineSize < 0)
+			throw(parseException(*this, 500, "Internal Server Error", "recv error"));
+		crlf[chunkLineSize] = 0;
+		if (strcmp(crlf, "\r\n") != 0)
+			throw(parseException(*this, 400, "Bad Request", "No CRLF at the end of a chunk"));
+	} while (chunkSize);
+	//_body[_bodySize] = 0;//for debug only
+	//cout << "CHUNK body size = " << _bodySize << ", body = [" << _body << "]" << endl;
+}
+
+void
+HttpRequest::_analyseNormalBody(void) throw(parseException)
+{
+	_checkContentLength(_fields["content-length"]);
+	std::istringstream(_fields["content-length"][0]) >> _bodySize;
+	if (_bodySize > CLIENT_MAX_BODY_SIZE)
+		throw(parseException(*this, 413, "Payload Too Large", "Content-Length too high"));
+	else if (_bodySize == 0)
+		return ;
+	ssize_t recvRet = recv(_client.s, _body, _bodySize, 0);
+	if (recvRet < 0)
+		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
+	else if (static_cast<size_t>(recvRet) < _bodySize)
+		throw(parseException(*this, 500, "Internal Server Error", "body smaller than given content length"));
+	_body[_bodySize] = 0;
+}
+
+void
+HttpRequest::_checkContentLength(vector<string> const & contentLengthField) const throw(parseException)
+{
+	if (contentLengthField.size() > 1)
+		throw(parseException(*this, 400, "Bad Request", "Mutiple Content-Length fields"));
+	else if (contentLengthField[0].size() > 9)
+		throw(parseException(*this, 400, "Bad Request", "Content-Length field is too long"));
+	else if (contentLengthField[0].find_first_not_of("0123456789") != string::npos)
+		throw(parseException(*this, 400, "Bad Request", "Content-Length is not a number"));
 }
 
 void
@@ -785,129 +869,9 @@ HttpRequest::_isAuthorized(void) const
 }
 
 void
-HttpRequest::_analyseBody(void) throw(parseException)
-{
-	_body[0] = 0;
-	if (_fields["transfer-encoding"].size() == 1 && _fields["transfer-encoding"][0] == "chunked")
-		_analyseChunkedBody();
-	else if (_fields["content-length"].size())
-		_analyseNormalBody();
-}
-
-void
-HttpRequest::_analyseNormalBody(void) throw(parseException)
-{
-	_checkContentLength(_fields["content-length"]);
-	std::istringstream(_fields["content-length"][0]) >> _bodySize;
-	if (_bodySize > CLIENT_MAX_BODY_SIZE)
-		throw(parseException(*this, 413, "Payload Too Large", "Content-Length too high"));
-	else if (_bodySize == 0)
-		return ;
-	ssize_t recvRet = recv(_client.s, _body, _bodySize, 0);
-	if (recvRet < 0)
-		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
-	else if (static_cast<size_t>(recvRet) < _bodySize)
-		throw(parseException(*this, 500, "Internal Server Error", "body smaller than given content length"));
-	_body[_bodySize] = 0;
-}
-
-/*26\r\n
-Voici les données du premier morceau\r\n
-1C\r\n
-et voici un second morceau\r\n
-20\r\n
-et voici deux derniers morceaux \r\n
-12\r\n
-sans saut de ligne\r\n
-0\r\n
-\r\n
-
-A process for decoding the chunked transfer coding can be represented
-in pseudo-code as:
-
-	length := 0
-	read chunk-size, chunk-ext (if any), and CRLF
-	while (chunk-size > 0) {
-	read chunk-data and CRLF
-	append chunk-data to decoded-body
-	length := length + chunk-size
-	read chunk-size, chunk-ext (if any), and CRLF
-	}
-	read trailer field
-	while (trailer field is not empty) {
-	if (trailer field is allowed to be sent in a trailer) {
-		append trailer field to existing header fields
-	}
-	read trailer-field
-	}
-	Content-Length := length
-	Remove "chunked" from Transfer-Encoding
-	Remove Trailer from existing header fields
-
-*/
-
-void
-HttpRequest::_analyseChunkedBody(void) throw(parseException)
-{
-	char			body[CLIENT_MAX_BODY_SIZE + 1];
-	ssize_t			bodySize = 0;
-
-	ssize_t			chunkBufferMaxSize = static_cast<ssize_t>(intToHex(CLIENT_MAX_BODY_SIZE).size());
-	ssize_t			chunkSizeBufferSize = 0;
-	char			chunkSizeBuffer[chunkBufferMaxSize + 1];
-	ssize_t			chunkSize = 0;
-	ssize_t			chunkLineSize = 0;
-	char			crlf[3] = {0};
-
-	body[0] = 0;
-	do
-	{
-		chunkSizeBufferSize = _getLine(chunkSizeBuffer, chunkBufferMaxSize);
-		if (chunkSizeBufferSize < 0)
-			throw(parseException(*this, 500, "Internal Server Error", "recv error"));
-		else if (chunkSizeBufferSize > chunkBufferMaxSize)
-			throw(parseException(*this, 431, "Request Body Too Large", "body too large"));
-		else if (!isHex(chunkSizeBuffer))
-			throw(parseException(*this, 431, "Invalid Chunk Size", "chunk size is not hex"));
-		chunkSize = hexToDec(chunkSizeBuffer);
-		if (bodySize + chunkSize > CLIENT_MAX_BODY_SIZE)
-			throw(parseException(*this, 431, "Request Body Too Large", "body too large"));
-		else if (chunkSize)
-		{
-			chunkLineSize = recv(_client.s, body + bodySize, static_cast<size_t>(chunkSize), 0);
-			if (chunkLineSize < 0)
-				throw(parseException(*this, 500, "Internal Server Error", "recv error"));
-			else if (chunkLineSize != chunkSize)
-				throw(parseException(*this, 431, "Invalid Chunk Size", "chunkLineSize != chunkSize"));
-			bodySize += chunkSize;
-			chunkLineSize = recv(_client.s, crlf, 2, 0);
-			if (chunkLineSize < 0)
-				throw(parseException(*this, 500, "Internal Server Error", "recv error"));
-			crlf[chunkLineSize] = 0;
-			if (strcmp(crlf, "\r\n"))
-				throw(parseException(*this, 431, "Invalid Chunk Ext", "invalid chunk ext missing \\r\\n"));
-		}
-	} while (chunkSize);
-	body[bodySize] = 0;
-	cout << "DEBUG CHUNK body size = " << bodySize << "  body =  " << body << endl; 
-	_analyseHeader();
-}
-
-void
-HttpRequest::_checkContentLength(vector<string> const & contentLengthField) const throw(parseException)
-{
-	if (contentLengthField.size() > 1)
-		throw(parseException(*this, 400, "Bad Request", "Mutiple Content-Length fields"));
-	else if (contentLengthField[0].size() > 9)
-		throw(parseException(*this, 400, "Bad Request", "Content-Length field is too long"));
-	else if (contentLengthField[0].find_first_not_of("0123456789") != string::npos)
-		throw(parseException(*this, 400, "Bad Request", "Content-Length is not a number"));
-}
-
-void
 HttpRequest::_debugFields(void)
 {
-	cerr << "Header received : " << endl;
+	cout << "Header received : " << endl;
 	map<string, vector<string> >::iterator it = _fields.begin();
 	map<string, vector<string> >::iterator ite = _fields.end();
 	for (; it != ite; ++it)
@@ -919,5 +883,5 @@ HttpRequest::_debugFields(void)
 			cout << *vit << " ";
 		cout << endl;
 	}
-	cerr << "end of debug 'header received'" << endl;
+	cout << "end of debug 'header received'" << endl;
 }
