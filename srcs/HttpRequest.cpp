@@ -372,7 +372,7 @@ HttpRequest::_analyseNormalBody(void) throw(parseException)
 		throw(parseException(*this, 413, "Payload Too Large", "Content-Length too high"));
 	else if (_bodySize == 0)
 		return ;
-	ssize_t recvRet = loopRecv(_client.s, _body, _bodySize, 0);
+	ssize_t recvRet = loopRecv(_client.s, _body, static_cast<ssize_t>(_bodySize));
 	if (recvRet < 0)
 		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
 	else if (static_cast<size_t>(recvRet) < _bodySize)
