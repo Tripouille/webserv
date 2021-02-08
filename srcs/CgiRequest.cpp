@@ -225,7 +225,7 @@ CgiRequest::_extractStatus(string & field) const
 {
 	size_t firstCharacter = field.find_first_not_of(' ');
 	size_t lastCharacter = field.find_last_not_of(' ');
-	field = field.substr(firstCharacter, lastCharacter);
+	field = field.substr(firstCharacter, lastCharacter + 1);
 	size_t spacePos = field.find(' ');
 	int code = atoi(field.substr(0, spacePos).c_str());
 	size_t statusPos = field.find_first_not_of(' ', spacePos);
