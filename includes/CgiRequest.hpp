@@ -39,22 +39,22 @@ class CgiRequest
 	};
 
 	public:
-		CgiRequest(const unsigned short serverPort, HttpRequest const & request, \
+		CgiRequest(const unsigned short serverPort, HttpRequest & request, \
 					Client const & client, string & cgi);
 		~CgiRequest(void);
-		CgiRequest(CgiRequest const & other);
 
-		CgiRequest & operator=(CgiRequest const & other);
-		void doRequest(HttpRequest const & request, Answer & answer);
+		void doRequest(Answer & answer);
 
 	private:
 		CgiRequest(void);
-		void _copy(CgiRequest const & other);
+		CgiRequest(CgiRequest const & other);
+		CgiRequest & operator=(CgiRequest const & other);
 		void _setEnv(int pos, string const & value);
 		void _setArg(int pos, string const & value);
 		void _analyzeHeader(int fd, Answer & answer);
 		ssize_t _getLine(int fd, char * buffer, ssize_t limit) const;
 		void _parseHeaderLine(string line, Answer & answer) throw(cgiException);
+		void _extractStatus(string & field) const;
 
 		enum {BUFF_SIZE = 100000, TIMEOUT = 1000000, ENV_SIZE = 20};
 
@@ -64,6 +64,7 @@ class CgiRequest
 		SOCKET				_socket;
 		int					_inPipe[2];
 		int					_outPipe[2];
+		HttpRequest &		_request;
 };
 
 #endif

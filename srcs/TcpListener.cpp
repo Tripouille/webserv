@@ -295,7 +295,7 @@ TcpListener::_handleNoBody(Answer & answer, HttpRequest const & request)
 void
 TcpListener::_doCgiRequest(CgiRequest cgiRequest, HttpRequest & request, Answer & answer)
 {
-	try { cgiRequest.doRequest(request, answer); }
+	try { cgiRequest.doRequest(answer); }
 	catch(CgiRequest::cgiException const & e)
 	{
 		request.setStatus(500, "Internal Server Error (CGI)");

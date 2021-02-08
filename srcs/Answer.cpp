@@ -168,10 +168,13 @@ Answer::_fillContentFields(HttpRequest const & request)
 	if (_fields.count("content-type") == 0 && _config.mimeType.count(extension))
 		_fields["Content-Type"] = _config.mimeType.at(extension);
 
-	streamsize fileSize = static_cast<streamsize>(_body.size() - 1)
-							* _body.back()->size + _body.back()->occupiedSize;
-	std::ostringstream fileSizeStream; fileSizeStream << fileSize;
-	_fields["Content-Length"] = fileSizeStream.str();
+	if (_body.size())
+	{
+		streamsize fileSize = static_cast<streamsize>(_body.size() - 1)
+								* _body.back()->size + _body.back()->occupiedSize;
+		std::ostringstream fileSizeStream; fileSizeStream << fileSize;
+		_fields["Content-Length"] = fileSizeStream.str();
+	}
 
 	if (!request._extensionPart.empty())
 		_fields["Content-Location"] = request._fileWithoutRoot + request._extensionPart;
