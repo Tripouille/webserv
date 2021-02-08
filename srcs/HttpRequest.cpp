@@ -331,7 +331,6 @@ HttpRequest::_analyseChunkedBody(void) throw(parseException)
 	do
 	{
 		chunkSizeBufferSize = _getLine(chunkSizeBuffer, chunkSizeBufferMaxSize, false);
-		chunkSizeBuffer[chunkSizeBufferSize] = 0;
 		if (chunkSizeBufferSize < 0)
 			throw(parseException(*this, 500, "Internal Server Error", "recv error"));
 		else if (chunkSizeBufferSize > chunkSizeBufferMaxSize)
@@ -340,6 +339,7 @@ HttpRequest::_analyseChunkedBody(void) throw(parseException)
 			throw(parseException(*this, 400, "Bad Request", "Missing chunk size"));
 		else if (!isHex(chunkSizeBuffer))
 			throw(parseException(*this, 400, "Bad Request", "Chunk size is not hex"));
+		chunkSizeBuffer[chunkSizeBufferSize] = 0;
 		chunkSize = hexToDec(chunkSizeBuffer);
 		if (static_cast<ssize_t>(_bodySize) + chunkSize > CLIENT_MAX_BODY_SIZE)
 			throw(parseException(*this, 413, "Payload Too Large", "Chunked body is too large"));

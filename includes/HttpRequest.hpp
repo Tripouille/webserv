@@ -16,7 +16,7 @@
 # include "base64.hpp"
 # include "utils.hpp"
 
-# define CLIENT_MAX_BODY_SIZE 1000000
+# define CLIENT_MAX_BODY_SIZE 10000000
 # define REQUEST_LINE_MAX_SIZE 1024
 # define HEADER_MAX_SIZE 8000
 
