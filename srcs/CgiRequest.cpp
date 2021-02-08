@@ -112,7 +112,6 @@ CgiRequest::doRequest(Answer & answer)
 	kill(child, SIGKILL);
 	fcntl(_outPipe[0], F_SETFL, O_NONBLOCK);
 	_analyzeHeader(_outPipe[0], answer);
-	//answer._debugFields();
 	s_buffer * buffer = NULL;
 	do
 	{

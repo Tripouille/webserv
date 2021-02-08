@@ -175,6 +175,8 @@ Answer::_fillContentFields(HttpRequest const & request)
 		std::ostringstream fileSizeStream; fileSizeStream << fileSize;
 		_fields["Content-Length"] = fileSizeStream.str();
 	}
+	else
+		_fields["Content-Length"] = "0";
 
 	if (!request._extensionPart.empty())
 		_fields["Content-Location"] = request._fileWithoutRoot + request._extensionPart;
