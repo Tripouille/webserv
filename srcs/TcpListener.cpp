@@ -52,7 +52,7 @@ TcpListener::init(void)
 		throw tcpException("Socket creation failed");
 
 	// Flag SO_REUSEADDR pour éviter l'erreur "bind failed: Address already in use"
-	int n = 1; struct timeval tv = {0, RCV_TIMEOUT};
+	int n = 1; struct timeval tv = {RCV_TIMEOUT, 0};
 	if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) < 0
 	|| setsockopt(_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
 	{
@@ -148,7 +148,7 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 		catch (HttpRequest::directoryListingException const & e)
 		{ _listDirectory(request, answer); return (_disconnectClient(socket));}
 
-		if (request._method == "PUT" && _put(request))
+		if (request._status.code / 100 == 2 && request._method == "PUT" && _put(request))
 		{
 			answer.sendStatus(request._status);
 			answer.sendEndOfHeader();

@@ -24,7 +24,7 @@
 # include "ServerConfig.hpp"
 
 # define BACKLOG 3
-# define RCV_TIMEOUT 3000
+# define RCV_TIMEOUT 1
 
 typedef int SOCKET;
 

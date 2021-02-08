@@ -1,13 +1,5 @@
 #include "utils.hpp"
 
-/*template<class T>
-std::string toStr(T const & value)
-{
-	std::ostringstream ss;
-	ss << value;
-	return (ss.str());
-}*/
-
 std::string intToHex(int const & value)
 {
 	std::ostringstream ss;
@@ -28,4 +20,19 @@ ssize_t hexToDec(std::string const & str)
 bool isHex(std::string const & str)
 {
 	return (str.find_first_not_of("0123456789abcdefABCDEF") == std::string::npos);
+}
+
+std::streamsize loopRecv(SOCKET socket, char * buffer, ssize_t size)
+{
+	int bytesRead = 0;
+	while (bytesRead < size)
+	{
+		std::streamsize recvReturn = recv(socket, buffer + bytesRead, static_cast<size_t>(size - bytesRead), 0);
+		if (recvReturn < 0)
+			return (recvReturn);
+		else if (recvReturn == 0)
+			return (bytesRead);
+		bytesRead += recvReturn;
+	}
+	return (bytesRead);
 }

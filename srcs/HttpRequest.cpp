@@ -345,14 +345,14 @@ HttpRequest::_analyseChunkedBody(void) throw(parseException)
 			throw(parseException(*this, 413, "Payload Too Large", "Chunked body is too large"));
 		else if (chunkSize)
 		{
-			chunkLineSize = recv(_client.s, _body + _bodySize, static_cast<size_t>(chunkSize), 0);
+			chunkLineSize = loopRecv(_client.s, _body + _bodySize, chunkSize);
 			if (chunkLineSize < 0)
 				throw(parseException(*this, 500, "Internal Server Error", "recv error"));
 			else if (chunkLineSize != chunkSize)
 				throw(parseException(*this, 500, "Internal Server Error", "Chunked body smaller than chunk size"));
 			_bodySize += static_cast<size_t>(chunkSize);
 		}
-		chunkLineSize = recv(_client.s, crlf, 2, 0);
+		chunkLineSize = loopRecv(_client.s, crlf, 2);
 		if (chunkLineSize < 0)
 			throw(parseException(*this, 500, "Internal Server Error", "recv error"));
 		crlf[chunkLineSize] = 0;
@@ -372,7 +372,7 @@ HttpRequest::_analyseNormalBody(void) throw(parseException)
 		throw(parseException(*this, 413, "Payload Too Large", "Content-Length too high"));
 	else if (_bodySize == 0)
 		return ;
-	ssize_t recvRet = recv(_client.s, _body, _bodySize, 0);
+	ssize_t recvRet = loopRecv(_client.s, _body, _bodySize, 0);
 	if (recvRet < 0)
 		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
 	else if (static_cast<size_t>(recvRet) < _bodySize)

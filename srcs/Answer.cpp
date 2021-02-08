@@ -81,6 +81,7 @@ void
 Answer::sendStatus(HttpRequest::s_status const & status)
 	const throw(sendException)
 {
+	cerr << "sending status " << status.code << " " << status.info << endl;
 	std::ostringstream oss;
 	oss << HTTP_VERSION << " " << status.code << " " << status.info << "\r\n";
 	_sendToClient(oss.str().c_str(), oss.str().size());

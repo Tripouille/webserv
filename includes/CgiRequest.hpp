@@ -68,39 +68,3 @@ class CgiRequest
 };
 
 #endif
-
-/*
-AUTH_TYPE      = "" | auth-scheme
-      			auth-scheme    = "Basic" | "Digest" | extension-auth
-      			extension-auth = token
-For HTTP, if the client request required authentication for external
-   access, then the server MUST set the value of this variable from the
-   'auth-scheme' token in the request Authorization header field.
-
-CONTENT_LENGTH
-The CONTENT_LENGTH variable contains the size of the message-body
-   attached to the request, if any, in decimal number of octets.  If no
-   data is attached, then NULL (or unset).
-
-      CONTENT_LENGTH = "" | 1*digit
-
-   The server MUST set this meta-variable if and only if the request is
-   accompanied by a message-body entity.  The CONTENT_LENGTH value must
-   reflect the length of the message-body after the server has removed
-   any transfer-codings or content-codings.
-CONTENT_TYPE
-GATEWAY_INTERFACE
-PATH_INFO
-PATH_TRANSLATED
-QUERY_STRING
-REMOTE_ADDR
-REMOTE_IDENT
-REMOTE_USER
-REQUEST_METHOD
-REQUEST_URI
-SCRIPT_NAME
-SERVER_NAME
-SERVER_PORT
-SERVER_PROTOCOL
-SERVER_SOFTWARE
-*/
