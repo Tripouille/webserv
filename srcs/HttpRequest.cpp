@@ -391,6 +391,31 @@ HttpRequest::_checkContentLength(vector<string> const & contentLengthField) cons
 		throw(parseException(*this, 400, "Bad Request", "Content-Length is not a number"));
 }
 
+map<string, vector<string> >
+HttpRequest::_getDeepestLocation(string const & key, string & analyzedFile) const
+{
+	std::map<string, map<string, vector<string> > >::iterator its = _host.location.begin();
+	std::map<string, map<string, vector<string> > >::iterator ite = _host.location.end();
+	std::map<string, map<string, vector<string> > >::iterator actual;
+	size_t slashPos;
+
+	while (analyzedFile.size())
+	{
+		for (actual = its; actual != ite; ++actual)
+			if (actual->first == analyzedFile)
+				if (actual->second.find(key) != actual->second.end())
+					return (actual->second);
+		slashPos = analyzedFile.find_last_of('/');
+		if (slashPos == 0 && analyzedFile != "/")
+			analyzedFile.erase(slashPos + 1);
+		else if (slashPos != string::npos)
+			analyzedFile.erase(slashPos);
+		else
+			analyzedFile.clear();
+	}
+	return (map<string, vector<string> >());
+}
+
 void
 HttpRequest::_setRequiredFile(void)
 {
@@ -453,32 +478,14 @@ void
 HttpRequest::_updatePutDirectory(void)
 {
 	string analyzedFile(_fileWithoutRoot);
-	std::map<string, map<string, vector<string> > >::iterator its = _host.location.begin();
-	std::map<string, map<string, vector<string> > >::iterator ite = _host.location.end();
-	std::map<string, map<string, vector<string> > >::iterator actual;
-	size_t slashPos;
-	while (analyzedFile.size())
+	map<string, vector<string> > location = _getDeepestLocation("upload_store", analyzedFile);
+	if (!location.empty())
 	{
-		for (actual = its; actual != ite; ++actual)
-			if (actual->first == analyzedFile)
-			{
-				if (actual->second.find("upload_store") != actual->second.end())
-				{
-					_requiredFile = _fileWithoutRoot;
-					_requiredFile.replace(0, analyzedFile.size(), actual->second["upload_store"][0]);
-					return ;
-				}
-			}
-
-		slashPos = analyzedFile.find_last_of('/');
-		if (slashPos == 0 && analyzedFile != "/")
-			analyzedFile.erase(slashPos + 1);
-		else if (slashPos != string::npos)
-			analyzedFile.erase(slashPos);
-		else
-			analyzedFile.clear();
+		_requiredFile = _fileWithoutRoot;
+		_requiredFile.replace(0, analyzedFile.size(), location["upload_store"][0]);
 	}
-	_requiredFile = _getPath(_fileWithoutRoot);
+	else
+		_requiredFile = _getPath(_fileWithoutRoot);
 }
 
 void
@@ -506,42 +513,24 @@ bool
 HttpRequest::_searchForIndexInLocations(void)
 {
 	struct stat fileInfos;
-	string analyzedFile(_fileWithoutRoot);
-	std::map<string, map<string, vector<string> > >::iterator its = _host.location.begin();
-	std::map<string, map<string, vector<string> > >::iterator ite = _host.location.end();
-	std::map<string, map<string, vector<string> > >::iterator actual;
-	size_t slashPos;
-	while (analyzedFile.size())
+	string analyzedFile = _fileWithoutRoot;
+	map<string, vector<string> > location = _getDeepestLocation("index", analyzedFile);
+	if (!location.empty())
 	{
-		for (actual = its; actual != ite; ++actual)
-			if (actual->first == analyzedFile)
+		vector<string> indexFiles = location["index"];
+		for (vector<string>::iterator indexFile = indexFiles.begin();
+		indexFile != indexFiles.end(); ++indexFile)
+		{
+			string testedFile = _requiredFile + *indexFile;
+			if (stat(testedFile.c_str(), &fileInfos) == 0)
 			{
-				if (actual->second.find("index") != actual->second.end())
-				{
-					vector<string> indexFiles = actual->second["index"];
-					for (vector<string>::iterator indexFile = indexFiles.begin();
-					indexFile != indexFiles.end(); ++indexFile)
-					{
-						string testedFile = _requiredFile + *indexFile;
-						if (stat(testedFile.c_str(), &fileInfos) == 0)
-						{
-							_requiredFile = testedFile;
-							_fileWithoutRoot += *indexFile;
-							return (true);
-						}
-					}
-					_requiredFile.clear();
-					return (true);
-				}
+				_requiredFile = testedFile;
+				_fileWithoutRoot += *indexFile;
+				return (true);
 			}
-
-		slashPos = analyzedFile.find_last_of('/');
-		if (slashPos == 0 && analyzedFile != "/")
-			analyzedFile.erase(slashPos + 1);
-		else if (slashPos != string::npos)
-			analyzedFile.erase(slashPos);
-		else
-			analyzedFile.clear();
+		}
+		_requiredFile.clear();
+		return (true);
 	}
 	return (false);
 }
@@ -567,27 +556,11 @@ HttpRequest::_searchForIndexInHost(void)
 bool
 HttpRequest::_directoryListingIsActivated(void) const
 {
-	string analyzedFile(_fileWithoutRoot);
-	std::map<string, map<string, vector<string> > >::iterator its = _host.location.begin();
-	std::map<string, map<string, vector<string> > >::iterator ite = _host.location.end();
-	std::map<string, map<string, vector<string> > >::iterator actual;
-	size_t slashPos;
-	while (analyzedFile.size())
-	{
-		for (actual = its; actual != ite; ++actual)
-			if (actual->first == analyzedFile)
-				if (actual->second.find("autoindex") != actual->second.end())
-					return (actual->second["autoindex"][0] == "on");
-
-		slashPos = analyzedFile.find_last_of('/');
-		if (slashPos == 0 && analyzedFile != "/")
-			analyzedFile.erase(slashPos + 1);
-		else if (slashPos != string::npos)
-			analyzedFile.erase(slashPos);
-		else
-			analyzedFile.clear();
-	}
-	if (_host.autoIndex)
+	string analyzedFile = _fileWithoutRoot;
+	map<string, vector<string> > location = _getDeepestLocation("autoindex", analyzedFile);
+	if (!location.empty())
+		return (location["autoindex"][0] == "on");
+	else if (_host.autoIndex)
 		return (true);
 	return (false);
 }
@@ -759,65 +732,23 @@ HttpRequest::_updateStatusIfInvalid(void)
 bool
 HttpRequest::_methodIsAuthorized(void) const
 {
-	vector<string> const & allowedMethods = _getAllowedMethods();
-	return (std::find(allowedMethods.begin(), allowedMethods.end(), _method) != allowedMethods.end());
-}
-
-vector<string> const
-HttpRequest::_getAllowedMethods(void) const
-{
-	string analyzedFile(_fileWithoutRoot);
-	size_t slashPos;
-	std::map<string, map<string, vector<string> > >::iterator its = _host.location.begin();
-	std::map<string, map<string, vector<string> > >::iterator ite = _host.location.end();
-	std::map<string, map<string, vector<string> > >::iterator actual;
-
-	while (analyzedFile.size())
-	{
-		for (actual = its; actual != ite; ++actual)
-			if (actual->first == analyzedFile)
-				if (actual->second.find("allowed_methods") != actual->second.end())
-					return (actual->second["allowed_methods"]);
-
-		slashPos = analyzedFile.find_last_of('/');
-		if (slashPos == 0 && analyzedFile != "/")
-			analyzedFile.erase(slashPos + 1);
-		else if (slashPos != string::npos)
-			analyzedFile.erase(slashPos);
-		else
-			analyzedFile.clear();
-	}
-	return (vector<string>());
+	string analyzedFile = _fileWithoutRoot;
+	map<string, vector<string> > location = _getDeepestLocation("allowed_methods", analyzedFile);
+	if (!location.empty())
+		return (std::find(location["allowed_methods"].begin(), location["allowed_methods"].end(), _method)
+				!= location["allowed_methods"].end());
+	return (false);
 }
 
 void
 HttpRequest::_setRequiredRealm(void)
 {
-	string analyzedFile(_fileWithoutRoot);
-	std::map<string, map<string, vector<string> > >::iterator its = _host.location.begin();
-	std::map<string, map<string, vector<string> > >::iterator ite = _host.location.end();
-	std::map<string, map<string, vector<string> > >::iterator actual;
-	size_t slashPos;
-
-	while (analyzedFile.size())
+	string analyzedFile = _fileWithoutRoot;
+	map<string, vector<string> > location = _getDeepestLocation("auth_basic", analyzedFile);
+	if (!location.empty())
 	{
-		for (actual = its; actual != ite; ++actual)
-			if (actual->first == analyzedFile)
-			{
-				if (actual->second.find("auth_basic") != actual->second.end())
-				{
-					_requiredRealm.name = actual->second["auth_basic"][0];
-					_requiredRealm.userFile = actual->second["auth_basic_user_file"][0];
-					return ;
-				}
-			}
-		slashPos = analyzedFile.find_last_of('/');
-		if (slashPos == 0 && analyzedFile != "/")
-			analyzedFile.erase(slashPos + 1);
-		else if (slashPos != string::npos)
-			analyzedFile.erase(slashPos);
-		else
-			analyzedFile.clear();
+		_requiredRealm.name = location["auth_basic"][0];
+		_requiredRealm.userFile = location["auth_basic_user_file"][0];
 	}
 }
 

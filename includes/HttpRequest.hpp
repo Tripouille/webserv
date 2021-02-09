@@ -118,6 +118,7 @@ class HttpRequest
 		void _analyseChunkedBody(void) throw(parseException);
 		void _checkContentLength(vector<string> const & contentLengthField)
 		const throw(parseException);
+		map<string, vector<string> > _getDeepestLocation(string const & key, string & analyzedFile) const;
 		void _setRequiredFile(void);
 		void _extractQueryPart(void);
 		string _getPath(string file) const;
@@ -131,7 +132,6 @@ class HttpRequest
 		vector<std::pair<string, double> > _getAcceptedExtensions(string const & fieldKey);
 		void _updateStatusIfInvalid(void);
 		bool _methodIsAuthorized(void) const;
-		vector<string> const _getAllowedMethods(void) const;
 		void _setRequiredRealm(void);
 		void _setClientInfos(void) const;
 		bool _isAuthorized(void) const;

@@ -156,8 +156,11 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 		}
 
 		if (request._status.code / 100 != 2)
+		{
+			_setErrorFields(request, answer);
 			if (!_setErrorPage(request))
 				return (_handleNoErrorPage(answer, request));
+		}
 		if (request._requiredFile.size())
 			_answerToClient(socket, answer, request);
 		else
@@ -270,30 +273,12 @@ TcpListener::_handleNoBody(Answer & answer, HttpRequest const & request)
 	throw(Answer::sendException)
 {
 	answer.sendStatus(request._status);
-	if (request._status.code == 401)
-	{
-		answer._fields["WWW-Authenticate"] = string("Basic realm=\"")
-											+ request._requiredRealm.name + string("\"");
-		answer.sendHeader();
-	}
-	else if (request._status.code == 405)
-	{
-		vector<string> const allowedMethods = request._getAllowedMethods();
-		vector<string>::const_iterator it = allowedMethods.begin();
-		while (it != allowedMethods.end())
-		{
-			answer._fields["Allow"] += *it++;
-			if (it != allowedMethods.end())
-				answer._fields["Allow"] += ", ";
-		}
-		answer.sendHeader();
-	}
 	answer.sendEndOfHeader();
 	return (_disconnectClient(answer._client));
 }
 
 void
-TcpListener::_doCgiRequest(CgiRequest cgiRequest, HttpRequest & request, Answer & answer)
+TcpListener::_doCgiRequest(CgiRequest cgiRequest, HttpRequest & request, Answer & answer) const
 {
 	try { cgiRequest.doRequest(answer); }
 	catch(CgiRequest::cgiException const & e)
@@ -302,6 +287,29 @@ TcpListener::_doCgiRequest(CgiRequest cgiRequest, HttpRequest & request, Answer 
 		answer.sendStatus(request._status);
 		answer.sendEndOfHeader();
 		throw(Answer::sendException("error in cgi : " + string(e.what())));
+	}
+}
+
+void
+TcpListener::_setErrorFields(HttpRequest const & request, Answer & answer) const
+{
+	if (request._status.code == 401)
+		answer._fields["WWW-Authenticate"] = string("Basic realm=\"")
+											+ request._requiredRealm.name + string("\"");
+	else if (request._status.code == 405)
+	{
+		vector<string> allowedMethods;
+		string analyzedFile = request._fileWithoutRoot;
+		map<string, vector<string> > location = request._getDeepestLocation("allowed_methods", analyzedFile);
+		if (!location.empty())
+			allowedMethods = location["allowed_methods"];
+		vector<string>::const_iterator it = allowedMethods.begin();
+		while (it != allowedMethods.end())
+		{
+			answer._fields["Allow"] += *it++;
+			if (it != allowedMethods.end())
+				answer._fields["Allow"] += ", ";
+		}
 	}
 }
 

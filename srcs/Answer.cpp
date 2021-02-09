@@ -52,12 +52,6 @@ Answer::operator=(Answer const & other)
 /* Public */
 
 void
-Answer::setBody(t_bufferQ const & body)
-{
-	_body = body;
-}
-
-void
 Answer::getFile(string const & fileName) throw(sendException)
 {
 	s_buffer *	buffer;

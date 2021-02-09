@@ -35,8 +35,9 @@ class Answer
 		Answer(Answer const & other);
 
 		Answer & operator=(Answer const & other);
-		void setBody(t_bufferQ const & body);
+
 		void getFile(string const & fileName) throw(sendException);
+		void setErrorFields(t_bufferQ const & body);
 		void sendStatus(HttpRequest::s_status const & status)
 			const throw(sendException);
 		void sendHeader(void) const throw(sendException);
