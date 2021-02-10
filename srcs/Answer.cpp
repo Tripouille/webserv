@@ -102,13 +102,14 @@ Answer::sendAnswer(HttpRequest const & request) throw(sendException)
 {
 	_fillServerField();
 	_fillDateField();
-	_fillContentFields(request);
+	_fields["Content-Length"] = "0";
+	if (request._requiredFile.size())
+		_fillContentFields(request);
+	sendStatus(request._status);
 	sendHeader();
 	sendEndOfHeader();
-	if (request._method != "HEAD")
+	if (request._method != "HEAD" && request._requiredFile.size())
 		_sendBody();
-	else
-		deleteQ(_body);
 }
 
 /* Private */
@@ -170,8 +171,6 @@ Answer::_fillContentFields(HttpRequest const & request)
 		std::ostringstream fileSizeStream; fileSizeStream << fileSize;
 		_fields["Content-Length"] = fileSizeStream.str();
 	}
-	else
-		_fields["Content-Length"] = "0";
 
 	if (!request._extensionPart.empty())
 		_fields["Content-Location"] = request._fileWithoutRoot + request._extensionPart;

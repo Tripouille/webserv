@@ -84,9 +84,6 @@ class TcpListener
 			throw(tcpException,  Answer::sendException);
 		void _doCgiRequest(CgiRequest cgiRequest, HttpRequest & request, Answer & answer) const;
 		void _setErrorFields(HttpRequest const & request, Answer & answer) const;
-		void _handleNoBody(Answer & answer, HttpRequest const & request)
-			throw(Answer::sendException);
-
 		bool _setErrorPage(HttpRequest & request) const;
 		void _handleNoErrorPage(Answer & answer, HttpRequest const & request);
 };

@@ -161,10 +161,10 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 			if (!_setErrorPage(request))
 				return (_handleNoErrorPage(answer, request));
 		}
-		if (request._requiredFile.size())
-			_answerToClient(socket, answer, request);
-		else
-			_handleNoBody(answer, request);
+		_answerToClient(socket, answer, request);
+
+		if (request._status.code / 100 != 2)
+			_disconnectClient(socket);
 	}
 	catch (Answer::sendException const & e)
 	{
@@ -248,7 +248,7 @@ TcpListener::_put(HttpRequest & request) const
 		file << request._body;
 		file.close();
 	}
-	return (request._status.info == "Created" || request._status.info == "No Content");
+	return (request._status.info == "No Content");
 }
 
 void
@@ -256,25 +256,18 @@ TcpListener::_answerToClient(SOCKET socket, Answer & answer,
 	HttpRequest & request)
 	throw(tcpException, Answer::sendException)
 {
-	string extension = request._requiredFile.substr(request._requiredFile.find_last_of('.') + 1);
-
-	try { _doCgiRequest(CgiRequest(_port, request, _clientInfos[socket], _host.cgi.at(extension)), request, answer); }
-	catch (std::out_of_range)
+	if (request._requiredFile.size())
 	{
-		try { answer.getFile(request._requiredFile); }
-		catch (Answer::sendException const &) { throw(tcpException("File reading failed")); }
-	}
-	answer.sendStatus(request._status);
-	answer.sendAnswer(request);
-}
+		string extension = request._requiredFile.substr(request._requiredFile.find_last_of('.') + 1);
 
-void
-TcpListener::_handleNoBody(Answer & answer, HttpRequest const & request)
-	throw(Answer::sendException)
-{
-	answer.sendStatus(request._status);
-	answer.sendEndOfHeader();
-	return (_disconnectClient(answer._client));
+		try { _doCgiRequest(CgiRequest(_port, request, _clientInfos[socket], _host.cgi.at(extension)), request, answer); }
+		catch (std::out_of_range)
+		{
+			try { answer.getFile(request._requiredFile); }
+			catch (Answer::sendException const &) { throw(tcpException("File reading failed")); }
+		}
+	}
+	answer.sendAnswer(request);
 }
 
 void
