@@ -259,7 +259,6 @@ TcpListener::_answerToClient(SOCKET socket, Answer & answer,
 	if (request._requiredFile.size())
 	{
 		string extension = request._requiredFile.substr(request._requiredFile.find_last_of('.') + 1);
-
 		try { _doCgiRequest(CgiRequest(_port, request, _clientInfos[socket], _host.cgi.at(extension)), request, answer); }
 		catch (std::out_of_range)
 		{
