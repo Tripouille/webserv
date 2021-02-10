@@ -56,10 +56,12 @@ HttpRequest::HttpRequest(Client & client, Host& host, ServerConfig & config)
 {
 	setStatus(200, "OK");
 	_bodySize = 0;
+	_body = new char[CLIENT_MAX_BODY_SIZE + 1];
 }
 
 HttpRequest::~HttpRequest(void)
 {
+	delete[] _body;
 }
 
 HttpRequest::HttpRequest(HttpRequest const & other)

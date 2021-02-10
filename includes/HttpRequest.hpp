@@ -88,7 +88,7 @@ class HttpRequest
 		string							_queryPart, _extensionPart;
 		realmInfos						_requiredRealm;
 		map<string, vector<string> >	_fields;
-		char							_body[CLIENT_MAX_BODY_SIZE + 1];
+		char *							_body;
 		size_t							_bodySize;
 		ssize_t							_headerSize;
 		s_status						_status;

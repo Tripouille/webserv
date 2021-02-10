@@ -14,15 +14,14 @@ OBJS					= $(addprefix $(OBJS_PATH), $(SRCS_NAME:.cpp=.o))
 NAME					= webserv
 RM						= rm -rf
 CC						= clang++
-FLAGS					= -Wall -Wextra -Werror -Wconversion -std=c++98 -fsanitize=address
+FLAGS					= -Wall -Wextra -Werror -Wconversion -std=c++98 #-fsanitize=address
 
 ifdef DEBUG
 FLAGS					+= -g3
 endif
 
 test: all
-#leaks --atExit -- ./webserv #leaks ne fonctionne pas sur mac ?
-	./webserv
+	valgrind ./webserv
 
 all: $(NAME)
 
