@@ -249,7 +249,7 @@ TcpListener::_writeInFile(HttpRequest & request) const
 }
 
 void
-TcpListener::_writeInFile(HttpRequest & request, t_bufferQ & body) const
+TcpListener::_writeInFile(HttpRequest & request, t_bufferQ body) const
 {
 	struct stat fileInfos;
 
@@ -273,9 +273,7 @@ TcpListener::_writeInFile(HttpRequest & request, t_bufferQ & body) const
 	{
 		while (!body.empty())
 		{
-			//_sendToClient(body.front()->b, static_cast<size_t>(body.front()->occupiedSize));
 			file.write(body.front()->b, body.front()->occupiedSize);
-			delete body.front();
 			body.pop();
 		}
 		file.close();

@@ -37,3 +37,4 @@ void deleteQ(t_bufferQ & q)
 		q.pop();
 	}
 }
+

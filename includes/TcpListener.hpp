@@ -79,7 +79,7 @@ class TcpListener
 		void _handleRequest(SOCKET client) throw(tcpException);
 		void _listDirectory(HttpRequest & request, Answer & answer) const;
 		void _writeInFile(HttpRequest & request) const;
-		void _writeInFile(HttpRequest & request, t_bufferQ & body) const;
+		void _writeInFile(HttpRequest & request, t_bufferQ body) const;
 		void _answerToClient(SOCKET client, Answer & answer,
 			HttpRequest & request)
 			throw(tcpException,  Answer::sendException);

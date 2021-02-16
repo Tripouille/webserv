@@ -218,7 +218,7 @@ CgiRequest::_getLine(int fd, char * buffer, ssize_t limit) const
 void
 CgiRequest::_parseHeaderLine(string line, Answer & answer) throw(cgiException)
 {
-	if (_request._status.info == "Created" || _request._status.info == "No Content")
+	if (_request._method == "PUT")
 		return ;
 	size_t colonPos = line.find(':', 0);
 	if (colonPos == string::npos)
@@ -243,6 +243,8 @@ CgiRequest::_extractStatus(string & field) const
 	size_t spacePos = field.find(' ');
 	int code = atoi(field.substr(0, spacePos).c_str());
 	size_t statusPos = field.find_first_not_of(' ', spacePos);
+	if (_request._status.code / 100 == 2 && code / 100 == 2)
+		return ;
 	_request.setStatus(code, field.substr(statusPos));
 }
 

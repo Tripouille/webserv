@@ -103,8 +103,7 @@ Answer::sendAnswer(HttpRequest const & request) throw(sendException)
 	_fillServerField();
 	_fillDateField();
 	_fields["Content-Length"] = "0";
-	if (request._status.info != "Created" && request._status.info != "No Content"
-	&& request._requiredFile.size())
+	if (request._method != "PUT" && request._requiredFile.size())
 		_fillContentFields(request);
 	sendStatus(request._status);
 	sendHeader();
