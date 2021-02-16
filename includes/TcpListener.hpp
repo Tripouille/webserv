@@ -78,10 +78,12 @@ class TcpListener
 		void _disconnectClient(SOCKET client);
 		void _handleRequest(SOCKET client) throw(tcpException);
 		void _listDirectory(HttpRequest & request, Answer & answer) const;
-		bool _put(HttpRequest & request) const;
+		void _writeInFile(HttpRequest & request) const;
+		void _writeInFile(HttpRequest & request, t_bufferQ & body) const;
 		void _answerToClient(SOCKET client, Answer & answer,
 			HttpRequest & request)
 			throw(tcpException,  Answer::sendException);
+		string const _needsCgi(string const & fileName) const;
 		void _doCgiRequest(CgiRequest cgiRequest, HttpRequest & request, Answer & answer) const;
 		void _setErrorFields(HttpRequest const & request, Answer & answer) const;
 		bool _setErrorPage(HttpRequest & request) const;

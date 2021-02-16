@@ -97,12 +97,12 @@ void
 HttpRequest::analyze(void) throw(parseException, closeOrderException, directoryListingException)
 {
 	_headerSize = 0;
-
 	_analyseRequestLine();
 	_analyseHeader();
 	_debugFields();
 	_setRequiredFile();
 	_analyseBody();
+
 	if (!_methodIsAuthorized())
 		throw(parseException(*this, 405, "Method Not Allowed", "from config"));
 	_setRequiredRealm();
@@ -436,16 +436,16 @@ HttpRequest::_setRequiredFile(void)
 	_extractQueryPart();
 	if (_fileWithoutRoot[0] != '/')
 		_fileWithoutRoot.insert(0, "/");
-	if (_method == "PUT")
-		_updatePutDirectory();
-	else
+	if (_method != "PUT")
 	{
 		_requiredFile = _getPath(_fileWithoutRoot);
 		_addIndexIfDirectory();
 		if (!(_extensionPart = _getLanguageAndEncodingExtension()).empty())
 			_requiredFile += _extensionPart;
-		_updateStatusIfInvalid();
+		_fileFound = _updateStatusIfInvalid();
 	}
+	if (_method == "PUT" || (_method == "POST" && !_fileFound))
+		_useStoreDirectory();
 }
 
 void
@@ -486,20 +486,6 @@ HttpRequest::_getPath(string file) const
 			file.clear();
 	}
 	return (_host.root + originalFile);
-}
-
-void
-HttpRequest::_updatePutDirectory(void)
-{
-	string analyzedFile(_fileWithoutRoot);
-	map<string, vector<string> > location = _getDeepestLocation("upload_store", analyzedFile);
-	if (!location.empty())
-	{
-		_requiredFile = _fileWithoutRoot;
-		_requiredFile.replace(0, analyzedFile.size(), location["upload_store"][0]);
-	}
-	else
-		_requiredFile = _getPath(_fileWithoutRoot);
 }
 
 void
@@ -735,12 +721,31 @@ HttpRequest::_getAcceptedExtensions(string const & fieldKey)
 	return (acceptedExtensions);
 }
 
-void
+bool
 HttpRequest::_updateStatusIfInvalid(void)
 {
 	struct stat fileInfos;
 	if (stat(_requiredFile.c_str(), &fileInfos) != 0 || !S_ISREG(fileInfos.st_mode))
-		setStatus(404, "Not Found");
+	{
+		if (_method != "PUT" && _method != "POST")
+			setStatus(404, "Not Found");
+		return (false);
+	}
+	return (true);
+}
+
+void
+HttpRequest::_useStoreDirectory(void)
+{
+	string analyzedFile(_fileWithoutRoot);
+	map<string, vector<string> > location = _getDeepestLocation("upload_store", analyzedFile);
+	if (!location.empty())
+	{
+		_requiredFile = _fileWithoutRoot;
+		_requiredFile.replace(0, analyzedFile.size(), location["upload_store"][0]);
+	}
+	else if (_method == "PUT")
+		_requiredFile = _getPath(_fileWithoutRoot);
 }
 
 bool

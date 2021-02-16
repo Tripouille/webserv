@@ -86,6 +86,7 @@ class HttpRequest
 		string 							_method, _target, _httpVersion;
 		string							_requiredFile, _fileWithoutRoot;
 		string							_queryPart, _extensionPart;
+		bool							_fileFound;
 		realmInfos						_requiredRealm;
 		map<string, vector<string> >	_fields;
 		char *							_body;
@@ -122,7 +123,6 @@ class HttpRequest
 		void _setRequiredFile(void);
 		void _extractQueryPart(void);
 		string _getPath(string file) const;
-		void _updatePutDirectory(void);
 		void _addIndexIfDirectory(void);
 		bool _searchForIndexInLocations(void);
 		bool _searchForIndexInHost(void);
@@ -130,7 +130,8 @@ class HttpRequest
 		string _getLanguageAndEncodingExtension(void);
 		vector<vector<string> > _getVariantFilesInDirectory(void);
 		vector<std::pair<string, double> > _getAcceptedExtensions(string const & fieldKey);
-		void _updateStatusIfInvalid(void);
+		bool _updateStatusIfInvalid(void);
+		void _useStoreDirectory(void);
 		bool _methodIsAuthorized(void) const;
 		void _setRequiredRealm(void);
 		void _setClientInfos(void) const;

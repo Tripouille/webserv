@@ -218,6 +218,8 @@ CgiRequest::_getLine(int fd, char * buffer, ssize_t limit) const
 void
 CgiRequest::_parseHeaderLine(string line, Answer & answer) throw(cgiException)
 {
+	if (_request._status.info == "Created" || _request._status.info == "No Content")
+		return ;
 	size_t colonPos = line.find(':', 0);
 	if (colonPos == string::npos)
 		throw(cgiException("no ':'", *this));

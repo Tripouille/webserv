@@ -148,12 +148,10 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 		catch (HttpRequest::directoryListingException const & e)
 		{ _listDirectory(request, answer); return (_disconnectClient(socket));}
 
-		if (request._status.code / 100 == 2 && request._method == "PUT" && _put(request))
-		{
-			answer.sendStatus(request._status);
-			answer.sendEndOfHeader();
-			return ;
-		}
+		if (request._status.code / 100 == 2
+		&& (request._method == "PUT" || (request._method == "POST" && !request._fileFound))
+		&& _needsCgi(request._fileWithoutRoot).empty())
+			_writeInFile(request);
 
 		if (request._status.code / 100 != 2)
 		{
@@ -222,17 +220,17 @@ TcpListener::_listDirectory(HttpRequest & request, Answer & answer) const
 		answer._sendToClient(page.c_str(), page.size());
 }
 
-bool
-TcpListener::_put(HttpRequest & request) const
+void
+TcpListener::_writeInFile(HttpRequest & request) const
 {
 	struct stat fileInfos;
 
 	if (stat(request._requiredFile.c_str(), &fileInfos) == 0)
 	{
-		if (S_ISDIR(fileInfos.st_mode) /*|| !S_ISREG(fileInfos.st_mode)*/)
+		if (S_ISDIR(fileInfos.st_mode))
 		{
 			request.setStatus(409, "Conflict");
-			return (false);
+			return ;
 		}
 		else
 			request.setStatus(204, "No Content");
@@ -245,10 +243,43 @@ TcpListener::_put(HttpRequest & request) const
 		request.setStatus(403, "Forbidden");
 	else
 	{
-		file << request._body;
+		file.write(request._body, static_cast<streamsize>(request._bodySize));
 		file.close();
 	}
-	return (request._status.info == "No Content");
+}
+
+void
+TcpListener::_writeInFile(HttpRequest & request, t_bufferQ & body) const
+{
+	struct stat fileInfos;
+
+	if (stat(request._requiredFile.c_str(), &fileInfos) == 0)
+	{
+		if (S_ISDIR(fileInfos.st_mode))
+		{
+			request.setStatus(409, "Conflict");
+			return ;
+		}
+		else
+			request.setStatus(204, "No Content");
+	}
+	else
+		request.setStatus(201, "Created");
+
+	std::ofstream file(request._requiredFile.c_str(), std::ofstream::out | std::ofstream::trunc);
+	if (!file)
+		request.setStatus(403, "Forbidden");
+	else
+	{
+		while (!body.empty())
+		{
+			//_sendToClient(body.front()->b, static_cast<size_t>(body.front()->occupiedSize));
+			file.write(body.front()->b, body.front()->occupiedSize);
+			delete body.front();
+			body.pop();
+		}
+		file.close();
+	}
 }
 
 void
@@ -258,15 +289,29 @@ TcpListener::_answerToClient(SOCKET socket, Answer & answer,
 {
 	if (request._requiredFile.size())
 	{
-		string extension = request._fileWithoutRoot.substr(request._fileWithoutRoot.find_last_of('.') + 1);
-		try { _doCgiRequest(CgiRequest(_port, request, _clientInfos[socket], _host.cgi.at(extension)), request, answer); }
-		catch (std::out_of_range)
+		string cgi;
+		if ((cgi = _needsCgi(request._fileWithoutRoot)).size())
+		{
+			_doCgiRequest(CgiRequest(_port, request, _clientInfos[socket], cgi), request, answer);
+			if (request._method == "PUT" || (request._method == "POST" && !request._fileFound))
+				_writeInFile(request, answer._body);
+		}
+		else if (request._method != "POST" && request._method != "PUT")
 		{
 			try { answer.getFile(request._requiredFile); }
 			catch (Answer::sendException const &) { throw(tcpException("File reading failed")); }
 		}
 	}
 	answer.sendAnswer(request);
+}
+
+string const
+TcpListener::_needsCgi(string const & fileName) const
+{
+	string extension = fileName.substr(fileName.find_last_of('.') + 1);
+	if (_host.cgi.count(extension))
+		return (_host.cgi[extension]);
+	return (string());
 }
 
 void
