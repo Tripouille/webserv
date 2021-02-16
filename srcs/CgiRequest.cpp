@@ -54,7 +54,7 @@ CgiRequest::CgiRequest(const unsigned short serverPort,
 	_setEnv(13, string("SERVER_NAME=127.0.0.1"));
 	_setEnv(14, string("SERVER_PORT=") + toStr(serverPort));
 	_setEnv(15, string("SERVER_PROTOCOL=HTTP/1.1"));
-	_setEnv(16, string("SERVER_SOFTWARE=Webserv/1.0"));
+	_setEnv(16, string("SERVER_SOFTWARE=") + _request._host.serverName);
 	_setEnv(17, string("REDIRECT_STATUS=200"));
 	_env[18] = NULL;
 
