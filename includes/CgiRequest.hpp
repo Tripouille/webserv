@@ -49,6 +49,7 @@ class CgiRequest
 		CgiRequest(void);
 		CgiRequest(CgiRequest const & other);
 		CgiRequest & operator=(CgiRequest const & other);
+		void _createEnv(unsigned short const serverPort, Client const & client);
 		void _setEnv(int pos, string const & value);
 		void _setArg(int pos, string const & value);
 		int _writeInCgi(void) throw(cgiException);
@@ -59,9 +60,9 @@ class CgiRequest
 		void _extractStatus(string & field) const;
 		void _closeCgi(int writeChildPid, int cgiChildPid) throw(cgiException);
 
-		enum {BUFF_SIZE = 100000, TIMEOUT = 90000000, ENV_SIZE = 20};
+		enum {BUFF_SIZE = 100000, TIMEOUT = 90000000, ENV_SIZE = 19};
 
-		char *				_env[ENV_SIZE];
+		char **				_env;
 		char *				_av[2];
 		string &			_cgi;
 		SOCKET				_socket;

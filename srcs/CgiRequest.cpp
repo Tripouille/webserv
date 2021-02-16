@@ -34,29 +34,7 @@ CgiRequest::CgiRequest(const unsigned short serverPort,
 			HttpRequest & request, Client const & client, string & cgi)
 	: _cgi(cgi), _socket(client.s), _request(request)
 {
-	Client::authentication authentication;
-	if (_request._requiredRealm.name.size())
-		authentication = client.authentications.at(_request._requiredRealm.name);
-	_setEnv(0, string("AUTH_TYPE=") + authentication.scheme);
-	_setEnv(1, string("CONTENT_LENGTH=") + toStr(_request._bodySize));
-	try { _setEnv(2, string("CONTENT_TYPE=") + _request._fields.at("content-type")[0]); }
-	catch (std::out_of_range) {_setEnv(2, string("CONTENT_TYPE="));}
-	_setEnv(3, string("GATEWAY_INTERFACE=CGI/1.1"));
-	_setEnv(4, string("PATH_INFO=") + _request._requiredFile);
-	_setEnv(5, string("PATH_TRANSLATED=") + _request._requiredFile);
-	_setEnv(6, string("QUERY_STRING=") + _request._queryPart);
-	_setEnv(7, string("REMOTE_ADDR=") + client.addr);
-	_setEnv(8, string("REMOTE_IDENT=") + authentication.ident);
-	_setEnv(9, string("REMOTE_USER=") + authentication.user);
-	_setEnv(10, string("REQUEST_METHOD=") + _request._method);
-	_setEnv(11, string("REQUEST_URI=") + _request._requiredFile);
-	_setEnv(12, string("SCRIPT_NAME=") + _request._requiredFile);
-	_setEnv(13, string("SERVER_NAME=127.0.0.1"));
-	_setEnv(14, string("SERVER_PORT=") + toStr(serverPort));
-	_setEnv(15, string("SERVER_PROTOCOL=HTTP/1.1"));
-	_setEnv(16, string("SERVER_SOFTWARE=") + _request._host.serverName);
-	_setEnv(17, string("REDIRECT_STATUS=200"));
-	_env[18] = NULL;
+	_createEnv(serverPort, client);
 
 	_setArg(0, _request._requiredFile);
 	_av[1] = NULL;
@@ -69,6 +47,7 @@ CgiRequest::~CgiRequest(void)
 {
 	for (int i = 0; _env[i] != NULL; ++i)
 		delete[] _env[i];
+	delete[] _env;
 	for (int i = 0; _av[i] != NULL; ++i)
 		delete[] _av[i];
 }
@@ -115,6 +94,49 @@ CgiRequest::doRequest(Answer & answer) throw(cgiException)
 }
 
 /* Private method */
+bool isCustom(std::pair<string, vector<string> > const & p) {return (p.first.substr(0, 2) == "x-");}
+void
+CgiRequest::_createEnv(unsigned short const serverPort, Client const & client)
+{
+	long customHeaderNb = count_if(_request._fields.begin(), _request._fields.end(), isCustom);
+	_env = new char*[ENV_SIZE + customHeaderNb];
+
+	Client::authentication authentication;
+	if (_request._requiredRealm.name.size())
+		authentication = client.authentications.at(_request._requiredRealm.name);
+	_setEnv(0, string("AUTH_TYPE=") + authentication.scheme);
+	_setEnv(1, string("CONTENT_LENGTH=") + toStr(_request._bodySize));
+	try { _setEnv(2, string("CONTENT_TYPE=") + _request._fields.at("content-type")[0]); }
+	catch (std::out_of_range) {_setEnv(2, string("CONTENT_TYPE="));}
+	_setEnv(3, string("GATEWAY_INTERFACE=CGI/1.1"));
+	_setEnv(4, string("PATH_INFO=") + _request._requiredFile);
+	_setEnv(5, string("PATH_TRANSLATED=") + _request._requiredFile);
+	_setEnv(6, string("QUERY_STRING=") + _request._queryPart);
+	_setEnv(7, string("REMOTE_ADDR=") + client.addr);
+	_setEnv(8, string("REMOTE_IDENT=") + authentication.ident);
+	_setEnv(9, string("REMOTE_USER=") + authentication.user);
+	_setEnv(10, string("REQUEST_METHOD=") + _request._method);
+	_setEnv(11, string("REQUEST_URI=") + _request._requiredFile);
+	_setEnv(12, string("SCRIPT_NAME=") + _request._requiredFile);
+	_setEnv(13, string("SERVER_NAME=127.0.0.1"));
+	_setEnv(14, string("SERVER_PORT=") + toStr(serverPort));
+	_setEnv(15, string("SERVER_PROTOCOL=HTTP/1.1"));
+	_setEnv(16, string("SERVER_SOFTWARE=") + _request._host.serverName);
+	_setEnv(17, string("REDIRECT_STATUS=200"));
+
+	int i = 17;
+	for (map<string, vector<string> >::iterator it = _request._fields.begin();
+	it != _request._fields.end(); ++it)
+		if (isCustom(*it))
+		{
+			string name = it->first;
+			std::transform(name.begin(), name.end(), name.begin(), toupper);
+			std::replace(name.begin(), name.end(), '-', '_');
+			_setEnv(++i, string("HTTP_") + name + string("=") + it->second[0]);
+		}
+	_env[++i] = NULL;
+}
+
 void
 CgiRequest::_setEnv(int pos, string const & value)
 {
