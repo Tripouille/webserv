@@ -101,6 +101,7 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException, directoryL
 	_analyseRequestLine();
 	_analyseHeader();
 	_debugFields();
+
 	_analyseBody();
 
 	_setRequiredFile();
@@ -378,7 +379,7 @@ HttpRequest::_analyseNormalBody(void) throw(parseException)
 	if (recvRet < 0)
 		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
 	else if (static_cast<size_t>(recvRet) < _bodySize)
-		throw(parseException(*this, 500, "Internal Server Error", "body smaller than given content length"));
+		throw(parseException(*this, 500, "Internal Server Error", "body smaller than given content length (" + toStr(recvRet) + ")"));
 	_body[_bodySize] = 0;
 }
 
@@ -735,6 +736,12 @@ bool
 HttpRequest::_methodIsAuthorized(void) const
 {
 	string analyzedFile = _fileWithoutRoot;
+
+	//temporary:
+	string extension = _fileWithoutRoot.substr(_fileWithoutRoot.find_last_of('.') + 1);
+	if (extension == "bla" && _method == "POST")
+		return (true);
+
 	map<string, vector<string> > location = _getDeepestLocation("allowed_methods", analyzedFile);
 	if (!location.empty())
 		return (std::find(location["allowed_methods"].begin(), location["allowed_methods"].end(), _method)

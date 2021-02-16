@@ -87,54 +87,31 @@ CgiRequest::operator=(CgiRequest const & other)
 
 /* Public method */
 void
-CgiRequest::doRequest(Answer & answer)
+CgiRequest::doRequest(Answer & answer) throw(cgiException)
 {
-	int status;
 	if (pipe(_inPipe) < 0 || pipe(_outPipe) < 0)
 		throw(cgiException("pipe failed", *this));
-	int child = fork();
-	if (child < 0)
-		throw(cgiException("fork failed", *this));
-	if (child == 0)
-	{
-		dup2(_inPipe[0], STDIN);
-		dup2(_outPipe[1], STDOUT);
-		if (_request._bodySize)
-			write(_inPipe[1], _request._body, _request._bodySize);
-		char eof = -1; write(_inPipe[1], &eof, 1);
-		if (execve(_cgi.c_str(), _av, _env) == -1)
-			exit(EXIT_FAILURE);
-	}
-	usleep(TIMEOUT);
-	waitpid(child, &status, WNOHANG);
-	if (WEXITSTATUS(status) == EXIT_FAILURE)
-		throw(cgiException("execve fail", *this));
-	kill(child, SIGKILL);
-	fcntl(_outPipe[0], F_SETFL, O_NONBLOCK);
+	int writeChildPid = _writeInCgi();
+	int cgiChildPid = _execCgi();
 	_analyzeHeader(_outPipe[0], answer);
 	s_buffer * buffer = NULL;
 	do
 	{
 		buffer = new s_buffer(BUFF_SIZE);
-		buffer->occupiedSize = read(_outPipe[0], buffer->b, static_cast<size_t>(buffer->size));
-		if (buffer->occupiedSize >= 0)
+		buffer->occupiedSize = selectAndRead(_outPipe[0], buffer->b, static_cast<size_t>(buffer->size));
+		if (buffer->occupiedSize > 0)
 			answer._body.push(buffer);
-		//write(2, buffer->b, static_cast<size_t>(buffer->occupiedSize));
+		//cerr << "cgi body : "; write(2, buffer->b, static_cast<size_t>(buffer->occupiedSize)); cerr << endl;
 	} while (buffer->occupiedSize == buffer->size);
-	if (buffer->occupiedSize == -1)
+	if (buffer->occupiedSize < 0)
 	{
-		if (answer._body.empty())
-			delete buffer;
-		else
-		{
-			deleteQ(answer._body);
-			throw(cgiException("read fail", *this));
-		}
+		delete buffer;
+		deleteQ(answer._body);
+		throw(cgiException("read fail", *this));
 	}
-	close(_inPipe[0]);
-	close(_inPipe[1]);
-	close(_outPipe[0]);
-	close(_outPipe[1]);
+	if (buffer->occupiedSize == 0)
+		delete buffer;
+	_closeCgi(writeChildPid, cgiChildPid);
 }
 
 /* Private method */
@@ -154,8 +131,43 @@ CgiRequest::_setArg(int pos, string const & value)
 	_av[pos][value.size()] = 0;
 }
 
+int
+CgiRequest::_writeInCgi(void) throw(cgiException)
+{
+	int writeChildPid = fork();
+	if (writeChildPid < 0)
+		throw(cgiException("fork failed", *this));
+	if (writeChildPid == 0)
+	{
+		ssize_t writeReturn = selectAndWrite(_inPipe[1], _request._body, _request._bodySize);
+		if (writeReturn < 0)
+			exit(EXIT_FAILURE);
+		char eof = -1; write(_inPipe[1], &eof, 1);
+		exit(EXIT_SUCCESS);
+	}
+	return (writeChildPid);
+}
+
+int
+CgiRequest::_execCgi(void) throw(cgiException)
+{
+	int cgiChildPid = fork();
+	if (cgiChildPid < 0)
+		throw(cgiException("fork failed", *this));
+	if (cgiChildPid == 0)
+	{
+		if (dup2(_inPipe[0], STDIN) < 0)
+			exit(EXIT_FAILURE);
+		if (dup2(_outPipe[1], STDOUT) < 0)
+			exit(EXIT_FAILURE);
+		if (execve(_cgi.c_str(), _av, _env) == -1)
+			exit(EXIT_FAILURE);
+	}
+	return (cgiChildPid);
+}
+
 void
-CgiRequest::_analyzeHeader(int fd, Answer & answer)
+CgiRequest::_analyzeHeader(int fd, Answer & answer) throw(cgiException)
 {
 	ssize_t			headerSize = 0;
 	//+1 pour pouvoir lire un char supplémentaire et dépasser la limite
@@ -170,7 +182,7 @@ CgiRequest::_analyzeHeader(int fd, Answer & answer)
 		_parseHeaderLine(line, answer);
 	}
 	if (lineSize < 0)
-		throw(cgiException("recv error", *this));
+		throw(cgiException("recv error in header", *this));
 	else if (headerSize > HEADER_MAX_SIZE)
 		throw(cgiException("header too large", *this));
 }
@@ -179,14 +191,14 @@ ssize_t
 CgiRequest::_getLine(int fd, char * buffer, ssize_t limit) const
 {
 	ssize_t lineSize = 1;
-	ssize_t	recvReturn = read(fd, buffer, 1);
+	ssize_t	recvReturn = selectAndRead(fd, buffer, 1);
 
 	if (recvReturn <= 0)
 		return (recvReturn);
 	while (buffer[lineSize - 1] != '\n'
 	&& buffer[lineSize - 1] != -1
 	&& lineSize <= limit
-	&& (recvReturn = read(fd, buffer + lineSize, 1)) == 1)
+	&& (recvReturn = selectAndRead(fd, buffer + lineSize, 1)) == 1)
 		++lineSize;
 
 	if (recvReturn <= 0)
@@ -230,4 +242,22 @@ CgiRequest::_extractStatus(string & field) const
 	int code = atoi(field.substr(0, spacePos).c_str());
 	size_t statusPos = field.find_first_not_of(' ', spacePos);
 	_request.setStatus(code, field.substr(statusPos));
+}
+
+void
+CgiRequest::_closeCgi(int writeChildPid, int cgiChildPid) throw(cgiException)
+{
+	int status;
+	waitpid(writeChildPid, &status, 0);
+	if (WEXITSTATUS(status) == EXIT_FAILURE)
+		throw(cgiException("writing to cgi fail", *this));
+	pid_t waitReturn = waitpid(cgiChildPid, &status, WNOHANG);
+	if (waitReturn == 0)
+		kill(cgiChildPid, SIGKILL);
+	if (WEXITSTATUS(status) == EXIT_FAILURE)
+		throw(cgiException("cgi execution failed", *this));
+	close(_inPipe[0]);
+	close(_inPipe[1]);
+	close(_outPipe[0]);
+	close(_outPipe[1]);
 }

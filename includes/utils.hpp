@@ -3,8 +3,13 @@
 # include <string>
 # include <sstream>
 # include <sys/socket.h>
+# include <unistd.h>
+# include <iostream>
+# include <fcntl.h>
 
 typedef int SOCKET;
+using std::cerr;
+using std::endl;
 
 template<class T>
 std::string toStr(T const & value)
@@ -19,5 +24,7 @@ ssize_t hexToDec(std::string const & str);
 bool isHex(std::string const & str);
 
 std::streamsize loopRecv(SOCKET socket, char * buffer, ssize_t size);
+std::streamsize selectAndRead(SOCKET socket, char * buffer, size_t size);
+std::streamsize selectAndWrite(SOCKET socket, char * buffer, size_t size);
 
 #endif

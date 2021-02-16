@@ -43,7 +43,7 @@ class CgiRequest
 					Client const & client, string & cgi);
 		~CgiRequest(void);
 
-		void doRequest(Answer & answer);
+		void doRequest(Answer & answer) throw(cgiException);
 
 	private:
 		CgiRequest(void);
@@ -51,12 +51,15 @@ class CgiRequest
 		CgiRequest & operator=(CgiRequest const & other);
 		void _setEnv(int pos, string const & value);
 		void _setArg(int pos, string const & value);
-		void _analyzeHeader(int fd, Answer & answer);
+		int _writeInCgi(void) throw(cgiException);
+		int _execCgi(void) throw(cgiException);
+		void _analyzeHeader(int fd, Answer & answer) throw(cgiException);
 		ssize_t _getLine(int fd, char * buffer, ssize_t limit) const;
 		void _parseHeaderLine(string line, Answer & answer) throw(cgiException);
 		void _extractStatus(string & field) const;
+		void _closeCgi(int writeChildPid, int cgiChildPid) throw(cgiException);
 
-		enum {BUFF_SIZE = 100000, TIMEOUT = 1000000, ENV_SIZE = 20};
+		enum {BUFF_SIZE = 100000, TIMEOUT = 90000000, ENV_SIZE = 20};
 
 		char *				_env[ENV_SIZE];
 		char *				_av[2];

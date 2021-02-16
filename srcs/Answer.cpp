@@ -166,8 +166,8 @@ Answer::_fillContentFields(HttpRequest const & request)
 
 	if (_body.size())
 	{
-		streamsize fileSize = static_cast<streamsize>(_body.size() - 1)
-								* _body.back()->size + _body.back()->occupiedSize;
+		ssize_t fileSize = static_cast<ssize_t>(_body.size() - 1)
+							* _body.back()->size + _body.back()->occupiedSize;
 		std::ostringstream fileSizeStream; fileSizeStream << fileSize;
 		_fields["Content-Length"] = fileSizeStream.str();
 	}
