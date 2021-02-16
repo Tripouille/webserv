@@ -101,10 +101,8 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException, directoryL
 	_analyseRequestLine();
 	_analyseHeader();
 	_debugFields();
-
-	_analyseBody();
-
 	_setRequiredFile();
+	_analyseBody();
 	if (!_methodIsAuthorized())
 		throw(parseException(*this, 405, "Method Not Allowed", "from config"));
 	_setRequiredRealm();
@@ -311,19 +309,32 @@ HttpRequest::_checkHeader(void) throw(parseException)
 		throw(parseException(*this, 400, "Bad Request", "too many Host header fields"));
 }
 
-#include <unistd.h>
 void
 HttpRequest::_analyseBody(void) throw(parseException)
 {
 	_body[0] = 0;
+	int maxBodySize = CLIENT_MAX_BODY_SIZE;
+	string analyzedFile(_fileWithoutRoot);
+	map<string, vector<string> > location = _getDeepestLocation("client_max_body_size", analyzedFile);
+	if (!location.empty())
+	{
+		maxBodySize = atoi(location["client_max_body_size"][0].c_str());
+		if (maxBodySize < 0 || location["client_max_body_size"][0].size() > 9)
+		{
+			cerr << "client_max_body_size config ignored" << endl;
+			maxBodySize = CLIENT_MAX_BODY_SIZE;
+		}
+		if (maxBodySize == 0)
+			maxBodySize = CLIENT_MAX_BODY_SIZE;
+	}
 	if (_fields["transfer-encoding"].size() == 1 && _fields["transfer-encoding"][0] == "chunked")
-		_analyseChunkedBody();
+		_analyseChunkedBody(maxBodySize);
 	else if (_fields["content-length"].size())
-		_analyseNormalBody();
+		_analyseNormalBody(maxBodySize);
 }
 
 void
-HttpRequest::_analyseChunkedBody(void) throw(parseException)
+HttpRequest::_analyseChunkedBody(int maxBodySize) throw(parseException)
 {
 	ssize_t			chunkSizeBufferMaxSize = static_cast<ssize_t>(intToHex(CLIENT_MAX_BODY_SIZE).size());
 	ssize_t			chunkSizeBufferSize = 0;
@@ -344,7 +355,7 @@ HttpRequest::_analyseChunkedBody(void) throw(parseException)
 			throw(parseException(*this, 400, "Bad Request", "Chunk size is not hex"));
 		chunkSizeBuffer[chunkSizeBufferSize] = 0;
 		chunkSize = hexToDec(chunkSizeBuffer);
-		if (static_cast<ssize_t>(_bodySize) + chunkSize > CLIENT_MAX_BODY_SIZE)
+		if (static_cast<ssize_t>(_bodySize) + chunkSize > maxBodySize)
 			throw(parseException(*this, 413, "Payload Too Large", "Chunked body is too large"));
 		else if (chunkSize)
 		{
@@ -367,11 +378,11 @@ HttpRequest::_analyseChunkedBody(void) throw(parseException)
 }
 
 void
-HttpRequest::_analyseNormalBody(void) throw(parseException)
+HttpRequest::_analyseNormalBody(int maxBodySize) throw(parseException)
 {
 	_checkContentLength(_fields["content-length"]);
 	std::istringstream(_fields["content-length"][0]) >> _bodySize;
-	if (_bodySize > CLIENT_MAX_BODY_SIZE)
+	if (_bodySize > static_cast<size_t>(maxBodySize))
 		throw(parseException(*this, 413, "Payload Too Large", "Content-Length too high"));
 	else if (_bodySize == 0)
 		return ;

@@ -114,8 +114,8 @@ class HttpRequest
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
 		void _checkHeader(void) throw(parseException);
 		void _analyseBody(void) throw(parseException);
-		void _analyseNormalBody(void) throw(parseException);
-		void _analyseChunkedBody(void) throw(parseException);
+		void _analyseNormalBody(int maxBodySize) throw(parseException);
+		void _analyseChunkedBody(int maxBodySize) throw(parseException);
 		void _checkContentLength(vector<string> const & contentLengthField)
 		const throw(parseException);
 		map<string, vector<string> > _getDeepestLocation(string const & key, string & analyzedFile) const;
