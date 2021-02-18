@@ -8,6 +8,12 @@ HttpRequest::parseException::parseException(HttpRequest const & request,
 			: _str(info + " : " + errorMsg)
 {
 	const_cast<HttpRequest &>(request).setStatus(code, info);
+	while (true)
+	{
+		std::streamsize recvReturn = recv(request._client.s, NULL, CLIENT_MAX_BODY_SIZE, MSG_DONTWAIT);
+		if (recvReturn <= 0)
+			return ;
+	}
 }
 
 HttpRequest::parseException::~parseException(void) throw()
