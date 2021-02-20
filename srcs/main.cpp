@@ -3,12 +3,23 @@
 #include "TcpListener.hpp"
 #include "ServerConfig.hpp"
 #include "MultiServ.hpp"
+#include "Regex.hpp" // <===== include pour les regex.
 #define PORT 8080
 using std::cerr;
 using std::endl;
 
 int main(int ac, char *av[])
 {
+	/* Exemple Regex */
+	try {
+		Regex regex(".*\\.php$");
+		std::cout << std::boolalpha << regex.match("lol.php") << " : " << regex.getLastMatch() << std::endl;
+	}
+	catch (std::invalid_argument const & e) {
+		std::cerr << e.what() << std::endl;
+	}
+	/* Fin Exemple Regex */
+
 	ServerConfig	config;
 
 	try
