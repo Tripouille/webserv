@@ -161,7 +161,7 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 		}
 		_answerToClient(socket, answer, request);
 
-		if (request._status.code / 100 != 2 && request._status.code / 100 != 4)
+		if (request._status.code / 100 != 2)
 			_disconnectClient(socket);
 	}
 	catch (Answer::sendException const & e)
@@ -374,6 +374,5 @@ TcpListener::_handleNoErrorPage(Answer & answer, HttpRequest const & request)
 	answer.sendEndOfHeader();
 	if (request._method != "HEAD")
 		answer._sendToClient(ss.str().c_str(), ss.str().size());
-	if (request._status.code / 100 != 4)
-		return (_disconnectClient(answer._client));
+	return (_disconnectClient(answer._client));
 }

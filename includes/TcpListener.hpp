@@ -23,7 +23,7 @@
 # include "Answer.hpp"
 # include "ServerConfig.hpp"
 
-# define BACKLOG 3
+# define BACKLOG 5000
 # define RCV_TIMEOUT 1
 
 typedef int SOCKET;

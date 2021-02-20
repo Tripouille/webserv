@@ -105,7 +105,7 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException, directoryL
 	_headerSize = 0;
 	_analyseRequestLine();
 	_analyseHeader();
-	_debugFields();
+	//_debugFields();
 	_setRequiredFile();
 	_analyseBody();
 
