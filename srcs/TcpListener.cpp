@@ -292,7 +292,7 @@ TcpListener::_answerToClient(SOCKET socket, Answer & answer,
 			if (request._method == "PUT" || (request._method == "POST" && !request._fileFound))
 				_writeInFile(request, answer._body);
 		}
-		else if (request._method == "GET" && request._method == "HEAD")
+		else if (request._method == "GET" || request._method == "HEAD")
 		{
 			try { answer.getFile(request._requiredFile); }
 			catch (Answer::sendException const &) { throw(tcpException("File reading failed")); }

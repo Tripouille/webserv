@@ -105,7 +105,6 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException, directoryL
 	_headerSize = 0;
 	_analyseRequestLine();
 	_analyseHeader();
-	//_debugFields();
 	_setRequiredFile();
 	_analyseBody();
 
@@ -446,7 +445,8 @@ HttpRequest::_setRequiredFile(void)
 	{
 		_requiredFile = _getPath(_fileWithoutRoot);
 		_addIndexIfDirectory();
-		if (!(_extensionPart = _getLanguageAndEncodingExtension()).empty())
+		_extensionPart = _getLanguageAndEncodingExtension();
+		if (_extensionPart.size())
 			_requiredFile += _extensionPart;
 		_fileFound = _updateStatusIfInvalid();
 	}
