@@ -52,9 +52,8 @@ TcpListener::init(void)
 		throw tcpException("Socket creation failed");
 
 	// Flag SO_REUSEADDR pour éviter l'erreur "bind failed: Address already in use"
-	int n = 1; struct timeval tv = {RCV_TIMEOUT, 0};
-	if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) < 0
-	|| setsockopt(_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
+	int n = 1;
+	if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) < 0)
 	{
 		close(_socket);
 		throw tcpException("Setting socket option failed");
@@ -119,6 +118,12 @@ TcpListener::_acceptNewClient(void) throw(tcpException)
 	_clientInfos[s] = Client(s, inet_ntoa(address.sin_addr));
 	std::cout << "client address: " << _clientInfos[s].addr << endl;
 	FD_SET(s, &_activeFdSet);
+	struct timeval tv = {RCV_TIMEOUT, 0};
+	if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
+	{
+		close(s);
+		throw tcpException("Setting socket option for client failed");
+	}
 	cout << ++_clientNb << " clients connected" << endl;
 }
 
