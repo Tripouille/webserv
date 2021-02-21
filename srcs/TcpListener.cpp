@@ -79,16 +79,15 @@ TcpListener::init(void)
 void
 TcpListener::run(void)
 {
-	fd_set setCopy, writeSetCopy;
+	fd_set readfds, writefds;
 	int socketCount;
 
 	while (true)
 	{
 		timeval timeout = {60, 0}; // 60 seconds
-		setCopy = _activeFdSet;
-		writeSetCopy = _activeFdSet;
+		writefds = readfds = _activeFdSet;
 
-		if ((socketCount = select(FD_SETSIZE, &setCopy, &writeSetCopy, NULL, &timeout)) < 0)
+		if ((socketCount = select(FD_SETSIZE, &readfds, &writefds, NULL, &timeout)) < 0)
 		{
 			close(_socket);
 			throw tcpException("Select failed");
@@ -96,11 +95,11 @@ TcpListener::run(void)
 		// Service all the sockets with input pending
 		for (SOCKET sock = 0; sock < FD_SETSIZE; ++sock)
 		{
-			if (FD_ISSET(sock, &setCopy))
+			if (FD_ISSET(sock, &readfds))
 			{
 				if (sock == _socket)
 					_acceptNewClient();
-				else if (FD_ISSET(sock, &writeSetCopy))
+				else if (FD_ISSET(sock, &writefds))
 					_handleRequest(sock);
 			}
 		}
@@ -150,7 +149,7 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 
 		if (request._status.code / 100 == 2
 		&& (request._method == "PUT" || (request._method == "POST" && !request._fileFound))
-		&& _needsCgi(request._fileWithoutRoot).empty())
+		&& _getCgiPath(request._fileWithoutRoot).empty())
 			_writeInFile(request);
 
 		if (request._status.code / 100 != 2)
@@ -282,19 +281,18 @@ TcpListener::_writeInFile(HttpRequest & request, t_bufferQ body) const
 
 void
 TcpListener::_answerToClient(SOCKET socket, Answer & answer,
-	HttpRequest & request)
-	throw(tcpException, Answer::sendException)
+	HttpRequest & request) throw(tcpException, Answer::sendException)
 {
 	if (request._requiredFile.size())
 	{
-		string cgi;
-		if ((cgi = _needsCgi(request._fileWithoutRoot)).size())
+		string cgi = _getCgiPath(request._fileWithoutRoot);
+		if (cgi.size())
 		{
-			_doCgiRequest(CgiRequest(_port, request, _clientInfos[socket], cgi), request, answer);
+			_doCgiRequest(CgiRequest(_port, request, _clientInfos[socket], cgi), answer);
 			if (request._method == "PUT" || (request._method == "POST" && !request._fileFound))
 				_writeInFile(request, answer._body);
 		}
-		else if (request._method != "POST" && request._method != "PUT")
+		else if (request._method == "GET" && request._method == "HEAD")
 		{
 			try { answer.getFile(request._requiredFile); }
 			catch (Answer::sendException const &) { throw(tcpException("File reading failed")); }
@@ -304,7 +302,7 @@ TcpListener::_answerToClient(SOCKET socket, Answer & answer,
 }
 
 string const
-TcpListener::_needsCgi(string const & fileName) const
+TcpListener::_getCgiPath(string const & fileName) const
 {
 	string extension = fileName.substr(fileName.find_last_of('.') + 1);
 	if (_host.cgi.count(extension))
@@ -313,13 +311,13 @@ TcpListener::_needsCgi(string const & fileName) const
 }
 
 void
-TcpListener::_doCgiRequest(CgiRequest cgiRequest, HttpRequest & request, Answer & answer) const
+TcpListener::_doCgiRequest(CgiRequest cgiRequest, Answer & answer) const
 {
 	try { cgiRequest.doRequest(answer); }
 	catch(CgiRequest::cgiException const & e)
 	{
-		request.setStatus(500, "Internal Server Error (CGI)");
-		answer.sendStatus(request._status);
+		cgiRequest._request.setStatus(500, "Internal Server Error (CGI)");
+		answer.sendStatus(cgiRequest._request._status);
 		answer.sendEndOfHeader();
 		throw(Answer::sendException("error in cgi : " + string(e.what())));
 	}

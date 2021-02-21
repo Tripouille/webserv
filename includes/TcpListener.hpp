@@ -83,8 +83,8 @@ class TcpListener
 		void _answerToClient(SOCKET client, Answer & answer,
 			HttpRequest & request)
 			throw(tcpException,  Answer::sendException);
-		string const _needsCgi(string const & fileName) const;
-		void _doCgiRequest(CgiRequest cgiRequest, HttpRequest & request, Answer & answer) const;
+		string const _getCgiPath(string const & fileName) const;
+		void _doCgiRequest(CgiRequest cgiRequest, Answer & answer) const;
 		void _setErrorFields(HttpRequest const & request, Answer & answer) const;
 		bool _setErrorPage(HttpRequest & request) const;
 		void _handleNoErrorPage(Answer & answer, HttpRequest const & request);

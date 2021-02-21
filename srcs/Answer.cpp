@@ -64,7 +64,7 @@ Answer::getFile(string const & fileName) throw(sendException)
 		buffer = new s_buffer(BUFFER_SIZE);
 		try {indexFile.read(buffer->b, buffer->size);}
 		catch (std::exception const &)
-		{throw(sendException("Coud not read file " + fileName));}
+		{delete buffer; throw(sendException("Coud not read file " + fileName));}
 		buffer->occupiedSize = indexFile.gcount();
 		_body.push(buffer);
 	} while (buffer->occupiedSize == buffer->size && !indexFile.eof());
