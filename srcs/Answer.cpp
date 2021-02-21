@@ -33,7 +33,7 @@ Answer::Answer(SOCKET client, Host const & host, ServerConfig const & config)
 Answer::~Answer()
 {
 	deleteQ(_body);
-	//_debugFields();
+	_debugFields();
 }
 
 Answer::Answer(Answer const & other) : _host(other._host), _config(other._config)
@@ -64,7 +64,7 @@ Answer::getFile(string const & fileName) throw(sendException)
 		buffer = new s_buffer(BUFFER_SIZE);
 		try {indexFile.read(buffer->b, buffer->size);}
 		catch (std::exception const &)
-		{throw(sendException("Coud not read file " + fileName));}
+		{delete buffer; throw(sendException("Coud not read file " + fileName));}
 		buffer->occupiedSize = indexFile.gcount();
 		_body.push(buffer);
 	} while (buffer->occupiedSize == buffer->size && !indexFile.eof());
@@ -160,7 +160,7 @@ Answer::_fillDateField(void)
 void
 Answer::_fillContentFields(HttpRequest const & request)
 {
-	string extension = request._requiredFile.substr(request._requiredFile.find_last_of('.') + 1, string::npos);
+	string extension = request._requiredFile.substr(request._requiredFile.find_last_of('.') + 1);
 	if (_fields.count("content-type") == 0 && _config.mimeType.count(extension))
 		_fields["Content-Type"] = _config.mimeType.at(extension);
 
@@ -168,8 +168,7 @@ Answer::_fillContentFields(HttpRequest const & request)
 	{
 		ssize_t fileSize = static_cast<ssize_t>(_body.size() - 1)
 							* _body.back()->size + _body.back()->occupiedSize;
-		std::ostringstream fileSizeStream; fileSizeStream << fileSize;
-		_fields["Content-Length"] = fileSizeStream.str();
+		_fields["Content-Length"] = toStr(fileSize);
 	}
 
 	if (!request._extensionPart.empty())
