@@ -14,6 +14,7 @@
 # include <list>
 # include <sstream>
 # include <sys/stat.h>
+# include <thread>
 
 # include "utils.hpp"
 # include "HttpRequest.hpp"
@@ -37,6 +38,8 @@ using std::queue;
 using std::list;
 using std::map;
 using std::streamsize;
+
+#define WORKERS 2
 
 class TcpListener
 {
@@ -74,6 +77,7 @@ class TcpListener
 		TcpListener(TcpListener const & other);
 		TcpListener & operator=(TcpListener const & other);
 
+		void _handleSocket(size_t id, fd_set const & readfds, fd_set const & writefds);
 		void _acceptNewClient(void) throw(tcpException);
 		void _disconnectClient(SOCKET client);
 		void _handleRequest(SOCKET client) throw(tcpException);

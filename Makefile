@@ -14,7 +14,7 @@ OBJS					= $(addprefix $(OBJS_PATH), $(SRCS_NAME:.cpp=.o))
 NAME					= webserv
 RM						= rm -rf
 CC						= clang++
-FLAGS					= -Wall -Wextra -Werror -std=c++98 -fsanitize=address
+FLAGS					= -Wall -Wextra -Werror -fsanitize=address
 
 ifdef DEBUG
 FLAGS					+= -g3

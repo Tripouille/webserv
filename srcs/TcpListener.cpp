@@ -91,21 +91,27 @@ TcpListener::run(void)
 			close(_socket);
 			throw tcpException("Select failed");
 		}
-		// Service all the sockets with input pending
-		for (SOCKET sock = 0; sock < FD_SETSIZE; ++sock)
-		{
-			if (FD_ISSET(sock, &readfds))
-			{
-				if (sock == _socket)
-					_acceptNewClient();
-				else if (FD_ISSET(sock, &writefds))
-					_handleRequest(sock);
-			}
-		}
+	
+		std::thread threads[WORKERS];
+		for (int i = 0; i < WORKERS; ++i)
+			threads[i] = std::thread(&TcpListener::_handleSocket, this, i, readfds, writefds);
+		for (int i = 0; i < WORKERS; ++i)
+			threads[i].join();
 	}
 }
 
 /* Private */
+void TcpListener::_handleSocket(size_t id, fd_set const & readfds, fd_set const & writefds) {
+	for (SOCKET sock = id; sock < FD_SETSIZE; sock += WORKERS) {
+		if (FD_ISSET(sock, &readfds)) {
+			if (sock == _socket)
+				_acceptNewClient();
+			else if (FD_ISSET(sock, &writefds))
+				_handleRequest(sock);
+		}
+	}
+}
+
 void
 TcpListener::_acceptNewClient(void) throw(tcpException)
 {
