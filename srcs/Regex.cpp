@@ -16,7 +16,21 @@ Regex::Regex(string const & regex) throw (std::invalid_argument) : _source(regex
 		_createSequence(i, _root);
 }
 
+Regex::Regex( Regex const & o) :  _root(o._root), _source(o._source), _lastMatch(o._lastMatch) {
+}
+
 Regex::~Regex() {
+}
+
+Regex & Regex::operator=(Regex const & o) {
+	_source = o._source;
+	_root = o._root;
+	_lastMatch = o._lastMatch;
+	return (*this);
+}
+
+bool Regex::operator<(Regex const & o) const {
+	return (_source < o._source);
 }
 
 
@@ -30,11 +44,10 @@ bool Regex::match(string const & str) {
 	size_t strPos = 0;
 	size_t testedStrPos = 0;
 	size_t limit = str.size();
-	
+
 	for (; strPos <= limit; ++strPos) {
 		testedStrPos = strPos;
-		if (_matchSequence(str, testedStrPos, _root.sequence, 0))
-		{
+		if (_matchSequence(str, testedStrPos, _root.sequence, 0)) {
 			_lastMatch = str.substr(strPos, testedStrPos - strPos);
 			return (true);
 		}
@@ -111,7 +124,7 @@ void Regex::_createSequence(size_t & i, struct pattern & parent)  throw (std::in
 	struct pattern sequence("Sequence");
 
 	size_t sequenceEnd = _getSequenceEnd(i);
-	while (i < sequenceEnd) 
+	while (i < sequenceEnd)
 		_handleSequence(i, sequence, parent);
 	_insertSequence(sequence, parent);
 }
@@ -260,7 +273,7 @@ size_t Regex::_getSequenceEnd(size_t i) const {
 
 bool Regex::_matchSequence(string const & str, size_t & strPos, vector<struct pattern> const & sequence, size_t sequencePos) const {
 	size_t alternativeSize, iAlternative, strPosSave = strPos;
-	
+
 	if (sequencePos == sequence.size())
 		return (true);
 	if (sequence[sequencePos].min == 0
@@ -348,7 +361,7 @@ bool Regex::_matchInBracket(string const & str, size_t & strPos, string const & 
 		}
 		else if (bracket[i] == str[strPos]) {
 			++strPos;
-			return (true);	
+			return (true);
 		}
 	return (false);
 }
@@ -364,7 +377,7 @@ bool Regex::_matchOutBracket(string const & str, size_t & strPos, string const &
 			++i; leftMinRangePos = i + 1;
 		}
 		else if (bracket[i] == str[strPos])
-			return (false);	
+			return (false);
 	++strPos;
 	return (true);
 }
