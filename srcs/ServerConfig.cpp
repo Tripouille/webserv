@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/22 14:52:18 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/22 15:26:39 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -374,12 +374,18 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 	map<string, vector<string> >					tmp;
 	std::map<string, vector<string> >::iterator		it = tmp.begin();
 
-	if (root[0] == '~' && root[1] == ' ')
-		root.erase(0,2);
-	if (root.find_first_of(' ') != string::npos)
-		root.erase(root.find_first_of(' '), root.size());
+	if (root[0] == '~')
+	{
+		root.erase(0,1);
+		if (root.find_last_of('{') != string::npos)
+			root.erase(root.find_last_of('{'), root.size());
+		std::stringstream tmp(root);
+		tmp >> line;
+	}
+	if (line.find_first_of(' ') != string::npos)
+		line.erase(line.find_first_of(' '), line.size());
 	try {
-		Regex regex(root.c_str());
+		Regex regex(line.c_str());
 		while(getline(p_file, line))
 		{
 			std::stringstream		str(line);
@@ -403,7 +409,8 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 
 	}
 	catch (std::invalid_argument const & e) {
-		std::cerr << e.what() << std::endl;
+		errno = EINVAL;
+		throw configException("Error: " + string(e.what()) + " in file", p_fileName);
 	}
 }
 
