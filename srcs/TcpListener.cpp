@@ -217,6 +217,9 @@ TcpListener::_listDirectory(HttpRequest & request, Answer & answer) const
 	}
 	page += "</table></body></html>";
 
+	answer._fillDateField();
+	answer._fillServerField();
+	answer._fields["Content-Length"] = toStr(page.size());
 	answer.sendStatus(request._status);
 	answer.sendHeader();
 	answer.sendEndOfHeader();
