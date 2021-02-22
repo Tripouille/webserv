@@ -1,6 +1,6 @@
 #include <cstring>
 #include <netinet/in.h>
-#include "TcpListener.hpp"
+
 #include "ServerConfig.hpp"
 #include "MultiServ.hpp"
 #include "Regex.hpp" // <===== include pour les regex.
@@ -13,7 +13,7 @@ int main(int ac, char *av[])
 	/* Exemple Regex */
 	try {
 		Regex regex(".*\\.php$");
-		std::cout << std::boolalpha << regex.match("lol.php") << " : " << regex.getLastMatch() << std::endl;
+		std::cout << std::boolalpha << regex.match("lol.php") << " : " << std::endl;
 	}
 	catch (std::invalid_argument const & e) {
 		std::cerr << e.what() << std::endl;
