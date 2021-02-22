@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/22 14:20:38 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/22 15:48:37 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@
 # include <sys/stat.h>
 # include <stdint.h>
 # include "Regex.hpp"
+# include "utils.hpp"
 
 using std::string;
 using std::list;

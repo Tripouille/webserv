@@ -26,5 +26,6 @@ bool isHex(std::string const & str);
 std::streamsize loopRecv(SOCKET socket, char * buffer, ssize_t size);
 std::streamsize selectAndRead(SOCKET socket, char * buffer, size_t size);
 std::streamsize selectAndWrite(SOCKET socket, char * buffer, size_t size);
+uint16_t		tryParseInt(std::string & str);
 
 #endif

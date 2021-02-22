@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/22 15:32:13 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/22 16:01:23 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,7 +91,7 @@ uint16_t &				ServerConfig::checkPort( uint16_t & p_port,
 	if (p_port == 0)
 	{
 		errno = EINVAL;
-		throw configException("Error params \"server_name:\" not found on ",
+		throw configException("Error params \"Port:\" is invalid on",
 								p_fileName);
 	}
 	return p_port;
@@ -495,7 +495,9 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				if (arg.find_first_not_of(' ') != string::npos)
 					arg.erase(0, arg.find_first_not_of(' '));
 				if (key == "port")
-					port = static_cast<unsigned short>(atoi(arg.c_str()));
+				{
+					port = tryParseInt(arg);
+				}
 				else if (key == "error_page")
 					errorTmp = this->isErrorPage(hostFile);
 				else if (key == "location")
