@@ -1,6 +1,6 @@
 #include "Regex.hpp"
 
-Regex::Regex(string const & regex) throw (std::invalid_argument) : _source(regex), _lastMatch("") {
+Regex::Regex(string const & regex) throw (std::invalid_argument) : _source(regex) {
 	if (regex.size() == 0)
 		throw std::invalid_argument("Regex can't be empty");
 	else if (_isRealEscape(_source.size() - 1))
@@ -16,7 +16,7 @@ Regex::Regex(string const & regex) throw (std::invalid_argument) : _source(regex
 		_createSequence(i, _root);
 }
 
-Regex::Regex( Regex const & o) :  _root(o._root), _source(o._source), _lastMatch(o._lastMatch) {
+Regex::Regex( Regex const & o) :  _root(o._root), _source(o._source) {
 }
 
 Regex::~Regex() {
@@ -25,12 +25,12 @@ Regex::~Regex() {
 Regex & Regex::operator=(Regex const & o) {
 	_source = o._source;
 	_root = o._root;
-	_lastMatch = o._lastMatch;
 	return (*this);
 }
 
 bool Regex::operator<(Regex const & o) const {
-	return (_source < o._source);
+	return (_source.size() > o._source.size() ||
+		(_source.size() == o._source.size() && _source > o._source));
 }
 
 
@@ -40,23 +40,17 @@ string Regex::getSource() const {
 	return (_source);
 }
 
-bool Regex::match(string const & str) {
+bool Regex::match(string const & str) const {
 	size_t strPos = 0;
 	size_t testedStrPos = 0;
 	size_t limit = str.size();
 
 	for (; strPos <= limit; ++strPos) {
 		testedStrPos = strPos;
-		if (_matchSequence(str, testedStrPos, _root.sequence, 0)) {
-			_lastMatch = str.substr(strPos, testedStrPos - strPos);
+		if (_matchSequence(str, testedStrPos, _root.sequence, 0))
 			return (true);
-		}
 	}
 	return (false);
-}
-
-string Regex::getLastMatch() const {
-	return (_lastMatch);
 }
 
 

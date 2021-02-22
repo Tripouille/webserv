@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/22 14:16:02 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/22 14:20:38 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,7 +104,7 @@ class ServerConfig
 		bool					checkAutoIndex( map<string, string> & p_map, string const & p_filename );
 		string					checkServerName( map<string, string> & p_map, string const & p_fileName );
 		uint16_t &				checkPort( uint16_t & p_port, string const & p_fileName );
-		map<string, string> &	checkCgi( string const & p_map, string const & p_fileName ) const;
+		void					checkCgi( string const & p_map, string const & p_fileName ) const;
 		map<string, string> &	checkErrorPage ( map<string, string> & p_map, string const & p_fileName, \
 													string const & p_root );
 		map<string, map<string, vector<string> > > &

@@ -32,8 +32,7 @@ class Regex {
         Regex(string const & regex) throw (std::invalid_argument);
         ~Regex();
         string getSource() const;
-        bool match(string const & str);
-        string getLastMatch() const;
+        bool match(string const & str) const;
         Regex(Regex const & o);
         Regex & operator=(Regex const & o);
         bool    operator<(Regex const & o) const;
@@ -95,7 +94,6 @@ class Regex {
         /* Variables */
         struct pattern _root;
         string  _source;
-        string _lastMatch;
 };
 
 #endif

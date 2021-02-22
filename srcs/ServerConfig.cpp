@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/22 14:17:42 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/22 14:52:18 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -222,12 +222,12 @@ ServerConfig::checkRegex(map<Regex, map<string, vector<string> > > & p_map, stri
 		{
 			if (map->first == "cgi")
 			{
-				if (map->second.size(1))
+				if (map->second.size() == 1)
 					checkCgi(map->second[0], p_fileName);
 				else
 				{
 					errno = EINVAL;
-					throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden for CGI on", \
+					throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden on", \
 											p_fileName);
 				}
 			}
@@ -288,12 +288,12 @@ ServerConfig::checkErrorPage( map<string, string> & p_map, string const & p_file
 	return p_map;
 }
 
-map<string, string> &	ServerConfig::checkCgi( string const & p_path, string const & p_fileName )
+void		ServerConfig::checkCgi( string const & p_path, string const & p_fileName ) const
 {
 	struct stat fileInfos;
 	if (stat(p_path.c_str(), &fileInfos) != 0)
 	{
-		throw configException("Error with cgi path " + string(it->second) + " in", p_fileName);
+		throw configException("Error with cgi path " + p_path + " in", p_fileName);
 	}
 }
 
