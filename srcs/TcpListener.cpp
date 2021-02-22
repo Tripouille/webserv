@@ -309,9 +309,10 @@ TcpListener::_answerToClient(SOCKET socket, Answer & answer,
 string const
 TcpListener::_getCgiPath(string const & fileName) const
 {
-	string extension = fileName.substr(fileName.find_last_of('.') + 1);
-	if (_host.cgi.count(extension))
-		return (_host.cgi[extension]);
+	for (map<Regex, map<string, vector<string> > >::iterator regex = _host.regexLocation.begin(); \
+	regex != _host.regexLocation.end(); regex++)
+		if (regex->first.match(fileName) && regex->second.count("cgi"))
+			return (regex->second["cgi"][0]);
 	return (string());
 }
 
