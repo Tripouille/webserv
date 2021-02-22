@@ -34,12 +34,13 @@ class Regex {
         string getSource() const;
         bool match(string const & str);
         string getLastMatch() const;
+        Regex(Regex const & o);
+        Regex & operator=(Regex const & o);
+        bool    operator<(Regex const & o) const;
 
 
     private:
         Regex();
-        Regex(Regex const & o);
-        Regex & operator=(Regex const & o);
 
         /* Checks */
         void _checkPipeValidity() const throw (std::invalid_argument);
@@ -93,7 +94,7 @@ class Regex {
 
         /* Variables */
         struct pattern _root;
-        string const _source;
+        string  _source;
         string _lastMatch;
 };
 
