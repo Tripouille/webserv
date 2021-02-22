@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/22 15:26:39 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/22 15:32:13 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -170,6 +170,17 @@ ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map,
 		for ( map<string, vector<string> >::iterator map = it->second.begin(); \
 				map != it->second.end(); map++)
 		{
+			if (map->first == "cgi")
+			{
+				if (map->second.size() == 1)
+					checkCgi(map->second[0], p_fileName);
+				else
+				{
+					errno = EINVAL;
+					throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden on", \
+											p_fileName);
+				}
+			}
 			if ((map->first != "allowed_methods" && map->first != "index" && map->first != "return") \
 				&& (map->second.size() > 1))
 			{
@@ -504,6 +515,18 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 			for (map<Regex, map<string, vector<string> > >::iterator reg = regex.begin(); reg != regex.end(); reg++)
 			{
 				std::cout << "DEBUG REG: " << reg->first.getSource() << std::endl << "\t";
+				for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
+				{
+					std::cout << maps->first << std::endl << "\t\t";
+					for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
+						std::cout << *vec << " ";
+					std::cout << std::endl;
+				}
+			}
+
+			for (map<string, map<string, vector<string> > >::iterator reg = conf.begin(); reg != conf.end(); reg++)
+			{
+				std::cout << "DEBUG LOCATION: " << reg->first << std::endl << "\t";
 				for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
 				{
 					std::cout << maps->first << std::endl << "\t\t";
