@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/05 15:55:02 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/22 14:17:42 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -211,6 +211,67 @@ ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map,
 	return p_map;
 }
 
+map<Regex, map<string, vector<string> > > &
+ServerConfig::checkRegex(map<Regex, map<string, vector<string> > > & p_map, string const & p_fileName)
+{
+	for (map<Regex, map<string, vector<string> > >::iterator it = p_map.begin(); \
+			it != p_map.end(); it++)
+	{
+		for ( map<string, vector<string> >::iterator map = it->second.begin(); \
+				map != it->second.end(); map++)
+		{
+			if (map->first == "cgi")
+			{
+				if (map->second.size(1))
+					checkCgi(map->second[0], p_fileName);
+				else
+				{
+					errno = EINVAL;
+					throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden for CGI on", \
+											p_fileName);
+				}
+			}
+			if ((map->first != "allowed_methods" && map->first != "index" && map->first != "return") \
+				&& (map->second.size() > 1))
+			{
+				errno = EINVAL;
+				throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden in", \
+											p_fileName);
+			}
+			if ((map->first == "upload_store"))
+			{
+				struct stat fileInfos;
+
+				if (stat(map->second.at(0).c_str(), &fileInfos) != 0 || !S_ISDIR(fileInfos.st_mode))
+					throw configException("Error in params \"" + map->first + "\" on Location \"" + it->first.getSource() + \
+								"\", " + map->second.at(0) + "\" is not a Directory in file", p_fileName);
+			}
+			if (map->first == "auth_basic" && (it->second.find("auth_basic_user_file") == it->second.end()))
+			{
+				errno = EINVAL;
+				throw configException("Error in params \"" + it->first.getSource() + "\" need params \'auth_basic_user_file\' in", \
+											p_fileName);
+			}
+			else if (map->first == "auth_basic_user_file" && (it->second.find("auth_basic") == it->second.end()))
+			{
+				errno = EINVAL;
+				throw configException("Error in params \"" + it->first.getSource() + "\" need params \'auth_basic\' in", \
+											p_fileName);
+			}
+			if (map->first == "autoindex")
+			{
+				if (map->second[0] != "on" && map->second[0] != "off")
+				{
+					errno = EINVAL;
+					throw configException("Error in params \"" + it->first.getSource() + "\" \'autoindex\' value cannot \'on\' or \'off\' in", \
+											p_fileName);
+				}
+			}
+		}
+	}
+	return p_map;
+}
+
 map<string, string> &
 ServerConfig::checkErrorPage( map<string, string> & p_map, string const & p_fileName, \
 								string const & p_root )
@@ -227,48 +288,13 @@ ServerConfig::checkErrorPage( map<string, string> & p_map, string const & p_file
 	return p_map;
 }
 
-map<string, string> &	ServerConfig::checkCgi( map<string, string>& p_map, string const & p_fileName )
+map<string, string> &	ServerConfig::checkCgi( string const & p_path, string const & p_fileName )
 {
-	for (map<string, string>::iterator it = p_map.begin(); \
-			it != p_map.end(); it++)
+	struct stat fileInfos;
+	if (stat(p_path.c_str(), &fileInfos) != 0)
 	{
-		struct stat fileInfos;
-		if (stat(it->second.c_str(), &fileInfos) != 0)
-		{
-			throw configException("Error with cgi path " + string(it->second) + " in", p_fileName);
-		}
+		throw configException("Error with cgi path " + string(it->second) + " in", p_fileName);
 	}
-	return p_map;
-}
-
-map<string, string>		ServerConfig::isCgi( ifstream & p_file )
-{
-	string		line;
-	string		key;
-	string		arg;
-	map<string, string>		tmp;
-	std::map<string, string>::iterator		it = tmp.begin();
-
-	while(getline(p_file, line))
-	{
-		std::stringstream	str(line);
-
-		str >> key;
-		if (str.eof() && key != "}")
-			continue;
-		if (key.at(0) == '#')
-			continue;
-		if (key == "}")
-			break ;
-		getline(str, arg);
-		if (arg.find_first_of(';') != string::npos)
-			arg.erase(arg.find_first_of(';'), arg.size());
-		if (arg.find_first_not_of(' ') != string::npos)
-			arg.erase(0, arg.find_first_not_of(' '));
-
-		tmp.insert(it, std::pair<string, string>(key, arg));
-	}
-	return tmp;
 }
 
 map<string, string>
@@ -338,6 +364,50 @@ vector<string>			ServerConfig::splitArg( string & p_arg )
 }
 
 void
+ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstream & p_file, \
+								string & p_arg, string const & p_fileName )
+{
+	string		key;
+	string		line;
+	string		arg;
+	string		root(p_arg);
+	map<string, vector<string> >					tmp;
+	std::map<string, vector<string> >::iterator		it = tmp.begin();
+
+	if (root[0] == '~' && root[1] == ' ')
+		root.erase(0,2);
+	if (root.find_first_of(' ') != string::npos)
+		root.erase(root.find_first_of(' '), root.size());
+	try {
+		Regex regex(root.c_str());
+		while(getline(p_file, line))
+		{
+			std::stringstream		str(line);
+			str >> key;
+			this->checkKeyInvalid(key, tmp, p_fileName);
+			if (str.eof() && key != "}")
+				continue;
+			if (key.at(0) == '#')
+				continue;
+			if (key == "}")
+				break ;
+			getline(str, arg);
+			if (arg.find_first_of(';') != string::npos)
+				arg.erase(arg.find_first_of(';'), arg.size());
+			if (arg.find_first_not_of(' ') != string::npos)
+				arg.erase(0, arg.find_first_not_of(' '));
+			vector<string> tmpV = this->splitArg(arg);
+			tmp.insert(it, std::pair<string, vector<string> >(key, tmpV));
+		}
+		p_map[regex] = tmp;
+
+	}
+	catch (std::invalid_argument const & e) {
+		std::cerr << e.what() << std::endl;
+	}
+}
+
+void
 ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \
 								string & p_arg, string const & p_fileName )
 {
@@ -346,7 +416,6 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 	string		root(p_arg);
 	string		arg;
 	map<string, vector<string> >					tmp;
-	vector<string>									argV;
 	std::map<string, vector<string> >::iterator		it = tmp.begin();
 
 	if (root.find_first_of(' ') != string::npos)
@@ -386,12 +455,12 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 		ifstream  hostFile(fileName.c_str());
 		if (hostFile)
 		{
-			map<string, string>	tmp;
-			map<string, string>	errorTmp;
-			map<string, string> cgiTmp;
-			std::map<string, string>::iterator		it = tmp.begin();
+			map<string, string>							tmp;
+			map<string, string>							errorTmp;
+			std::map<string, string>::iterator			it = tmp.begin();
 			map<string, map<string, vector<string> > >	conf;
-			uint16_t port;
+			map<Regex, map<string, vector<string> > >	regex;
+			uint16_t									port;
 
 			while (getline(hostFile, line))
 			{
@@ -409,18 +478,34 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 					arg.erase(0, arg.find_first_not_of(' '));
 				if (key == "port")
 					port = static_cast<unsigned short>(atoi(arg.c_str()));
-				else if (key == "cgi")
-					cgiTmp = this->isCgi(hostFile);
 				else if (key == "error_page")
 					errorTmp = this->isErrorPage(hostFile);
 				else if (key == "location")
-					this->isLocation(conf, hostFile, arg, p_filname[i]);
+				{
+					if (arg[0] == '~')
+						this->isRegex(regex, hostFile, arg, p_filname[i]);
+					else
+						this->isLocation(conf, hostFile, arg, p_filname[i]);
+				}
 				else
 				{
 					this->checkKeyExist(key, tmp, p_filname[i]);
 					tmp.insert(it, std::pair<string, string>(key, arg));
 				}
 			}
+
+			for (map<Regex, map<string, vector<string> > >::iterator reg = regex.begin(); reg != regex.end(); reg++)
+			{
+				std::cout << "DEBUG REG: " << reg->first.getSource() << std::endl << "\t";
+				for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
+				{
+					std::cout << maps->first << std::endl << "\t\t";
+					for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
+						std::cout << *vec << " ";
+					std::cout << std::endl;
+				}
+			}
+
 			/* Init stuct Host */
 			Host temp_host = {
 				this->checkPort(port, p_filname[i]),
@@ -428,9 +513,9 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				this->checkAutoIndex(tmp, p_filname[i]),
 				this->convertIndex(tmp, p_filname[i]),
 				this->checkServerName(tmp, p_filname[i]),
-				this->checkCgi(cgiTmp, p_filname[i]),
 				this->checkErrorPage(errorTmp, p_filname[i], tmp.at("root")),
-				this->checkLocation(conf, p_filname[i])
+				this->checkLocation(conf, p_filname[i]),
+				this->checkRegex(regex, p_filname[i])
 			};
 			host.push_back(temp_host);
 		} else {

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/16 12:34:02 by aalleman         ###   ########lyon.fr   */
+/*   Updated: 2021/02/22 14:16:02 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@
 # include <sstream>
 # include <sys/stat.h>
 # include <stdint.h>
+# include "Regex.hpp"
 
 using std::string;
 using std::list;
@@ -41,9 +42,9 @@ struct Host
 	bool										autoIndex;
 	vector<string>								index;
 	string										serverName;
-	map<string, string>							cgi;
 	map<string, string>							errorPage;
 	map<string, map<string, vector<string> > > 	location;
+	map<Regex, map<string, vector<string> > >	regexLocation;
 };
 
 class ServerConfig
@@ -103,19 +104,22 @@ class ServerConfig
 		bool					checkAutoIndex( map<string, string> & p_map, string const & p_filename );
 		string					checkServerName( map<string, string> & p_map, string const & p_fileName );
 		uint16_t &				checkPort( uint16_t & p_port, string const & p_fileName );
-		map<string, string> &	checkCgi( map<string, string>& p_map, string const & p_fileName );
+		map<string, string> &	checkCgi( string const & p_map, string const & p_fileName ) const;
 		map<string, string> &	checkErrorPage ( map<string, string> & p_map, string const & p_fileName, \
 													string const & p_root );
 		map<string, map<string, vector<string> > > &
 								checkLocation( map<string, map<string, vector<string> > > & p_map, string const & p_fileName );
+		map<Regex, map<string, vector<string> > > &
+								checkRegex( map<Regex, map<string, vector<string> > > & p_map, string const & p_fileName);
 		void					checkKeyExist( string const & p_key, map<string, string> const & p_tmp,
 												 string const & p_filename = "server.conf" );
 		void					checkIfParamsExist( void );
 		void					checkKeyInvalid( string const & p_key, map<string, vector<string> > & p_map, \
 													string const & p_fileName );
-		map<string, string>		isCgi( ifstream & p_file );
 		map<string, string>		isErrorPage( ifstream & p_file );
 		void					isLocation(	map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \
+												string & p_arg, string const & p_fileName );
+		void					isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstream & p_file, \
 												string & p_arg, string const & p_fileName );
 		vector<string>			splitArg( string & p_arg );
 
