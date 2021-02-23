@@ -26,6 +26,23 @@ HttpRequest::parseException::what(void) const throw()
 	return (_str.c_str());
 }
 
+HttpRequest::recvException::recvException(HttpRequest const & request,
+				 int code, string const & info, string errorMsg) throw()
+			: _str(info + " : " + errorMsg)
+{
+	const_cast<HttpRequest &>(request).setStatus(code, info);
+}
+
+HttpRequest::recvException::~recvException(void) throw()
+{
+}
+
+const char *
+HttpRequest::recvException::what(void) const throw()
+{
+	return (_str.c_str());
+}
+
 HttpRequest::directoryListingException::directoryListingException(void) throw()
 {
 }
@@ -100,7 +117,7 @@ HttpRequest::setStatus(int c, string const & i)
 }
 
 void
-HttpRequest::analyze(void) throw(parseException, closeOrderException, directoryListingException)
+HttpRequest::analyze(void) throw(parseException, recvException, closeOrderException, directoryListingException)
 {
 	_headerSize = 0;
 	_analyseRequestLine();
@@ -137,7 +154,7 @@ HttpRequest::_copy(HttpRequest const & other)
 */
 
 void
-HttpRequest::_analyseRequestLine(void) throw(parseException, closeOrderException)
+HttpRequest::_analyseRequestLine(void) throw(parseException, recvException, closeOrderException)
 {
 	char			buffer[REQUEST_LINE_MAX_SIZE + 1];
 	vector<string>	requestLine;
@@ -150,7 +167,7 @@ HttpRequest::_analyseRequestLine(void) throw(parseException, closeOrderException
 	|| _headerSize == 1)
 		throw(parseException(*this, 400, "Bad Request", "Too many empty lines before request"));
 	if (_headerSize < 0)
-		throw(parseException(*this, 500, "Internal Server Error", "recv error (may have timeout)"));
+		throw(recvException(*this, 500, "Internal Server Error", "recv error (may have timeout)"));
 	else if (_headerSize == 0)
 		throw(closeOrderException());
 	else if (_headerSize > REQUEST_LINE_MAX_SIZE)
@@ -251,7 +268,7 @@ HttpRequest::_checkHttpVersion(void) const throw(parseException)
 }
 
 void
-HttpRequest::_analyseHeader(void) throw(parseException)
+HttpRequest::_analyseHeader(void) throw(parseException, recvException)
 {
 	//+1 pour pouvoir lire un char supplémentaire et dépasser la limite
 	char			line[HEADER_MAX_SIZE + 1];
@@ -265,7 +282,7 @@ HttpRequest::_analyseHeader(void) throw(parseException)
 		_parseHeaderLine(line);
 	}
 	if (lineSize < 0)
-		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
+		throw(recvException(*this, 500, "Internal Server Error", "recv error"));
 	else if (_headerSize > HEADER_MAX_SIZE)
 		throw(parseException(*this, 431, "Request Header Fields Too Large", "header too large"));
 	_checkHeader();
@@ -316,7 +333,7 @@ HttpRequest::_checkHeader(void) throw(parseException)
 }
 
 void
-HttpRequest::_analyseBody(void) throw(parseException)
+HttpRequest::_analyseBody(void) throw(parseException, recvException)
 {
 	_body[0] = 0;
 	int maxBodySize = CLIENT_MAX_BODY_SIZE;
@@ -340,7 +357,7 @@ HttpRequest::_analyseBody(void) throw(parseException)
 }
 
 void
-HttpRequest::_analyseChunkedBody(int maxBodySize) throw(parseException)
+HttpRequest::_analyseChunkedBody(int maxBodySize) throw(parseException, recvException)
 {
 	ssize_t			chunkSizeBufferMaxSize = static_cast<ssize_t>(intToHex(CLIENT_MAX_BODY_SIZE).size());
 	ssize_t			chunkSizeBufferSize = 0;
@@ -352,7 +369,7 @@ HttpRequest::_analyseChunkedBody(int maxBodySize) throw(parseException)
 	{
 		chunkSizeBufferSize = _getLine(chunkSizeBuffer, chunkSizeBufferMaxSize, false);
 		if (chunkSizeBufferSize < 0)
-			throw(parseException(*this, 500, "Internal Server Error", "recv error"));
+			throw(recvException(*this, 500, "Internal Server Error", "recv error"));
 		else if (chunkSizeBufferSize > chunkSizeBufferMaxSize)
 			throw(parseException(*this, 413, "Payload Too Large", "Chunk size is too large"));
 		else if (!chunkSizeBuffer[0])
@@ -367,14 +384,14 @@ HttpRequest::_analyseChunkedBody(int maxBodySize) throw(parseException)
 		{
 			chunkLineSize = loopRecv(_client.s, _body + _bodySize, chunkSize);
 			if (chunkLineSize < 0)
-				throw(parseException(*this, 500, "Internal Server Error", "recv error"));
+				throw(recvException(*this, 500, "Internal Server Error", "recv error"));
 			else if (chunkLineSize != chunkSize)
 				throw(parseException(*this, 500, "Internal Server Error", "Chunked body smaller than chunk size"));
 			_bodySize += static_cast<size_t>(chunkSize);
 		}
 		chunkLineSize = loopRecv(_client.s, crlf, 2);
 		if (chunkLineSize < 0)
-			throw(parseException(*this, 500, "Internal Server Error", "recv error"));
+			throw(recvException(*this, 500, "Internal Server Error", "recv error"));
 		crlf[chunkLineSize] = 0;
 		if (strcmp(crlf, "\r\n") != 0)
 			throw(parseException(*this, 400, "Bad Request", "No CRLF at the end of a chunk"));
@@ -382,7 +399,7 @@ HttpRequest::_analyseChunkedBody(int maxBodySize) throw(parseException)
 }
 
 void
-HttpRequest::_analyseNormalBody(int maxBodySize) throw(parseException)
+HttpRequest::_analyseNormalBody(int maxBodySize) throw(parseException, recvException)
 {
 	_checkContentLength(_fields["content-length"]);
 	std::istringstream(_fields["content-length"][0]) >> _bodySize;
@@ -392,7 +409,7 @@ HttpRequest::_analyseNormalBody(int maxBodySize) throw(parseException)
 		return ;
 	ssize_t recvRet = loopRecv(_client.s, _body, static_cast<ssize_t>(_bodySize));
 	if (recvRet < 0)
-		throw(parseException(*this, 500, "Internal Server Error", "recv error"));
+		throw(recvException(*this, 500, "Internal Server Error", "recv error"));
 	else if (static_cast<size_t>(recvRet) < _bodySize)
 		throw(parseException(*this, 500, "Internal Server Error", "body smaller than given content length (" + toStr(recvRet) + ")"));
 	_body[_bodySize] = 0;

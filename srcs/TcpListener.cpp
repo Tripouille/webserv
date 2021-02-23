@@ -147,6 +147,8 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 		try { request.analyze(); }
 		catch (HttpRequest::parseException const & e)
 		{ cerr << e.what() << endl; }
+		catch (HttpRequest::recvException const & e)
+		{ cerr << e.what() << endl; return (_disconnectClient(socket));}
 		catch (HttpRequest::closeOrderException const & e)
 		{ return (_disconnectClient(socket)); }
 		catch (HttpRequest::directoryListingException const & e)

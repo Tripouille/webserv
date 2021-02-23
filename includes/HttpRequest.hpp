@@ -57,6 +57,15 @@ class HttpRequest
 			private:
 				string _str;
 		};
+		class recvException : public std::exception
+		{
+			public:
+				recvException(HttpRequest const & request, int code, string const & info, string str) throw();
+				virtual ~recvException(void) throw();
+				virtual const char * what(void) const throw();
+			private:
+				string _str;
+		};
 		class directoryListingException : public std::exception
 		{
 			public:
@@ -79,7 +88,7 @@ class HttpRequest
 		s_status const & getStatus(void) const;
 		void setStatus(int c, string const & i);
 
-		void analyze(void) throw(parseException, closeOrderException, directoryListingException);
+		void analyze(void) throw(parseException, recvException, closeOrderException, directoryListingException);
 
 	private:
 		Client &						_client;
@@ -101,7 +110,7 @@ class HttpRequest
 		HttpRequest & operator=(HttpRequest const & other);
 
 		void _copy(HttpRequest const & other);
-		void _analyseRequestLine(void) throw(parseException, closeOrderException);
+		void _analyseRequestLine(void) throw(parseException, recvException, closeOrderException);
 		ssize_t _getLine(char * buffer, ssize_t limit, bool LFAllowed = true)
 		const throw(parseException);
 		vector<string> _splitRequestLine(string s) const;
@@ -110,13 +119,13 @@ class HttpRequest
 		void _checkMethod(void) const throw(parseException);
 		void _checkTarget(void) const throw(parseException);
 		void _checkHttpVersion(void) const throw(parseException);
-		void _analyseHeader(void) throw(parseException);
+		void _analyseHeader(void) throw(parseException, recvException);
 		void _parseHeaderLine(string line) throw(parseException);
 		void _splitHeaderField(string s, vector<string> & fieldValue) const;
 		void _checkHeader(void) throw(parseException);
-		void _analyseBody(void) throw(parseException);
-		void _analyseNormalBody(int maxBodySize) throw(parseException);
-		void _analyseChunkedBody(int maxBodySize) throw(parseException);
+		void _analyseBody(void) throw(parseException, recvException);
+		void _analyseNormalBody(int maxBodySize) throw(parseException, recvException);
+		void _analyseChunkedBody(int maxBodySize) throw(parseException, recvException);
 		void _checkContentLength(vector<string> const & contentLengthField)
 		const throw(parseException);
 		map<string, vector<string> > _getDeepestLocation(string const & key, string & analyzedFile) const;
