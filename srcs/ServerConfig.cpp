@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/23 13:37:15 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/23 13:42:49 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -411,6 +411,8 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 				continue;
 			if (key.at(0) == '#')
 				continue;
+			if (key == "}" && line != "}")
+				throw std::invalid_argument("Error: line not finish with '}'");
 			if (key == "}")
 				break ;
 			getline(str, arg);
@@ -459,6 +461,8 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 			continue;
 		if (key.at(0) == '#')
 			continue;
+		if (key == "}" && line != "}")
+			throw std::invalid_argument("Error: line not finish with '}'");
 		if (key == "}")
 			break ;
 		getline(str, arg);
