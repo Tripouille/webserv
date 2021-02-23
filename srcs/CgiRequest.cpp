@@ -88,7 +88,7 @@ CgiRequest::doRequest(Answer & answer) throw(cgiException)
 		deleteQ(answer._body);
 		throw(cgiException("read fail", *this));
 	}
-	if (buffer->occupiedSize == 0)
+	else if (buffer->occupiedSize == 0)
 		delete buffer;
 	_closeCgi(writeChildPid, cgiChildPid);
 }
