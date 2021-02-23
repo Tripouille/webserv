@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/23 15:16:42 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/23 15:27:09 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -393,7 +393,7 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 		if ((pos = root.find_last_of('{')) != string::npos)
 		{
 			if (checkEndLine(root.substr(pos, root.size()), "{"))
-				throw std::invalid_argument("Error: line " + std::to_string(*nbLine) + " not finish with '{'");
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with '{'");
 			root.erase(pos, root.size());
 		}
 		std::stringstream tmp(root);
@@ -414,14 +414,14 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 			if (key.at(0) == '#')
 				continue;
 			if (key == "}" && line != "}")
-				throw std::invalid_argument("Error: line " + std::to_string(*nbLine) + " not finish with '}'");
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with '}'");
 			if (key == "}")
 				break ;
 			getline(str, arg);
 			if ((pos = arg.find_first_of(';')) != string::npos)
 			{
 				if (checkEndLine(arg.substr(pos, arg.size()), ";"))
-					throw std::invalid_argument("Error: line " + std::to_string(*nbLine) + " not finish with ';'");
+					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with ';'");
 				arg.erase(arg.find_first_of(';'), arg.size());
 			}
 			if (arg.find_first_not_of(' ') != string::npos)
@@ -453,7 +453,7 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 	if ((pos = root.find_last_of('{')) != string::npos)
 	{
 		if (checkEndLine(root.substr(pos, root.size()), "{"))
-				throw std::invalid_argument("Error: line " + std::to_string(*nbLine) + " not finish with '{'");
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with '{'");
 		root.erase(pos, root.size());
 	}
 	if (root.find_first_of(' ') != string::npos)
@@ -476,7 +476,7 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 		if (( pos = arg.find_first_of(';')) != string::npos)
 		{
 			if (checkEndLine(arg.substr(pos, arg.size()), ";"))
-					throw std::invalid_argument("Error: line " + std::to_string(*nbLine) + " not finish with ';'");
+					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with ';'");
 			arg.erase(arg.find_first_of(';'), arg.size());
 		}
 		if (arg.find_first_not_of(' ') != string::npos)
@@ -522,7 +522,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				if (arg.find_first_of(';') != string::npos)
 				{
 					if (checkEndLine(arg.substr(arg.find_first_of(';'), arg.size()), ";"))
-						throw std::invalid_argument("Error: line " + std::to_string(nbLine) + " not finish with ';'");
+						throw std::invalid_argument("Error: line " + toStr(nbLine) + " not finish with ';'");
 					arg.erase(arg.find_first_of(';'), arg.size());
 				}
 				if (arg.find_first_not_of(' ') != string::npos)
