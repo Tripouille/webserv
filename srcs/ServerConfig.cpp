@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/23 13:42:49 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/23 15:16:42 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -309,7 +309,7 @@ void		ServerConfig::checkCgi( string const & p_path, string const & p_fileName )
 }
 
 map<string, string>
-ServerConfig::isErrorPage( ifstream & p_file )
+ServerConfig::isErrorPage( ifstream & p_file, int *nbLine )
 {
 	string		line;
 	string		key;
@@ -320,6 +320,7 @@ ServerConfig::isErrorPage( ifstream & p_file )
 
 	while(getline(p_file, line))
 	{
+		*nbLine += 1;
 		std::stringstream		str(line);
 		str >> key;
 		if (str.eof() && key != "}")
@@ -376,7 +377,7 @@ vector<string>			ServerConfig::splitArg( string & p_arg )
 
 void
 ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstream & p_file, \
-								string & p_arg, string const & p_fileName )
+								string & p_arg, string const & p_fileName, int *nbLine )
 {
 	size_t		pos(0);
 	string		key;
@@ -391,8 +392,8 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 		root.erase(0,1);
 		if ((pos = root.find_last_of('{')) != string::npos)
 		{
-			if (root[root.size()-1] != '{')
-				throw std::invalid_argument("Error: Invalid argument: line not finish with '{'");
+			if (checkEndLine(root.substr(pos, root.size()), "{"))
+				throw std::invalid_argument("Error: line " + std::to_string(*nbLine) + " not finish with '{'");
 			root.erase(pos, root.size());
 		}
 		std::stringstream tmp(root);
@@ -404,6 +405,7 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 		Regex regex(line.c_str());
 		while(getline(p_file, line))
 		{
+			*nbLine += 1;
 			std::stringstream		str(line);
 			str >> key;
 			this->checkKeyInvalid(key, tmp, p_fileName);
@@ -412,12 +414,16 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 			if (key.at(0) == '#')
 				continue;
 			if (key == "}" && line != "}")
-				throw std::invalid_argument("Error: line not finish with '}'");
+				throw std::invalid_argument("Error: line " + std::to_string(*nbLine) + " not finish with '}'");
 			if (key == "}")
 				break ;
 			getline(str, arg);
-			if (arg.find_first_of(';') != string::npos)
+			if ((pos = arg.find_first_of(';')) != string::npos)
+			{
+				if (checkEndLine(arg.substr(pos, arg.size()), ";"))
+					throw std::invalid_argument("Error: line " + std::to_string(*nbLine) + " not finish with ';'");
 				arg.erase(arg.find_first_of(';'), arg.size());
+			}
 			if (arg.find_first_not_of(' ') != string::npos)
 				arg.erase(0, arg.find_first_not_of(' '));
 			vector<string> tmpV = this->splitArg(arg);
@@ -434,7 +440,7 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 
 void
 ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \
-								string & p_arg, string const & p_fileName )
+								string & p_arg, string const & p_fileName, int *nbLine )
 {
 	size_t		pos(0);
 	string		key;
@@ -446,14 +452,15 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 
 	if ((pos = root.find_last_of('{')) != string::npos)
 	{
-		if (root[root.size()-1] != '{')
-			throw std::invalid_argument("Error: Invalid argument: line not finish with '{'");
+		if (checkEndLine(root.substr(pos, root.size()), "{"))
+				throw std::invalid_argument("Error: line " + std::to_string(*nbLine) + " not finish with '{'");
 		root.erase(pos, root.size());
 	}
 	if (root.find_first_of(' ') != string::npos)
 		root.erase(root.find_first_of(' '), root.size());
 	while(getline(p_file, line))
 	{
+		*nbLine += 1;
 		std::stringstream		str(line);
 		str >> key;
 		this->checkKeyInvalid(key, tmp, p_fileName);
@@ -466,8 +473,12 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 		if (key == "}")
 			break ;
 		getline(str, arg);
-		if (arg.find_first_of(';') != string::npos)
+		if (( pos = arg.find_first_of(';')) != string::npos)
+		{
+			if (checkEndLine(arg.substr(pos, arg.size()), ";"))
+					throw std::invalid_argument("Error: line " + std::to_string(*nbLine) + " not finish with ';'");
 			arg.erase(arg.find_first_of(';'), arg.size());
+		}
 		if (arg.find_first_not_of(' ') != string::npos)
 			arg.erase(0, arg.find_first_not_of(' '));
 		vector<string> tmpV = this->splitArg(arg);
@@ -495,9 +506,11 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 			map<string, map<string, vector<string> > >	conf;
 			map<Regex, map<string, vector<string> > >	regex;
 			uint16_t									port(0);
+			int											nbLine(0);
 
 			while (getline(hostFile, line))
 			{
+				nbLine++;
 				std::stringstream	str(line);
 
 				str >> key;
@@ -507,19 +520,23 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 					continue;
 				getline(str, arg);
 				if (arg.find_first_of(';') != string::npos)
+				{
+					if (checkEndLine(arg.substr(arg.find_first_of(';'), arg.size()), ";"))
+						throw std::invalid_argument("Error: line " + std::to_string(nbLine) + " not finish with ';'");
 					arg.erase(arg.find_first_of(';'), arg.size());
+				}
 				if (arg.find_first_not_of(' ') != string::npos)
 					arg.erase(0, arg.find_first_not_of(' '));
 				if (key == "port")
 					port = tryParseInt(arg);
 				else if (key == "error_page")
-					errorTmp = this->isErrorPage(hostFile);
+					errorTmp = this->isErrorPage(hostFile, &nbLine);
 				else if (key == "location")
 				{
 					if (arg[0] == '~')
-						this->isRegex(regex, hostFile, arg, p_filname[i]);
+						this->isRegex(regex, hostFile, arg, p_filname[i], &nbLine);
 					else
-						this->isLocation(conf, hostFile, arg, p_filname[i]);
+						this->isLocation(conf, hostFile, arg, p_filname[i], &nbLine);
 				}
 				else
 				{
