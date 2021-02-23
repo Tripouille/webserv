@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/23 12:55:45 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/23 13:00:52 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -478,7 +478,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 			std::map<string, string>::iterator			it = tmp.begin();
 			map<string, map<string, vector<string> > >	conf;
 			map<Regex, map<string, vector<string> > >	regex;
-			uint16_t									port;
+			uint16_t									port(0);
 
 			while (getline(hostFile, line))
 			{
