@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/22 15:48:37 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/23 15:14:43 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,11 +117,11 @@ class ServerConfig
 		void					checkIfParamsExist( void );
 		void					checkKeyInvalid( string const & p_key, map<string, vector<string> > & p_map, \
 													string const & p_fileName );
-		map<string, string>		isErrorPage( ifstream & p_file );
+		map<string, string>		isErrorPage( ifstream & p_file, int *nbLine );
 		void					isLocation(	map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \
-												string & p_arg, string const & p_fileName );
+												string & p_arg, string const & p_fileName, int *nbLine );
 		void					isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstream & p_file, \
-												string & p_arg, string const & p_fileName );
+												string & p_arg, string const & p_fileName, int *nbLine );
 		vector<string>			splitArg( string & p_arg );
 
 };

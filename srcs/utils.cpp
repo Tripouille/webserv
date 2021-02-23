@@ -98,6 +98,23 @@ std::streamsize selectAndWrite(SOCKET socket, char * buffer, size_t size)
 uint16_t			tryParseInt(std::string & str)
 {
 	if (str.find_first_not_of("0123456789", 0) != std::string::npos)
-		return 0;
+		throw std::invalid_argument("Error: Invalid argument: Params is not a number.");
 	return (atoi(str.c_str()));
+}
+
+bool				checkEndLine( std::string str, std::string comp)
+{
+	std::string			tmp;
+	std::stringstream	line(str);
+
+	line >> tmp;
+	if (tmp == comp && line.eof())
+		return false;
+	else
+	{
+		line >> tmp;
+		if (tmp[0] == '#')
+			return false;
+	}
+	return true;
 }
