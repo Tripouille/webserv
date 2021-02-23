@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/23 13:00:52 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/23 13:37:15 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -378,6 +378,7 @@ void
 ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstream & p_file, \
 								string & p_arg, string const & p_fileName )
 {
+	size_t		pos(0);
 	string		key;
 	string		line;
 	string		arg;
@@ -388,8 +389,12 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 	if (root[0] == '~')
 	{
 		root.erase(0,1);
-		if (root.find_last_of('{') != string::npos)
-			root.erase(root.find_last_of('{'), root.size());
+		if ((pos = root.find_last_of('{')) != string::npos)
+		{
+			if (root[root.size()-1] != '{')
+				throw std::invalid_argument("Error: Invalid argument: line not finish with '{'");
+			root.erase(pos, root.size());
+		}
 		std::stringstream tmp(root);
 		tmp >> line;
 	}
@@ -429,6 +434,7 @@ void
 ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \
 								string & p_arg, string const & p_fileName )
 {
+	size_t		pos(0);
 	string		key;
 	string		line;
 	string		root(p_arg);
@@ -436,6 +442,12 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 	map<string, vector<string> >					tmp;
 	std::map<string, vector<string> >::iterator		it = tmp.begin();
 
+	if ((pos = root.find_last_of('{')) != string::npos)
+	{
+		if (root[root.size()-1] != '{')
+			throw std::invalid_argument("Error: Invalid argument: line not finish with '{'");
+		root.erase(pos, root.size());
+	}
 	if (root.find_first_of(' ') != string::npos)
 		root.erase(root.find_first_of(' '), root.size());
 	while(getline(p_file, line))
