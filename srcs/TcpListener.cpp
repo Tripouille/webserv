@@ -164,9 +164,6 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 				return (_handleNoErrorPage(answer, request));
 		}
 		_answerToClient(socket, answer, request);
-
-		if (request._status.code / 100 != 2)
-			_disconnectClient(socket);
 	}
 	catch (Answer::sendException const & e)
 	{
@@ -303,10 +300,19 @@ TcpListener::_answerToClient(SOCKET socket, Answer & answer,
 		else if (request._method == "GET" || request._method == "HEAD" || request._method == "POST")
 		{
 			try { answer.getFile(request._requiredFile); }
-			catch (Answer::sendException const &) { throw(tcpException("File reading failed")); }
+			catch (Answer::sendException const &)
+			{
+				request.setStatus(403, "Forbidden");
+				if (_setErrorPage(request))
+					return (_answerToClient(socket, answer, request));
+				else
+					return (_handleNoErrorPage(answer, request));
+			}
 		}
 	}
 	answer.sendAnswer(request);
+	if (request._status.code / 100 != 2)
+		_disconnectClient(socket);
 }
 
 string const

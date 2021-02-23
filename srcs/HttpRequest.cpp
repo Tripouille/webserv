@@ -105,6 +105,7 @@ HttpRequest::analyze(void) throw(parseException, closeOrderException, directoryL
 	_headerSize = 0;
 	_analyseRequestLine();
 	_analyseHeader();
+	_debugFields();
 	_setRequiredFile();
 	_analyseBody();
 
@@ -378,8 +379,6 @@ HttpRequest::_analyseChunkedBody(int maxBodySize) throw(parseException)
 		if (strcmp(crlf, "\r\n") != 0)
 			throw(parseException(*this, 400, "Bad Request", "No CRLF at the end of a chunk"));
 	} while (chunkSize);
-	//_body[_bodySize] = 0;//for debug only
-	//cout << "CHUNK body size = " << _bodySize << ", body = [" << _body << "]" << endl;
 }
 
 void
