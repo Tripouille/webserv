@@ -6,6 +6,7 @@
 # include <unistd.h>
 # include <iostream>
 # include <fcntl.h>
+# include <stdexcept>
 
 typedef int SOCKET;
 using std::cerr;
