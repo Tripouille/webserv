@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/24 22:43:36 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/24 22:48:55 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -474,7 +474,7 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 			if (key.at(0) == '#')
 				continue;
 			if (key == "}" && line != "}")
-				throw std::invalid_argument("Error: line " + toStr(*nbLine));
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " Invalid argument: " + p_fileName);
 			if (key == "}")
 				break ;
 			this->checkKeyIsNotValid(key, nbLine);
@@ -534,7 +534,7 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 		if (key.at(0) == '#')
 			continue;
 		if (key == "}" && line != "}")
-			throw std::invalid_argument("Error:");
+			throw std::invalid_argument("Error: line " + toStr(*nbLine) + " Invalid argument: " + p_fileName);
 		if (key == "}")
 			break ;
 		this->checkKeyIsNotValid(key, nbLine);
