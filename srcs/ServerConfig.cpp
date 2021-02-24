@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/24 17:23:28 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/24 20:15:25 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -467,6 +467,8 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 			std::stringstream		str(line);
 			str >> key;
 			this->checkKeyInvalid(key, tmp, p_fileName);
+			if (str.eof() && key != "}" && key != "{")
+				this->checkKeyIsNotValid(key, nbLine);
 			if (str.eof() && key != "}")
 				continue;
 			if (key.at(0) == '#')
@@ -525,6 +527,8 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 		std::stringstream		str(line);
 		str >> key;
 		this->checkKeyInvalid(key, tmp, p_fileName);
+		if (str.eof() && key != "}" && key != "{")
+				this->checkKeyIsNotValid(key, nbLine);
 		if (str.eof() && key != "}")
 			continue;
 		if (key.at(0) == '#')
