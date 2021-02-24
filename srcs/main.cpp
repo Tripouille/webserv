@@ -29,7 +29,7 @@ int main(int ac, char *av[])
 	}
 	catch (std::exception const & e)
 	{
-		cerr << e.what() << "from main" << endl;
+		cerr << e.what() << endl;
 		exit(errno);
 	}
 	return (0);
