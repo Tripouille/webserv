@@ -5,3 +5,4 @@ webserv.pid
 www/put_saves/*
 www/YoupiBanane/*
 .DS_Store
+webservTester/__pycache__/*
