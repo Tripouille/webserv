@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/24 15:13:12 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/24 15:17:52 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -198,6 +198,17 @@ ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map,
 			{
 				if (map->second.size() == 1)
 					checkCgi(map->second[0], p_fileName);
+				else
+				{
+					errno = EINVAL;
+					throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden on", \
+											p_fileName);
+				}
+			}
+			if (map->first == "client_max_body_size")
+			{
+				if (map->second.size() == 1)
+					tryParseInt(map->second[0]);
 				else
 				{
 					errno = EINVAL;
