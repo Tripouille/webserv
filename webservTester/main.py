@@ -67,6 +67,7 @@ print(colors.RESET)
 
 
 test(200, 'GET', '/index.php', None, {"Host": "localhost"}, None, None)
+print()
 # Stress test
 for i in range(1000):
 	webserv = client.HTTPConnection('localhost:9999')
