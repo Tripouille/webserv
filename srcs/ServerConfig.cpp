@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/23 16:28:18 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/24 15:13:12 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,20 @@ const char *			ServerConfig::configException::what(void) const throw()
 ServerConfig::ServerConfig( std::string const & path ) :
 	_pathConfFile(path)
 {
+	_dictionary.push_back("port");
+	_dictionary.push_back("root");
+	_dictionary.push_back("server_name");
+	_dictionary.push_back("index");
+	_dictionary.push_back("error_page");
+	_dictionary.push_back("location");
+	_dictionary.push_back("cgi");
+	_dictionary.push_back("allowed_methods");
+	_dictionary.push_back("upload_store");
+	_dictionary.push_back("client_max_body_size");
+	_dictionary.push_back("alias");
+	_dictionary.push_back("auth_basic");
+	_dictionary.push_back("auth_basic_user_file");
+	_dictionary.push_back("autoindex");
 }
 
 
@@ -56,6 +70,16 @@ ServerConfig::~ServerConfig()
 /*
 ** --------------------------------- METHODS ----------------------------------
 */
+
+void					ServerConfig::checkKeyIsNotValid( string const & p_key, int *nbLine )
+{
+	for (list<string>::iterator it = _dictionary.begin(); \
+		it != _dictionary.end(); it++)
+		if (*it == p_key)
+			return ;
+	throw std::invalid_argument("Error: line " + toStr(*nbLine) \
+		+ " " + p_key + " is invalid. ");
+}
 
 DIR *					ServerConfig::directoryPath( void )
 {
@@ -419,6 +443,7 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with '}'");
 			if (key == "}")
 				break ;
+			this->checkKeyIsNotValid(key, nbLine);
 			getline(str, arg);
 			if ((pos = arg.find_first_of(';')) != string::npos)
 			{
@@ -476,6 +501,7 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 			throw std::invalid_argument("Error: line not finish with '}'");
 		if (key == "}")
 			break ;
+		this->checkKeyIsNotValid(key, nbLine);
 		getline(str, arg);
 		if (( pos = arg.find_first_of(';')) != string::npos)
 		{
@@ -524,6 +550,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 					continue;
 				if (key.at(0) == '#')
 					continue;
+				this->checkKeyIsNotValid(key, &nbLine);
 				getline(str, arg);
 				if (arg.find_first_of(';') != string::npos)
 				{
