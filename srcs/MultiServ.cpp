@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/19 10:39:00 by frfrey            #+#    #+#             */
-/*   Updated: 2021/01/25 15:28:44 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/24 13:33:04 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,6 +81,8 @@ void			MultiServ::initServs( void )
 		}
 		wait(&_status);
 		_pids.close();
+		if (WIFSIGNALED(_status))
+			this->stopServ(const_cast<char *>("stop"));
 	}
 	else
 	{

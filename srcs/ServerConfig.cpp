@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/23 15:27:09 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/23 16:28:18 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -332,6 +332,8 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine )
 		getline(str, arg);
 		if (arg.find_first_of(';') != string::npos)
 			arg.erase(arg.find_first_of(';'), arg.size());
+		else
+			throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with ';'");
 		if (arg.find_first_not_of(' ') != string::npos)
 			arg.erase(0, arg.find_first_not_of(' '));
 		tmp.insert(it, std::pair<string, string>(key, arg));
@@ -424,6 +426,8 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with ';'");
 				arg.erase(arg.find_first_of(';'), arg.size());
 			}
+			else
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with ';'");
 			if (arg.find_first_not_of(' ') != string::npos)
 				arg.erase(0, arg.find_first_not_of(' '));
 			vector<string> tmpV = this->splitArg(arg);
@@ -479,6 +483,8 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with ';'");
 			arg.erase(arg.find_first_of(';'), arg.size());
 		}
+		else
+			throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with ';'");
 		if (arg.find_first_not_of(' ') != string::npos)
 			arg.erase(0, arg.find_first_not_of(' '));
 		vector<string> tmpV = this->splitArg(arg);
@@ -525,6 +531,9 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 						throw std::invalid_argument("Error: line " + toStr(nbLine) + " not finish with ';'");
 					arg.erase(arg.find_first_of(';'), arg.size());
 				}
+				else if ((key == "port" || key == "root" || key == "server_name" || key == "index") \
+					&& arg.find_first_of(';') == string::npos)
+					throw std::invalid_argument("Error: line " + toStr(nbLine) + " not finish with ';'");
 				if (arg.find_first_not_of(' ') != string::npos)
 					arg.erase(0, arg.find_first_not_of(' '));
 				if (key == "port")
