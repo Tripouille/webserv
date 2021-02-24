@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/24 15:17:52 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/24 16:09:40 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,6 +79,20 @@ void					ServerConfig::checkKeyIsNotValid( string const & p_key, int *nbLine )
 			return ;
 	throw std::invalid_argument("Error: line " + toStr(*nbLine) \
 		+ " " + p_key + " is invalid. ");
+}
+
+bool					ServerConfig::checkArgAllowdMethods( vector<string> & p_vector )
+{
+	vector<string>::iterator it = p_vector.begin();
+	for (; it != p_vector.end(); it++)
+	{
+		std::cout << "DEBUG ALLOWED METHOD: " << *it << " " << p_vector.size() << std::endl;
+		if (*it == "HEAD" || *it == "GET" || *it == "POST" || *it == "PUT")
+			continue ;
+	}
+	if (it == p_vector.end())
+		return false;
+	return true;
 }
 
 DIR *					ServerConfig::directoryPath( void )
@@ -213,6 +227,15 @@ ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map,
 				{
 					errno = EINVAL;
 					throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden on", \
+											p_fileName);
+				}
+			}
+			if (map->first == "allowed_methods")
+			{
+				if (checkArgAllowdMethods(map->second))
+				{
+					errno = EINVAL;
+					throw configException("Error in params \"" + string(map->first) + "\" wrong argument", \
 											p_fileName);
 				}
 			}

@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/24 15:09:08 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/24 15:53:42 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,6 +125,7 @@ class ServerConfig
 												string & p_arg, string const & p_fileName, int *nbLine );
 		vector<string>			splitArg( string & p_arg );
 		void					checkKeyIsNotValid( string const & p_key, int *nbLine );
+		bool					checkArgAllowdMethods( vector<string> & p_vector );
 
 };
 
