@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/24 20:15:25 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/24 22:43:36 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,7 +95,7 @@ DIR *					ServerConfig::directoryPath( void )
 	if (http.find("host") == http.end())
 	{
 		errno = EHOSTUNREACH;
-		throw configException("Error path \"host\" does not exist on conf file");
+		throw configException("Error path \"host\" does not exist on 'conf' file");
 	}
 	string name(http.at("host").c_str());
 	name.erase(name.find_last_of('/'), name.size());
@@ -210,7 +210,7 @@ ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map,
 				else
 				{
 					errno = EINVAL;
-					throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden on", \
+					throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden :", \
 											p_fileName);
 				}
 			}
@@ -221,21 +221,21 @@ ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map,
 				else
 				{
 					errno = EINVAL;
-					throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden on", \
+					throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden :", \
 											p_fileName);
 				}
 			}
 			if (map->first == "allowed_methods" && checkArgAllowdMethods(map->second))
 			{
 				errno = EINVAL;
-				throw configException("Error in params \"" + string(map->first) + "\" wrong argument", \
+				throw configException("Error in params \"" + string(map->first) + "\" invalid argument :", \
 										p_fileName);
 			}
 			if ((map->first != "allowed_methods" && map->first != "index" && map->first != "return") \
 				&& (map->second.size() > 1))
 			{
 				errno = EINVAL;
-				throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden in", \
+				throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden :", \
 											p_fileName);
 			}
 			if ((map->first == "upload_store"))
@@ -288,7 +288,7 @@ ServerConfig::checkRegex(map<Regex, map<string, vector<string> > > & p_map, stri
 				else
 				{
 					errno = EINVAL;
-					throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden on", \
+					throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden :", \
 											p_fileName);
 				}
 			}
@@ -302,7 +302,7 @@ ServerConfig::checkRegex(map<Regex, map<string, vector<string> > > & p_map, stri
 				&& (map->second.size() > 1))
 			{
 				errno = EINVAL;
-				throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden in", \
+				throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden :", \
 											p_fileName);
 			}
 			if ((map->first == "upload_store"))
@@ -316,13 +316,13 @@ ServerConfig::checkRegex(map<Regex, map<string, vector<string> > > & p_map, stri
 			if (map->first == "auth_basic" && (it->second.find("auth_basic_user_file") == it->second.end()))
 			{
 				errno = EINVAL;
-				throw configException("Error in params \"" + it->first.getSource() + "\" need params \'auth_basic_user_file\' in", \
+				throw configException("Error in params \"" + it->first.getSource() + "\" need params \'auth_basic_user_file\' :", \
 											p_fileName);
 			}
 			else if (map->first == "auth_basic_user_file" && (it->second.find("auth_basic") == it->second.end()))
 			{
 				errno = EINVAL;
-				throw configException("Error in params \"" + it->first.getSource() + "\" need params \'auth_basic\' in", \
+				throw configException("Error in params \"" + it->first.getSource() + "\" need params \'auth_basic\' :", \
 											p_fileName);
 			}
 			if (map->first == "autoindex")
@@ -330,7 +330,7 @@ ServerConfig::checkRegex(map<Regex, map<string, vector<string> > > & p_map, stri
 				if (map->second[0] != "on" && map->second[0] != "off")
 				{
 					errno = EINVAL;
-					throw configException("Error in params \"" + it->first.getSource() + "\" \'autoindex\' value cannot \'on\' or \'off\' in", \
+					throw configException("Error in params \"" + it->first.getSource() + "\" \'autoindex\' value cannot \'on\' or \'off\' :", \
 											p_fileName);
 				}
 			}
@@ -349,7 +349,7 @@ ServerConfig::checkErrorPage( map<string, string> & p_map, string const & p_file
 		struct stat fileInfos;
 		if (stat(string(p_root + it->second).c_str(), &fileInfos) != 0)
 		{
-			throw configException("Error with error file " + string(p_root + it->second) + " in", p_fileName);
+			throw configException("Error with error file " + string(p_root + it->second) + " :", p_fileName);
 		}
 	}
 	return p_map;
@@ -360,7 +360,7 @@ void		ServerConfig::checkCgi( string const & p_path, string const & p_fileName )
 	struct stat fileInfos;
 	if (stat(p_path.c_str(), &fileInfos) != 0)
 	{
-		throw configException("Error with cgi path " + p_path + " in", p_fileName);
+		throw configException("Error with cgi path " + p_path + " :", p_fileName);
 	}
 }
 
@@ -389,7 +389,7 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine )
 		if (arg.find_first_of(';') != string::npos)
 			arg.erase(arg.find_first_of(';'), arg.size());
 		else
-			throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with ';'");
+			throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
 		if (arg.find_first_not_of(' ') != string::npos)
 			arg.erase(0, arg.find_first_not_of(' '));
 		tmp.insert(it, std::pair<string, string>(key, arg));
@@ -406,7 +406,7 @@ ServerConfig::checkKeyInvalid( string const & p_key, map<string, vector<string> 
 		if (p_map.find("alias") != p_map.end())
 		{
 			errno = EINVAL;
-			throw configException("Error params \"alias:\" exist in params location on file ", p_fileName);
+			throw configException("Error params \"alias:\" exist in params location :", p_fileName);
 		}
 	}
 	else if (p_key == "alias")
@@ -414,7 +414,7 @@ ServerConfig::checkKeyInvalid( string const & p_key, map<string, vector<string> 
 		if (p_map.find("root") != p_map.end())
 		{
 			errno = EINVAL;
-			throw configException("Error params \"root:\" exist in params location on file ", p_fileName);
+			throw configException("Error params \"root:\" exist in params location :", p_fileName);
 		}
 	}
 }
@@ -451,7 +451,7 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 		if ((pos = root.find_last_of('{')) != string::npos)
 		{
 			if (checkEndLine(root.substr(pos, root.size()), "{"))
-				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with '{'");
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
 			root.erase(pos, root.size());
 		}
 		std::stringstream tmp(root);
@@ -474,7 +474,7 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 			if (key.at(0) == '#')
 				continue;
 			if (key == "}" && line != "}")
-				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with '}'");
+				throw std::invalid_argument("Error: line " + toStr(*nbLine));
 			if (key == "}")
 				break ;
 			this->checkKeyIsNotValid(key, nbLine);
@@ -482,11 +482,11 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 			if ((pos = arg.find_first_of(';')) != string::npos)
 			{
 				if (checkEndLine(arg.substr(pos, arg.size()), ";"))
-					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with ';'");
+					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
 				arg.erase(arg.find_first_of(';'), arg.size());
 			}
 			else
-				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with ';'");
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish");
 			if (arg.find_first_not_of(' ') != string::npos)
 				arg.erase(0, arg.find_first_not_of(' '));
 			vector<string> tmpV = this->splitArg(arg);
@@ -497,7 +497,7 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 	}
 	catch (std::invalid_argument const & e) {
 		errno = EINVAL;
-		throw configException("Error: " + string(e.what()) + " in file", p_fileName);
+		throw configException("Error: " + string(e.what()) + " :", p_fileName);
 	}
 }
 
@@ -516,7 +516,7 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 	if ((pos = root.find_last_of('{')) != string::npos)
 	{
 		if (checkEndLine(root.substr(pos, root.size()), "{"))
-				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with '{'");
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish");
 		root.erase(pos, root.size());
 	}
 	if (root.find_first_of(' ') != string::npos)
@@ -534,7 +534,7 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 		if (key.at(0) == '#')
 			continue;
 		if (key == "}" && line != "}")
-			throw std::invalid_argument("Error: line not finish with '}'");
+			throw std::invalid_argument("Error:");
 		if (key == "}")
 			break ;
 		this->checkKeyIsNotValid(key, nbLine);
@@ -542,11 +542,11 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 		if (( pos = arg.find_first_of(';')) != string::npos)
 		{
 			if (checkEndLine(arg.substr(pos, arg.size()), ";"))
-					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with ';'");
+					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
 			arg.erase(arg.find_first_of(';'), arg.size());
 		}
 		else
-			throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish with ';'");
+			throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
 		if (arg.find_first_not_of(' ') != string::npos)
 			arg.erase(0, arg.find_first_not_of(' '));
 		vector<string> tmpV = this->splitArg(arg);
@@ -591,12 +591,12 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				if (arg.find_first_of(';') != string::npos)
 				{
 					if (checkEndLine(arg.substr(arg.find_first_of(';'), arg.size()), ";"))
-						throw std::invalid_argument("Error: line " + toStr(nbLine) + " not finish with ';'");
+						throw std::invalid_argument("Error: line " + toStr(nbLine) + " not finish.");
 					arg.erase(arg.find_first_of(';'), arg.size());
 				}
 				else if ((key == "port" || key == "root" || key == "server_name" || key == "index") \
 					&& arg.find_first_of(';') == string::npos)
-					throw std::invalid_argument("Error: line " + toStr(nbLine) + " not finish with ';'");
+					throw std::invalid_argument("Error: line " + toStr(nbLine) + " not finish.");
 				if (arg.find_first_not_of(' ') != string::npos)
 					arg.erase(0, arg.find_first_not_of(' '));
 				if (key == "port")
@@ -697,7 +697,7 @@ void					ServerConfig::initConf( void )
 	if (http.find("type_file") == http.end())
 	{
 		errno = EINVAL;
-		throw configException("Error params type_file does not exist on conf file");
+		throw configException("Error params type_file does not exist : server.conf");
 	}
 	ifstream 			mimeFile(http.at("type_file").c_str());
 
