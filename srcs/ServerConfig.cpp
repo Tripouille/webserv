@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/24 16:09:40 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/24 17:23:28 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,14 +85,9 @@ bool					ServerConfig::checkArgAllowdMethods( vector<string> & p_vector )
 {
 	vector<string>::iterator it = p_vector.begin();
 	for (; it != p_vector.end(); it++)
-	{
-		std::cout << "DEBUG ALLOWED METHOD: " << *it << " " << p_vector.size() << std::endl;
-		if (*it == "HEAD" || *it == "GET" || *it == "POST" || *it == "PUT")
-			continue ;
-	}
-	if (it == p_vector.end())
-		return false;
-	return true;
+		if (*it != "HEAD" && *it != "GET" && *it != "POST" && *it != "PUT")
+			return true;
+	return false;
 }
 
 DIR *					ServerConfig::directoryPath( void )
@@ -230,14 +225,11 @@ ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map,
 											p_fileName);
 				}
 			}
-			if (map->first == "allowed_methods")
+			if (map->first == "allowed_methods" && checkArgAllowdMethods(map->second))
 			{
-				if (checkArgAllowdMethods(map->second))
-				{
-					errno = EINVAL;
-					throw configException("Error in params \"" + string(map->first) + "\" wrong argument", \
-											p_fileName);
-				}
+				errno = EINVAL;
+				throw configException("Error in params \"" + string(map->first) + "\" wrong argument", \
+										p_fileName);
 			}
 			if ((map->first != "allowed_methods" && map->first != "index" && map->first != "return") \
 				&& (map->second.size() > 1))
@@ -299,6 +291,12 @@ ServerConfig::checkRegex(map<Regex, map<string, vector<string> > > & p_map, stri
 					throw configException("Error in params \"" + string(map->first) + "\" multi argument is forbiden on", \
 											p_fileName);
 				}
+			}
+			if (map->first == "allowed_methods" && checkArgAllowdMethods(map->second))
+			{
+				errno = EINVAL;
+				throw configException("Error in params \"" + string(map->first) + "\" wrong argument", \
+										p_fileName);
 			}
 			if ((map->first != "allowed_methods" && map->first != "index" && map->first != "return") \
 				&& (map->second.size() > 1))
