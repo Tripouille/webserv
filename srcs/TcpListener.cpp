@@ -158,7 +158,7 @@ TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 
 		if (request._status.code / 100 == 2
 		&& (request._method == "PUT" || (request._method == "POST" && !request._fileFound))
-		&& _getCgiPath(request._fileWithoutRoot).empty())
+		&& _getCgiPath(request).empty())
 			_writeInFile(request);
 
 		if (request._status.code / 100 != 2)
@@ -294,7 +294,7 @@ TcpListener::_answerToClient(SOCKET socket, Answer & answer,
 {
 	if (request._requiredFile.size())
 	{
-		string cgi = _getCgiPath(request._fileWithoutRoot);
+		string cgi = _getCgiPath(request);
 		if (cgi.size())
 		{
 			_doCgiRequest(CgiRequest(_port, request, _clientInfos[socket], cgi), answer);
@@ -320,12 +320,12 @@ TcpListener::_answerToClient(SOCKET socket, Answer & answer,
 }
 
 string const
-TcpListener::_getCgiPath(string const & fileName) const
+TcpListener::_getCgiPath(HttpRequest const & request) const
 {
-	for (map<Regex, map<string, vector<string> > >::iterator regex = _host.regexLocation.begin(); \
-	regex != _host.regexLocation.end(); regex++)
-		if (regex->first.match(fileName) && regex->second.count("cgi"))
-			return (regex->second["cgi"][0]);
+	string analyzedFile = request._fileWithoutRoot;
+	map<string, vector<string> > location = request._getDeepestLocation("cgi", analyzedFile);
+	if (!location.empty())
+		return (location["cgi"][0]);
 	return (string());
 }
 
