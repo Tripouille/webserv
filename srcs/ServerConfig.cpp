@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/24 23:10:42 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/24 23:13:19 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -781,21 +781,6 @@ void					ServerConfig::readFile( ifstream & file )
 	}
 }
 
-void					ServerConfig::init( void )
-{
-	ifstream configFile(_pathConfFile.c_str());
-	if (configFile)
-	{
-		this->readFile(configFile);
-		this->initConf();
-		this->readFolderHost();
-		configFile.close();
-		this->checkIfParamsExist();
-	} else {
-		throw configException("Error with config file", _pathConfFile);
-	}
-}
-
 void					ServerConfig::checkIfParamsExist( void )
 {
 	if (http.find("uri_max_size") == http.end())
@@ -810,29 +795,18 @@ void					ServerConfig::checkIfParamsExist( void )
 	}
 }
 
-void					ServerConfig::checkConfigFile( void )
+void					ServerConfig::init( void )
 {
-	ifstream	configFile(_pathConfFile.c_str());
-	string		line;
-	string		params;
-
+	ifstream configFile(_pathConfFile.c_str());
 	if (configFile)
 	{
-		while(getline(configFile, line))
-		{
-			std::stringstream	str(line);
-			str >> params;
-			if (str.eof())
-				continue;
-			if (params.at(0) == '#')
-				continue;
-			if (line.find_last_of(';') == string::npos)
-			{
-				errno = EINVAL;
-				throw configException("Error in config file with params :", params);
-			}
-		}
+		this->readFile(configFile);
+		this->initConf();
+		this->readFolderHost();
 		configFile.close();
+		this->checkIfParamsExist();
+	} else {
+		throw configException("Error with config file", _pathConfFile);
 	}
 }
 

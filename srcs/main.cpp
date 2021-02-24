@@ -14,7 +14,6 @@ int main(int ac, char *av[])
 
 	try
 	{
-		config.checkConfigFile();
 		config.init();
 		MultiServ		serv(config, config.host);
 
