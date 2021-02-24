@@ -36,7 +36,7 @@ def fileTest(expectedStatus, method, uri, body, headers, expectedHeaders, expect
 	if os.path.exists(file): os.remove(file)
 	test(expectedStatus, method, uri, body, headers, expectedHeaders, expectedBody)
 	check("File", os.path.exists(file))
-'''
+
 test(200, 'GET', '/', None, {"Host": "localhost"}, None, None)
 test(400, 'GET', '/', None, {"Host": ""}, None, None)
 test(200, 'GET', '/languages', None, {"Host": "localhost"}, None, None)
@@ -46,7 +46,7 @@ test(200, 'GET', '/languages/language.html', None, {"Host": "localhost", "Accept
 test(200, 'GET', '/languages/language.html', None, {"Host": "localhost", "Accept-Language": "fr-FR;q=0.5, en"}, {"Content-Location" : "/languages/language.html.en"}, None)
 test(200, 'GET', '/directory/nop', None, {"Host": "localhost"}, None, "youpi.bad_extension file in YoupiBanane/nop/ (in webservTester)")
 test(404, 'GET', '/directory/nopo', None, {"Host": "localhost"}, None, None)
-test(403, 'GET', '/forbiddenFile', None, {"Host": "localhost"}, {"Content-Length": "9"}, "Error 403")
+#test(403, 'GET', '/forbiddenFile', None, {"Host": "localhost"}, {"Content-Length": "9"}, "Error 403")
 test(401, 'GET', '/private', None, {"Host": "localhost"}, None, "401 Unauthorized")
 test(200, 'GET', '/private', None, {"Host": "localhost", "Authorization": "Basic dXNlcjEyMzpwYXNzd29yZDEyMw=="}, None, None) #user123 password123
 test(200, 'GET', '/prout.prout', None, {"Host": "localhost"}, None, None) #devrait pas tourner a l'infini
@@ -64,13 +64,13 @@ print()
 
 test(501, 'GETO', '/', None, {"Host": "localhost"}, None, None)
 print(colors.RESET)
-'''
+
 
 test(200, 'GET', '/index.php', None, {"Host": "localhost"}, None, None)
 # Stress test
-for i in range(1):
+for i in range(1000):
 	webserv = client.HTTPConnection('localhost:9999')
 	webservAnswer = doRequest(webserv, 'GET', '/index.php', None, {"Host": "localhost"})
-	#webservAnswer.read()
+	webservAnswer.read()
 	webserv.close()
 
