@@ -10,7 +10,7 @@ HttpRequest::parseException::parseException(HttpRequest const & request,
 	const_cast<HttpRequest &>(request).setStatus(code, info);
 	while (true)
 	{
-		std::streamsize recvReturn = recv(request._client.s, NULL, CLIENT_MAX_BODY_SIZE, MSG_DONTWAIT);
+		std::streamsize recvReturn = recv(request._client.s, NULL, CLIENT_MAX_BODY_SIZE, 0);
 		if (recvReturn <= 0)
 			return ;
 	}
@@ -429,11 +429,31 @@ HttpRequest::_checkContentLength(vector<string> const & contentLengthField) cons
 map<string, vector<string> >
 HttpRequest::_getDeepestLocation(string const & key, string & analyzedFile) const
 {
-	std::map<string, map<string, vector<string> > >::iterator its = _host.location.begin();
-	std::map<string, map<string, vector<string> > >::iterator ite = _host.location.end();
-	std::map<string, map<string, vector<string> > >::iterator actual;
+	string fileSave = analyzedFile;
 	size_t slashPos;
 
+	map<Regex, map<string, vector<string> > >::iterator rits = _host.regexLocation.begin();
+	map<Regex, map<string, vector<string> > >::iterator rite = _host.regexLocation.end();
+	map<Regex, map<string, vector<string> > >::iterator ractual;
+	while (analyzedFile.size())
+	{
+		for (ractual = rits; ractual != rite; ++ractual)
+			if (ractual->first.match(analyzedFile))
+				if (ractual->second.find(key) != ractual->second.end())
+					return (ractual->second);
+		slashPos = analyzedFile.find_last_of('/');
+		if (slashPos == 0 && analyzedFile != "/")
+			analyzedFile.erase(slashPos + 1);
+		else if (slashPos != string::npos)
+			analyzedFile.erase(slashPos);
+		else
+			analyzedFile.clear();
+	}
+
+	analyzedFile = fileSave;
+	map<string, map<string, vector<string> > >::iterator its = _host.location.begin();
+	map<string, map<string, vector<string> > >::iterator ite = _host.location.end();
+	map<string, map<string, vector<string> > >::iterator actual;
 	while (analyzedFile.size())
 	{
 		for (actual = its; actual != ite; ++actual)
@@ -448,6 +468,7 @@ HttpRequest::_getDeepestLocation(string const & key, string & analyzedFile) cons
 		else
 			analyzedFile.clear();
 	}
+
 	return (map<string, vector<string> >());
 }
 
