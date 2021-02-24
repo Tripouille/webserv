@@ -4,5 +4,4 @@ objs
 webserv.pid
 www/put_saves/*
 www/YoupiBanane/*
-webservTester
 .DS_Store
