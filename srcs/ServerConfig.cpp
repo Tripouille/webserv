@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/24 22:48:55 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/24 23:10:42 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,23 @@ ServerConfig::ServerConfig( std::string const & path ) :
 	_dictionary.push_back("auth_basic");
 	_dictionary.push_back("auth_basic_user_file");
 	_dictionary.push_back("autoindex");
+	_dictionary.push_back("user");
+	_dictionary.push_back("worker_processes");
+	_dictionary.push_back("pid");
+	_dictionary.push_back("worker_connections");
+	_dictionary.push_back("uri_max_size");
+	_dictionary.push_back("max_empty_line_before_request");
+	_dictionary.push_back("sendfile");
+	_dictionary.push_back("tcp_nopush");
+	_dictionary.push_back("tcp_nodelay");
+	_dictionary.push_back("keepalive_timeout");
+	_dictionary.push_back("types_hash_max_size");
+	_dictionary.push_back("type_file");
+	_dictionary.push_back("default_type");
+	_dictionary.push_back("access_log");
+	_dictionary.push_back("error_log");
+	_dictionary.push_back("gzip");
+	_dictionary.push_back("host");
 }
 
 
@@ -730,12 +747,14 @@ void					ServerConfig::readFile( ifstream & file )
 	string				key;
 	string				arg;
 	size_t				nb(0);
+	int					nbLine(0);
 	std::map<string, string>::iterator		it = http.begin();
 
 	while (getline(file, line))
 	{
 		std::stringstream	str(line);
 
+		nbLine++;
 		str >> key;
 		if (str.eof())
 			continue;
@@ -743,13 +762,22 @@ void					ServerConfig::readFile( ifstream & file )
 			continue;
 		if ((nb = key.find_first_of(':') != string::npos))
 			key.erase(key.find_first_of(':'), nb + 1);
+		this->checkKeyIsNotValid(key, &nbLine);
 		getline(str, arg);
-		if (arg.find_first_of(';') != string::npos)
-			arg.erase(arg.find_first_of(';'), arg.size());
-		if (arg.find_first_not_of(' ') != string::npos)
-			arg.erase(0, arg.find_first_not_of(' '));
+		if ((nb = arg.find_first_of(';')) != string::npos)
+		{
+			if (checkEndLine(arg.substr(nb, arg.size()), ";"))
+				throw std::invalid_argument("Error: line " + toStr(nbLine) + " not finish.");
+			arg.erase(nb, arg.size());
+		}
+		if ((nb = arg.find_first_of(';')) != string::npos)
+			arg.erase(nb, arg.size());
+		if ((nb = arg.find_first_not_of(' ')) != string::npos)
+			arg.erase(0, nb);
 		this->checkKeyExist(key, http);
 		http.insert(it, std::pair<string, string>(key, arg));
+		arg = "";
+		key = "";
 	}
 }
 
