@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/24 23:13:19 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/25 11:42:39 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -387,6 +387,7 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine )
 	string		line;
 	string		key;
 	string		arg;
+	size_t		pos;
 
 	map<string, string>		tmp;
 	std::map<string, string>::iterator		it = tmp.begin();
@@ -403,8 +404,12 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine )
 		if (key == "}")
 			break ;
 		getline(str, arg);
-		if (arg.find_first_of(';') != string::npos)
+		if ((pos = arg.find_first_of(';')) != string::npos)
+		{
+			if (checkEndLine(arg.substr(pos, arg.size()), ";"))
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
 			arg.erase(arg.find_first_of(';'), arg.size());
+		}
 		else
 			throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
 		if (arg.find_first_not_of(' ') != string::npos)
