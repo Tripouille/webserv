@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/25 14:28:00 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/25 17:09:21 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,7 +119,8 @@ class ServerConfig
 		void					checkIfParamsExist( void );
 		void					checkIfKeyIsNotRootOrAlias( string const & p_key, map<string, vector<string> > & p_map, \
 													string const & p_fileName );
-		map<string, string>		isErrorPage( ifstream & p_file, int *nbLine );
+		void					isErrorPage( ifstream & p_file, int *nbLine, string const & p_fileName, \
+											string & p_arg, map<string, string> & p_mapError );
 		void					isLocation(	map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \
 												string & p_arg, string const & p_fileName, int *nbLine );
 		void					isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstream & p_file, \
@@ -129,7 +130,10 @@ class ServerConfig
 		bool					checkArgAllowdMethods( vector<string> & p_vector );
 		void					fillLocation( string const & p_fileName, ifstream & p_file,\
 										map<string, vector<string> > & p_location,  int * nbLine, \
-										bool p_bracketIsOpen );
+										bool p_bracketIsOpen, string & p_line );
+		string					checkOpeningBracket( string & p_root, int * nbLine, \
+									bool & bracketIsOpen );
+		void					checkErrorCode( string & p_key, int *nbLine, string const & p_fileName );
 
 };
 
