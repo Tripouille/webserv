@@ -112,9 +112,14 @@ bool				checkEndLine( std::string str, std::string comp)
 		return false;
 	else
 	{
+		tmp.erase();
 		line >> tmp;
+		std::cout << "DEBUG ENDLINE: " << tmp.empty() << " "<< tmp << " " << line.eof() << std::endl;
 		if (tmp[0] == '#')
 			return false;
 	}
+	std::cout << "DEBUG ENDLINE: " << tmp.empty() << " "<< tmp << " " << line.eof() << std::endl;
+	if (tmp.empty() && line.eof())
+		return false;
 	return true;
 }
