@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/25 13:00:55 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/25 14:28:00 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,7 +124,7 @@ class ServerConfig
 												string & p_arg, string const & p_fileName, int *nbLine );
 		void					isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstream & p_file, \
 												string & p_arg, string const & p_fileName, int *nbLine );
-		vector<string>			splitArg( string & p_arg );
+		vector<string>			splitArg( std::stringstream & p_sstr, bool & p_bracketIsClose );
 		void					checkKeyIsNotValid( string const & p_key, int *nbLine );
 		bool					checkArgAllowdMethods( vector<string> & p_vector );
 		void					fillLocation( string const & p_fileName, ifstream & p_file,\
