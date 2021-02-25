@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/24 23:12:58 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/25 12:01:33 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,7 +115,7 @@ class ServerConfig
 		void					checkKeyExist( string const & p_key, map<string, string> const & p_tmp,
 												 string const & p_filename = "server.conf" );
 		void					checkIfParamsExist( void );
-		void					checkKeyInvalid( string const & p_key, map<string, vector<string> > & p_map, \
+		void					checkIfKeyIsNotRootOrAlias( string const & p_key, map<string, vector<string> > & p_map, \
 													string const & p_fileName );
 		map<string, string>		isErrorPage( ifstream & p_file, int *nbLine );
 		void					isLocation(	map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \

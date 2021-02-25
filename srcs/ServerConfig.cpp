@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/25 11:42:39 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/25 12:04:30 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -420,7 +420,7 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine )
 }
 
 void
-ServerConfig::checkKeyInvalid( string const & p_key, map<string, vector<string> > & p_map, \
+ServerConfig::checkIfKeyIsNotRootOrAlias( string const & p_key, map<string, vector<string> > & p_map, \
 									string const & p_fileName )
 {
 	if (p_key == "root")
@@ -488,7 +488,9 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 			*nbLine += 1;
 			std::stringstream		str(line);
 			str >> key;
-			this->checkKeyInvalid(key, tmp, p_fileName);
+			this->checkIfKeyIsNotRootOrAlias(key, tmp, p_fileName);
+			if (key.empty())
+				continue ;
 			if (str.eof() && key != "}" && key != "{")
 				this->checkKeyIsNotValid(key, nbLine);
 			if (str.eof() && key != "}")
@@ -548,7 +550,7 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 		*nbLine += 1;
 		std::stringstream		str(line);
 		str >> key;
-		this->checkKeyInvalid(key, tmp, p_fileName);
+		this->checkIfKeyIsNotRootOrAlias(key, tmp, p_fileName);
 		if (str.eof() && key != "}" && key != "{")
 				this->checkKeyIsNotValid(key, nbLine);
 		if (str.eof() && key != "}")
