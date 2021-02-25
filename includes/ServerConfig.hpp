@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/25 12:01:33 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/25 13:00:55 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,8 @@
 # include <stdint.h>
 # include "Regex.hpp"
 # include "utils.hpp"
+
+# define WHITESPACE " \n\t\r\v\f"
 
 using std::string;
 using std::list;
@@ -125,6 +127,9 @@ class ServerConfig
 		vector<string>			splitArg( string & p_arg );
 		void					checkKeyIsNotValid( string const & p_key, int *nbLine );
 		bool					checkArgAllowdMethods( vector<string> & p_vector );
+		void					fillLocation( string const & p_fileName, ifstream & p_file,\
+										map<string, vector<string> > & p_location,  int * nbLine, \
+										bool p_bracketIsOpen );
 
 };
 
