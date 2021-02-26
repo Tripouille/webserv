@@ -32,6 +32,7 @@ TcpListener::TcpListener(in_addr_t const & ipAddress, uint16_t port,
 
 TcpListener::~TcpListener()
 {
+	pthread_mutex_destroy(&_clientMutex);
 	close(_socket);
 }
 
@@ -73,6 +74,7 @@ TcpListener::init(void)
 
 	FD_ZERO(&_activeFdSet);
 	FD_SET(_socket, &_activeFdSet);
+	pthread_mutex_init(&_clientMutex, NULL);
 }
 
 void
@@ -80,6 +82,12 @@ TcpListener::run(void)
 {
 	fd_set readfds, writefds;
 	int socketCount;
+	int workerNb;
+
+	if (_config.http.find("worker_processes") != _config.http.end())
+		workerNb = atoi(_config.http["worker_processes"].c_str());
+	else
+		workerNb = DEFAULT_WORKER_NB;
 
 	while (true)
 	{
@@ -91,18 +99,13 @@ TcpListener::run(void)
 			close(_socket);
 			throw tcpException("Select failed");
 		}
-	
-		std::thread threads[WORKERS];
-		for (int i = 0; i < WORKERS; ++i)
-			threads[i] = std::thread(&TcpListener::_handleSocket, this, i, readfds, writefds);
-		for (int i = 0; i < WORKERS; ++i)
-			threads[i].join();
+
+		launchThreads(this, readfds, writefds, std::min(workerNb, socketCount));
 	}
 }
 
-/* Private */
-void TcpListener::_handleSocket(size_t id, fd_set const & readfds, fd_set const & writefds) {
-	for (SOCKET sock = id; sock < FD_SETSIZE; sock += WORKERS) {
+void TcpListener::handleSocket(size_t id, fd_set const & readfds, fd_set const & writefds, int workerNb) {
+	for (SOCKET sock = id; sock < FD_SETSIZE; sock += workerNb) {
 		if (FD_ISSET(sock, &readfds)) {
 			if (sock == _socket)
 				_acceptNewClient();
@@ -112,16 +115,16 @@ void TcpListener::_handleSocket(size_t id, fd_set const & readfds, fd_set const 
 	}
 }
 
+/* Private */
 void
 TcpListener::_acceptNewClient(void) throw(tcpException)
 {
-	cout << endl << "New connection to the server, ";
+	pthread_mutex_lock(&_clientMutex);
 	struct sockaddr_in address; socklen_t address_len = sizeof(address);
 	SOCKET s = accept(_socket, reinterpret_cast<sockaddr*>(&address), &address_len);
 	if (s < 0)
 		throw tcpException("Accept failed");
 	_clientInfos[s] = Client(s, inet_ntoa(address.sin_addr));
-	std::cout << "client address: " << _clientInfos[s].addr << endl;
 	FD_SET(s, &_activeFdSet);
 	struct timeval tv = {RCV_TIMEOUT, 0};
 	if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
@@ -129,22 +132,24 @@ TcpListener::_acceptNewClient(void) throw(tcpException)
 		close(s);
 		throw tcpException("Setting socket option for client failed");
 	}
-	cout << ++_clientNb << " clients connected" << endl;
+	cout << endl << "New client : " << _clientInfos[s].addr << ", " << ++_clientNb << " connected" << endl;
+	pthread_mutex_unlock(&_clientMutex);
 }
 
 void
 TcpListener::_disconnectClient(SOCKET socket)
 {
 	cout << "Killing socket " << socket << endl;
+	pthread_mutex_lock(&_clientMutex);
 	FD_CLR(socket, &_activeFdSet);
 	close(socket);
 	_clientNb--;
+	pthread_mutex_unlock(&_clientMutex);
 }
 
 void
 TcpListener::_handleRequest(SOCKET socket) throw(tcpException)
 {
-	cout << endl << "Data arriving from socket " << socket << endl;
 	HttpRequest request(_clientInfos[socket], _host, _config);
 	Answer answer(socket, _host, _config);
 

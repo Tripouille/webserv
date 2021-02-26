@@ -14,7 +14,7 @@
 # include <list>
 # include <sstream>
 # include <sys/stat.h>
-# include <thread>
+# include <algorithm>
 
 # include "utils.hpp"
 # include "HttpRequest.hpp"
@@ -23,6 +23,7 @@
 # include "Client.hpp"
 # include "Answer.hpp"
 # include "ServerConfig.hpp"
+# include "thread.hpp"
 
 # define BACKLOG 5000
 # define RCV_TIMEOUT 1
@@ -38,8 +39,6 @@ using std::queue;
 using std::list;
 using std::map;
 using std::streamsize;
-
-#define WORKERS 2
 
 class TcpListener
 {
@@ -60,6 +59,7 @@ class TcpListener
 
 		void init(void);
 		void run(void);
+		void handleSocket(size_t id, fd_set const & readfds, fd_set const & writefds, int workerNb);
 
 	private:
 		in_addr_t				_ipAddress;
@@ -71,13 +71,12 @@ class TcpListener
 		map<SOCKET, Client> 	_clientInfos;
 		ServerConfig &			_config;
 		Host &					_host;
-
+		pthread_mutex_t			_clientMutex;
 
 		TcpListener(void);
 		TcpListener(TcpListener const & other);
 		TcpListener & operator=(TcpListener const & other);
 
-		void _handleSocket(size_t id, fd_set const & readfds, fd_set const & writefds);
 		void _acceptNewClient(void) throw(tcpException);
 		void _disconnectClient(SOCKET client);
 		void _handleRequest(SOCKET client) throw(tcpException);
@@ -92,6 +91,8 @@ class TcpListener
 		void _setErrorFields(HttpRequest const & request, Answer & answer) const;
 		bool _setErrorPage(HttpRequest & request) const;
 		void _handleNoErrorPage(Answer & answer, HttpRequest const & request);
+
+		enum { DEFAULT_WORKER_NB = 8 };
 };
 
 #endif
