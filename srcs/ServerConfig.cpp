@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/26 15:02:24 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/26 15:36:53 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -403,7 +403,8 @@ ServerConfig::checkIfKeyIsNotRootOrAlias( string const & p_key, map<string, vect
 	}
 }
 
-vector<string>			ServerConfig::splitArg( std::stringstream & p_sstr, bool & p_bracketIsClose )
+vector<string>			ServerConfig::splitArg( std::stringstream & p_sstr, bool & p_bracketIsClose, \
+							int * nbLine, string const & p_fileName )
 {
 	vector<string>		tmp;
 	string				line;
@@ -414,6 +415,9 @@ vector<string>			ServerConfig::splitArg( std::stringstream & p_sstr, bool & p_br
 		string	arg;
 
 		p_sstr >> line;
+		if ((pos = line.find_first_of("{")) != string::npos)
+			throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
+					" Invalid argument: Bracket was open: " + p_fileName);
 		if ((pos = line.find_first_of(';')) != string::npos)
 		{
 			arg = line.substr(0, pos);
@@ -482,7 +486,7 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 					+ " Invalid argument: Missing value " + p_fileName);
 			this->checkIfKeyIsNotRootOrAlias(key, p_location, p_fileName);
 			this->checkKeyIsNotValid(key, nbLine);
-			vector<string> tmpV = this->splitArg(str, bracketIsClose);
+			vector<string> tmpV = this->splitArg(str, bracketIsClose, nbLine, p_fileName);
 			p_location[key] = tmpV;
 		}
 	}
@@ -504,7 +508,6 @@ ServerConfig::checkOpeningBracket( string & p_root, bool & bracketIsOpen )
 	size_t		pos(0);
 	string 		key;
 
-	std::cout << "DEBUG OPENING BRACKET: " << p_root << std::endl;
 	if ((pos = p_root.find_first_not_of(WHITESPACE)) != string::npos)
 		p_root.erase(0, pos);
 	if ((pos = p_root.find_last_of('{')) != string::npos)
@@ -529,7 +532,6 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 	bool					bracketIsClose(false);
 	bool					bracketIsOpen(false);
 
-	std::cout << "DEBUG IS ERROR PAGE: " << p_arg << std::endl;
 	this->checkOpeningBracket(p_arg, bracketIsOpen);
 	while(!bracketIsClose)
 	{
@@ -573,7 +575,7 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 				throw std::invalid_argument("Error: line " + toStr(*nbLine) \
 					+ " Invalid argument: Missing value " + p_fileName);
 			this->checkErrorCode(key, nbLine, p_fileName);
-			vector<string> tmpV = this->splitArg(str, bracketIsClose);
+			vector<string> tmpV = this->splitArg(str, bracketIsClose, nbLine, p_fileName);
 			if (tmpV.size() == 1)
 				p_mapError[key] = tmpV[0];
 			else
