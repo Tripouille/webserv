@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/25 11:42:39 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/26 16:24:32 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,7 @@ ServerConfig::ServerConfig( std::string const & path ) :
 ** -------------------------------- DESTRUCTOR --------------------------------
 */
 
-ServerConfig::~ServerConfig()
+ServerConfig::~ServerConfig( )
 {
 }
 
@@ -88,6 +88,22 @@ ServerConfig::~ServerConfig()
 ** --------------------------------- METHODS ----------------------------------
 */
 
+bool					ServerConfig::checkArgumentSolo( string & p_arg )
+{
+	std::stringstream	arg(p_arg);
+	string				word;
+	short				nb(0);
+
+	while (!arg.eof())
+	{
+		arg >> word;
+		nb++;
+	}
+	if (nb > 1)
+			return false;
+	return true;
+}
+
 void					ServerConfig::checkKeyIsNotValid( string const & p_key, int *nbLine )
 {
 	for (list<string>::iterator it = _dictionary.begin(); \
@@ -95,7 +111,7 @@ void					ServerConfig::checkKeyIsNotValid( string const & p_key, int *nbLine )
 		if (*it == p_key)
 			return ;
 	throw std::invalid_argument("Error: line " + toStr(*nbLine) \
-		+ " " + p_key + " is invalid. ");
+		+ " '" + p_key + "' is invalid. ");
 }
 
 bool					ServerConfig::checkArgAllowdMethods( vector<string> & p_vector )
@@ -156,6 +172,9 @@ string					ServerConfig::checkServerName( map<string, string> & p_map,
 		throw configException("Error params \"server_name:\" not found on ",
 								p_fileName);
 	}
+	else if (!checkArgumentSolo(p_map.at("server_name")))
+			throw std::invalid_argument("Error: Invalid argument: One argument is allowed: " \
+						+ p_fileName);
 	return string(p_map.at("server_name"));
 }
 
@@ -360,6 +379,9 @@ map<string, string> &
 ServerConfig::checkErrorPage( map<string, string> & p_map, string const & p_fileName, \
 								string const & p_root )
 {
+	if (!checkArgumentSolo(const_cast<string&>(p_root)))
+			throw std::invalid_argument("Error: Invalid argument: One argument is allowed: " \
+						+ p_fileName);
 	for (map<string, string>::iterator it = p_map.begin(); \
 			it != p_map.end(); it++)
 	{
@@ -381,46 +403,8 @@ void		ServerConfig::checkCgi( string const & p_path, string const & p_fileName )
 	}
 }
 
-map<string, string>
-ServerConfig::isErrorPage( ifstream & p_file, int *nbLine )
-{
-	string		line;
-	string		key;
-	string		arg;
-	size_t		pos;
-
-	map<string, string>		tmp;
-	std::map<string, string>::iterator		it = tmp.begin();
-
-	while(getline(p_file, line))
-	{
-		*nbLine += 1;
-		std::stringstream		str(line);
-		str >> key;
-		if (str.eof() && key != "}")
-			continue;
-		if (key.at(0) == '#')
-			continue;
-		if (key == "}")
-			break ;
-		getline(str, arg);
-		if ((pos = arg.find_first_of(';')) != string::npos)
-		{
-			if (checkEndLine(arg.substr(pos, arg.size()), ";"))
-				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
-			arg.erase(arg.find_first_of(';'), arg.size());
-		}
-		else
-			throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
-		if (arg.find_first_not_of(' ') != string::npos)
-			arg.erase(0, arg.find_first_not_of(' '));
-		tmp.insert(it, std::pair<string, string>(key, arg));
-	}
-	return tmp;
-}
-
 void
-ServerConfig::checkKeyInvalid( string const & p_key, map<string, vector<string> > & p_map, \
+ServerConfig::checkIfKeyIsNotRootOrAlias( string const & p_key, map<string, vector<string> > & p_map, \
 									string const & p_fileName )
 {
 	if (p_key == "root")
@@ -441,85 +425,214 @@ ServerConfig::checkKeyInvalid( string const & p_key, map<string, vector<string> 
 	}
 }
 
-vector<string>			ServerConfig::splitArg( string & p_arg )
+vector<string>			ServerConfig::splitArg( std::stringstream & p_sstr, bool & p_bracketIsClose, \
+							int * nbLine, string const & p_fileName )
 {
 	vector<string>		tmp;
-	std::stringstream	str(p_arg);
-	string				arg;
+	string				line;
+	size_t				pos;
 
-	while(!str.eof())
+	while(!p_sstr.eof())
 	{
-		str >> arg;
+		string	arg;
+
+		p_sstr >> line;
+		if ((pos = line.find_first_of("{")) != string::npos)
+			throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
+					" Invalid argument: Bracket was open: " + p_fileName);
+		if ((pos = line.find_first_of(';')) != string::npos)
+		{
+			arg = line.substr(0, pos);
+			p_sstr.seekg((line.size() - arg.size() - 1) * -1, std::ios_base::cur);
+			if (line[pos + 1] == '}' && checkEndLine(line.substr(pos + 1), "}"))
+			{
+				p_bracketIsClose = true;
+			}
+			tmp.push_back(arg);
+			break ;
+		}
+		else
+			arg = line;
 		tmp.push_back(arg);
 	}
 	return tmp;
+}
+
+void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_file,\
+							map<string, vector<string> > & p_location,  int * nbLine, bool p_bracketIsOpen,
+							string & p_line )
+{
+	string		arg;
+	bool		bracketIsClose(false);
+
+	while(!bracketIsClose)
+	{
+		if (p_line.empty())
+		{
+			*nbLine += 1;
+			getline(p_file, p_line);
+		}
+		std::stringstream		str(p_line);
+		p_line.erase();
+
+		while (!str.eof() && !bracketIsClose)
+		{
+			string		key;
+
+			str >> key;
+			if (key.empty() || key.at(0) == '#')
+				break ;
+			if (key != "{" && !p_bracketIsOpen)
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
+					" Invalid argument: Bracket was not open: " + p_fileName);
+			if (key == "{")
+			{
+				if (p_bracketIsOpen)
+					throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
+						" Invalid argument: Bracket is already open: " + p_fileName);
+				p_bracketIsOpen = true;
+				key.erase();
+				str >> key;
+				if (key.empty())
+					break ;
+			}
+			if (key == "}")
+			{
+				string rest;
+				getline(str, rest);
+				if (!checkEndLine(rest, "}"))
+					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " Invalid argument: " + p_fileName);
+				bracketIsClose = true;
+				break;
+			}
+			if (str.eof())
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) \
+					+ " Invalid argument: Missing value " + p_fileName);
+			this->checkIfKeyIsNotRootOrAlias(key, p_location, p_fileName);
+			this->checkKeyIsNotValid(key, nbLine);
+			vector<string> tmpV = this->splitArg(str, bracketIsClose, nbLine, p_fileName);
+			p_location[key] = tmpV;
+		}
+	}
+}
+
+void
+ServerConfig::checkErrorCode( string & p_key , int *nbLine, string const & p_fileName )
+{
+	uint16_t nb = tryParseInt(p_key);
+	if (nb < 100 && nb > 999)
+		throw std::invalid_argument("Error: line " + toStr(*nbLine) \
+					+ " Invalid argument: This is not an valid Error code " \
+					+ p_fileName);
+}
+
+string
+ServerConfig::checkOpeningBracket( string & p_root, bool & bracketIsOpen )
+{
+	size_t		pos(0);
+	string 		key;
+
+	if ((pos = p_root.find_first_not_of(WHITESPACE)) != string::npos)
+		p_root.erase(0, pos);
+	if ((pos = p_root.find_last_of('{')) != string::npos)
+	{
+		bracketIsOpen = true;
+		key =  p_root.substr(0, pos);
+		p_root.erase(0, pos + 1);
+	}
+	else
+	{
+		key = p_root;
+		p_root.erase();
+	}
+	return key;
+}
+
+void
+ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_fileName, \
+							string & p_arg, map<string, string> & p_mapError )
+{
+	string					arg;
+	bool					bracketIsClose(false);
+	bool					bracketIsOpen(false);
+
+	this->checkOpeningBracket(p_arg, bracketIsOpen);
+	while(!bracketIsClose)
+	{
+		if (p_arg.empty())
+		{
+			getline(p_file, p_arg);
+			*nbLine += 1;
+		}
+		std::stringstream		str(p_arg);
+		p_arg.erase();
+
+		while (!str.eof() && !bracketIsClose)
+		{
+			string		key;
+
+			str >> key;
+			if (key.empty() || key.at(0) == '#')
+				break ;
+			if (key != "{" && !bracketIsOpen)
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
+					" Invalid argument: Bracket was not open: " + p_fileName);
+			else if (key == "{")
+			{
+				if (bracketIsOpen)
+					throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
+						" Invalid argument: Bracket is already open: " + p_fileName);
+				bracketIsOpen = true;
+				key.erase();
+				str >> key;
+				if (key.empty())
+					break ;
+			}
+			else if (key == "}")
+			{
+				string rest;
+				getline(str, rest);
+				if (!checkEndLine(rest, "}"))
+					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " Invalid argument: " + p_fileName);
+				bracketIsClose = true;
+				break;
+			}
+			if (str.eof())
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) \
+					+ " Invalid argument: Missing value " + p_fileName);
+			this->checkErrorCode(key, nbLine, p_fileName);
+			vector<string> tmpV = this->splitArg(str, bracketIsClose, nbLine, p_fileName);
+			if (tmpV.size() == 1)
+				p_mapError[key] = tmpV[0];
+			else
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) \
+					+ " Invalid argument: multi argument: " + p_fileName);
+		}
+	}
 }
 
 void
 ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstream & p_file, \
 								string & p_arg, string const & p_fileName, int *nbLine )
 {
-	size_t		pos(0);
-	string		key;
-	string		line;
-	string		arg;
-	string		root(p_arg);
-	map<string, vector<string> >					tmp;
-	std::map<string, vector<string> >::iterator		it = tmp.begin();
+	string							line(p_arg);
+	map<string, vector<string> >	location;
+	bool							bracketIsOpen(false);
+	string							key;
+	size_t							pos(0);
 
-	if (root[0] == '~')
-	{
-		root.erase(0,1);
-		if ((pos = root.find_last_of('{')) != string::npos)
-		{
-			if (checkEndLine(root.substr(pos, root.size()), "{"))
-				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
-			root.erase(pos, root.size());
-		}
-		std::stringstream tmp(root);
-		tmp >> line;
-	}
-	if (line.find_first_of(' ') != string::npos)
-		line.erase(line.find_first_of(' '), line.size());
+	line.erase(0,1);
+	key = this->checkOpeningBracket(line, bracketIsOpen);
+	if ((pos = key.find_first_of(WHITESPACE)) != string::npos)
+			key.erase(0, pos);
 	try {
-		Regex regex(line.c_str());
-		while(getline(p_file, line))
-		{
-			*nbLine += 1;
-			std::stringstream		str(line);
-			str >> key;
-			this->checkKeyInvalid(key, tmp, p_fileName);
-			if (str.eof() && key != "}" && key != "{")
-				this->checkKeyIsNotValid(key, nbLine);
-			if (str.eof() && key != "}")
-				continue;
-			if (key.at(0) == '#')
-				continue;
-			if (key == "}" && line != "}")
-				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " Invalid argument: " + p_fileName);
-			if (key == "}")
-				break ;
-			this->checkKeyIsNotValid(key, nbLine);
-			getline(str, arg);
-			if ((pos = arg.find_first_of(';')) != string::npos)
-			{
-				if (checkEndLine(arg.substr(pos, arg.size()), ";"))
-					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
-				arg.erase(arg.find_first_of(';'), arg.size());
-			}
-			else
-				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish");
-			if (arg.find_first_not_of(' ') != string::npos)
-				arg.erase(0, arg.find_first_not_of(' '));
-			vector<string> tmpV = this->splitArg(arg);
-			tmp.insert(it, std::pair<string, vector<string> >(key, tmpV));
-		}
-		p_map[regex] = tmp;
-
+		Regex	regex(key);
+		this->fillLocation(p_fileName, p_file, location, nbLine, bracketIsOpen, line);
+		p_map[regex] = location;
 	}
 	catch (std::invalid_argument const & e) {
 		errno = EINVAL;
-		throw configException("Error: " + string(e.what()) + " :", p_fileName);
+		throw configException("Error: line "+ toStr(*nbLine) + " " + string(e.what()) + " :", p_fileName);
 	}
 }
 
@@ -527,104 +640,72 @@ void
 ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \
 								string & p_arg, string const & p_fileName, int *nbLine )
 {
-	size_t		pos(0);
-	string		key;
-	string		line;
-	string		root(p_arg);
-	string		arg;
-	map<string, vector<string> >					tmp;
-	std::map<string, vector<string> >::iterator		it = tmp.begin();
+	string							line(p_arg);
+	map<string, vector<string> >	location;
+	bool							bracketIsOpen(false);
+	string							key;
 
-	if ((pos = root.find_last_of('{')) != string::npos)
+	key = this->checkOpeningBracket(line, bracketIsOpen);
+	this->fillLocation(p_fileName, p_file, location, nbLine, bracketIsOpen, line);
+	p_map[key] = location;
+}
+
+string					ServerConfig::extractBraquetErrorPage( string & p_arg, int *nbLine )
+{
+	size_t		pos(0);
+	if ((pos = p_arg.find_first_not_of('#')) != string::npos)
 	{
-		if (checkEndLine(root.substr(pos, root.size()), "{"))
-				throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish");
-		root.erase(pos, root.size());
+		if (p_arg[pos - 1] == '#')
+			return string("{");
+		throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
 	}
-	if (root.find_first_of(' ') != string::npos)
-		root.erase(root.find_first_of(' '), root.size());
-	while(getline(p_file, line))
-	{
-		*nbLine += 1;
-		std::stringstream		str(line);
-		str >> key;
-		this->checkKeyInvalid(key, tmp, p_fileName);
-		if (str.eof() && key != "}" && key != "{")
-				this->checkKeyIsNotValid(key, nbLine);
-		if (str.eof() && key != "}")
-			continue;
-		if (key.at(0) == '#')
-			continue;
-		if (key == "}" && line != "}")
-			throw std::invalid_argument("Error: line " + toStr(*nbLine) + " Invalid argument: " + p_fileName);
-		if (key == "}")
-			break ;
-		this->checkKeyIsNotValid(key, nbLine);
-		getline(str, arg);
-		if (( pos = arg.find_first_of(';')) != string::npos)
-		{
-			if (checkEndLine(arg.substr(pos, arg.size()), ";"))
-					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
-			arg.erase(arg.find_first_of(';'), arg.size());
-		}
-		else
-			throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
-		if (arg.find_first_not_of(' ') != string::npos)
-			arg.erase(0, arg.find_first_not_of(' '));
-		vector<string> tmpV = this->splitArg(arg);
-		tmp.insert(it, std::pair<string, vector<string> >(key, tmpV));
-	}
-	p_map[root] = tmp;
+	return string("{");
 }
 
 void					ServerConfig::initHost( vector<string> & p_filname )
 {
 	string				line;
-	string				key;
-	string				arg;
 
 	for (size_t i = 0; i < p_filname.size(); i++)
 	{
 		string fileName(http.at("host"));
 		fileName += p_filname[i];
 		ifstream  hostFile(fileName.c_str());
+
 		if (hostFile)
 		{
 			map<string, string>							tmp;
-			map<string, string>							errorTmp;
+			map<string, string>							mapError;
 			std::map<string, string>::iterator			it = tmp.begin();
 			map<string, map<string, vector<string> > >	conf;
 			map<Regex, map<string, vector<string> > >	regex;
 			uint16_t									port(0);
 			int											nbLine(0);
+			size_t										pos(0);
 
 			while (getline(hostFile, line))
 			{
-				nbLine++;
+				string				key;
+				string				arg;
 				std::stringstream	str(line);
 
+				nbLine++;
 				str >> key;
-				if (str.eof())
+				if (key.empty())
 					continue;
 				if (key.at(0) == '#')
 					continue;
-				this->checkKeyIsNotValid(key, &nbLine);
 				getline(str, arg);
-				if (arg.find_first_of(';') != string::npos)
+				if ((pos = arg.find_first_not_of(WHITESPACE)) != string::npos)
+					arg.erase(0, pos);
+				if (!std::strncmp(key.c_str(), "error_page", 10))
 				{
-					if (checkEndLine(arg.substr(arg.find_first_of(';'), arg.size()), ";"))
-						throw std::invalid_argument("Error: line " + toStr(nbLine) + " not finish.");
-					arg.erase(arg.find_first_of(';'), arg.size());
+					if ((pos = key.find_first_of('{')) != string::npos)
+					{
+						arg = this->extractBraquetErrorPage(arg, &nbLine);
+					}
+					this->isErrorPage(hostFile, &nbLine, p_filname[i], arg, mapError);
 				}
-				else if ((key == "port" || key == "root" || key == "server_name" || key == "index") \
-					&& arg.find_first_of(';') == string::npos)
-					throw std::invalid_argument("Error: line " + toStr(nbLine) + " not finish.");
-				if (arg.find_first_not_of(' ') != string::npos)
-					arg.erase(0, arg.find_first_not_of(' '));
-				if (key == "port")
-					port = tryParseInt(arg);
-				else if (key == "error_page")
-					errorTmp = this->isErrorPage(hostFile, &nbLine);
 				else if (key == "location")
 				{
 					if (arg[0] == '~')
@@ -634,34 +715,55 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				}
 				else
 				{
+					this->checkKeyIsNotValid(key, &nbLine);
+					if (arg.find_first_of(';') != string::npos)
+					{
+						if (!checkEndLine(arg.substr(arg.find_first_of(';'), arg.size()), ";"))
+							throw std::invalid_argument("Error: line " + toStr(nbLine) + " not finish.");
+						arg.erase(arg.find_first_of(';'), arg.size());
+					}
+					else
+						throw std::invalid_argument("Error: line " + toStr(nbLine) + " not finish.");
 					this->checkKeyExist(key, tmp, p_filname[i]);
-					tmp.insert(it, std::pair<string, string>(key, arg));
+					if (key == "port")
+					{
+						if (port != 0)
+							throw std::invalid_argument("Error: line " + toStr(nbLine) + " key Port exist!");
+						port = tryParseInt(arg);
+					}
+					else
+						tmp.insert(it, std::pair<string, string>(key, arg));
 				}
 			}
 
-			for (map<Regex, map<string, vector<string> > >::iterator reg = regex.begin(); reg != regex.end(); reg++)
+			for (map<string, string>::iterator t = tmp.begin(); t != tmp.end(); t++)
 			{
-				std::cout << "DEBUG REG: " << reg->first.getSource() << std::endl << "\t";
-				for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
-				{
-					std::cout << maps->first << std::endl << "\t\t";
-					for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
-						std::cout << *vec << " ";
-					std::cout << std::endl;
-				}
+				std::cout << "DEBUG REST: " << std::endl << "\t";
+				std::cout << t->first << " " << t->second << std::endl;
 			}
+			// for (map<Regex, map<string, vector<string> > >::iterator reg = regex.begin(); reg != regex.end(); reg++)
+			// {
+			// 	std::cout << "DEBUG REG: " << reg->first.getSource() << std::endl << "\t";
+			// 	for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
+			// 	{
+			// 		std::cout << maps->first << std::endl << "\t\t";
+			// 		for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
+			// 			std::cout << *vec << " ";
+			// 		std::cout << std::endl;
+			// 	}
+			// }
 
-			for (map<string, map<string, vector<string> > >::iterator reg = conf.begin(); reg != conf.end(); reg++)
-			{
-				std::cout << "DEBUG LOCATION: " << reg->first << std::endl << "\t";
-				for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
-				{
-					std::cout << maps->first << std::endl << "\t\t";
-					for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
-						std::cout << *vec << " ";
-					std::cout << std::endl;
-				}
-			}
+			// for (map<string, map<string, vector<string> > >::iterator reg = conf.begin(); reg != conf.end(); reg++)
+			// {
+			// 	std::cout << "DEBUG LOCATION: " << reg->first << std::endl << "\t";
+			// 	for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
+			// 	{
+			// 		std::cout << maps->first << std::endl << "\t\t";
+			// 		for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
+			// 			std::cout << *vec << " ";
+			// 		std::cout << std::endl;
+			// 	}
+			// }
 
 			/* Init stuct Host */
 			Host temp_host = {
@@ -670,7 +772,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				this->checkAutoIndex(tmp, p_filname[i]),
 				this->convertIndex(tmp, p_filname[i]),
 				this->checkServerName(tmp, p_filname[i]),
-				this->checkErrorPage(errorTmp, p_filname[i], tmp.at("root")),
+				this->checkErrorPage(mapError, p_filname[i], tmp.at("root")),
 				this->checkLocation(conf, p_filname[i]),
 				this->checkRegex(regex, p_filname[i])
 			};
@@ -771,7 +873,7 @@ void					ServerConfig::readFile( ifstream & file )
 		getline(str, arg);
 		if ((nb = arg.find_first_of(';')) != string::npos)
 		{
-			if (checkEndLine(arg.substr(nb, arg.size()), ";"))
+			if (!checkEndLine(arg.substr(nb, arg.size()), ";"))
 				throw std::invalid_argument("Error: line " + toStr(nbLine) + " not finish.");
 			arg.erase(nb, arg.size());
 		}

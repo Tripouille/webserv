@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/24 23:12:58 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/26 16:05:12 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,8 @@
 # include <stdint.h>
 # include "Regex.hpp"
 # include "utils.hpp"
+
+# define WHITESPACE " \n\t\r\v\f"
 
 using std::string;
 using std::list;
@@ -115,16 +117,25 @@ class ServerConfig
 		void					checkKeyExist( string const & p_key, map<string, string> const & p_tmp,
 												 string const & p_filename = "server.conf" );
 		void					checkIfParamsExist( void );
-		void					checkKeyInvalid( string const & p_key, map<string, vector<string> > & p_map, \
+		void					checkIfKeyIsNotRootOrAlias( string const & p_key, map<string, vector<string> > & p_map, \
 													string const & p_fileName );
-		map<string, string>		isErrorPage( ifstream & p_file, int *nbLine );
+		void					isErrorPage( ifstream & p_file, int *nbLine, string const & p_fileName, \
+											string & p_arg, map<string, string> & p_mapError );
 		void					isLocation(	map<string, map<string, vector<string> > > & p_map, ifstream & p_file, \
 												string & p_arg, string const & p_fileName, int *nbLine );
 		void					isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstream & p_file, \
 												string & p_arg, string const & p_fileName, int *nbLine );
-		vector<string>			splitArg( string & p_arg );
+		vector<string>			splitArg( std::stringstream & p_sstr, bool & p_bracketIsClose, \
+										int * nbLine, string const & p_fileName );
 		void					checkKeyIsNotValid( string const & p_key, int *nbLine );
 		bool					checkArgAllowdMethods( vector<string> & p_vector );
+		void					fillLocation( string const & p_fileName, ifstream & p_file,\
+										map<string, vector<string> > & p_location,  int * nbLine, \
+										bool p_bracketIsOpen, string & p_line );
+		string					checkOpeningBracket( string & p_root, bool & bracketIsOpen );
+		void					checkErrorCode( string & p_key, int *nbLine, string const & p_fileName );
+		string					extractBraquetErrorPage( string & p_arg, int *nbLine );
+		bool					checkArgumentSolo( string & p_arg );
 
 };
 
