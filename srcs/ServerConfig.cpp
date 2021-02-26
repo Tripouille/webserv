@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/25 17:25:14 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/26 12:18:13 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -418,7 +418,6 @@ vector<string>			ServerConfig::splitArg( std::stringstream & p_sstr, bool & p_br
 		{
 			arg = line.substr(0, pos);
 			p_sstr.seekg((line.size() - arg.size() - 1) * -1, std::ios_base::cur);
-			std::cout << "DEBUG SPLIT ARG: " << p_sstr.peek() << std::endl;
 			if (line[pos + 1] == '}' && checkEndLine(line.substr(pos + 1), "}"))
 			{
 				p_bracketIsClose = true;
@@ -465,7 +464,6 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 				p_bracketIsOpen = true;
 				key.erase();
 				str >> key;
-				std::cout << "DEBUG FILL LOCATION: " << *nbLine << " " << key << std::endl;
 			}
 			if (key.empty() || key.at(0) == '#')
 				break ;
@@ -473,7 +471,6 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 			{
 				string rest;
 				getline(str, rest);
-				std::cerr << "DEBUG FILL LOCATION 2: " << rest << std::endl;
 				if (!checkEndLine(rest, "}"))
 					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " Invalid argument: " + p_fileName);
 				bracketIsClose = true;
@@ -516,8 +513,8 @@ ServerConfig::checkOpeningBracket( string & p_root, int * nbLine, bool & bracket
 	}
 	else
 	{
-
 		key = p_root;
+		p_root.erase();
 	}
 	return key;
 }
@@ -555,7 +552,6 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 				bracketIsOpen = true;
 				key.erase();
 				str >> key;
-				std::cout << "DEBUG FILL LOCATION: " << *nbLine << " " << key << std::endl;
 			}
 			if (key.empty() || key.at(0) == '#')
 				break ;
@@ -563,7 +559,6 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 			{
 				string rest;
 				getline(str, rest);
-				std::cerr << "DEBUG FILL LOCATION 2: " << rest << std::endl;
 				if (!checkEndLine(rest, "}"))
 					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " Invalid argument: " + p_fileName);
 				bracketIsClose = true;
@@ -591,11 +586,12 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 	map<string, vector<string> >	location;
 	bool							bracketIsOpen(false);
 	string							key;
+	size_t							pos(0);
 
 	line.erase(0,1);
-	std::cout << line << std::endl;
 	key = this->checkOpeningBracket(line, nbLine, bracketIsOpen);
-	std::cout << key << std::endl;
+	if ((pos = key.find_first_of(WHITESPACE)) != string::npos)
+			key.erase(0, pos);
 	try {
 		Regex	regex(key);
 		this->fillLocation(p_fileName, p_file, location, nbLine, bracketIsOpen, line);
@@ -657,11 +653,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				if ((pos = arg.find_first_not_of(WHITESPACE)) != string::npos)
 					arg.erase(0, pos);
 				if (key == "error_page")
-				{
-					std::cout << "DEBUG !!!!!!!!" << key << std::endl;
 					this->isErrorPage(hostFile, &nbLine, p_filname[i], arg, mapError);
-					std::cout << "DEBUG !!!!!!!!" << nbLine << " " << key << std::endl;
-				}
 				else if (key == "location")
 				{
 					if (arg[0] == '~')
