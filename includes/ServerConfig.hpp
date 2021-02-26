@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/26 16:05:12 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/26 17:02:10 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,7 +102,7 @@ class ServerConfig
 		void					readFolderHost( void );
 		void					initHost( vector<string> & p_filname );
 		DIR *					directoryPath( void );
-		vector<string>			convertIndex( map<string, string> & p_map, string const & p_fileName );
+		vector<string>			convertIndex( map<string, string> & p_map );
 		string					checkRoot( map<string, string> & p_map, string const & p_fileName );
 		bool					checkAutoIndex( map<string, string> & p_map, string const & p_filename );
 		string					checkServerName( map<string, string> & p_map, string const & p_fileName );

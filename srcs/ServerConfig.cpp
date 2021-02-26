@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/26 16:42:49 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/26 17:07:01 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,23 +192,20 @@ string					ServerConfig::checkRoot( map<string, string> & p_map,
 	return string(p_map.at("root"));
 }
 
-vector<string>			ServerConfig::convertIndex( map<string, string> & p_map,
-														string const & p_fileName )
+vector<string>			ServerConfig::convertIndex( map<string, string> & p_map )
 {
-	std::string			word;
 	vector<string>		tmp;
 
-	if (p_map.find("index") == p_map.end())
+	if (p_map.find("index") != p_map.end())
 	{
-		errno = EINVAL;
-		throw configException("Error params \"index:\" not found in file ",
-								p_fileName);
-	}
-	std::stringstream	line(p_map.at("index"));
-	while(line)
-	{
-		line >> word;
-		tmp.push_back(word);
+		std::string			word;
+		std::stringstream	line(p_map.at("index"));
+
+		while(line)
+		{
+			line >> word;
+			tmp.push_back(word);
+		}
 	}
 	return tmp;
 }
@@ -772,7 +769,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				this->checkPort(port, p_filname[i]),
 				this->checkRoot(tmp, p_filname[i]),
 				this->checkAutoIndex(tmp, p_filname[i]),
-				this->convertIndex(tmp, p_filname[i]),
+				this->convertIndex(tmp),
 				this->checkServerName(tmp, p_filname[i]),
 				this->checkErrorPage(mapError, p_filname[i], tmp.at("root")),
 				this->checkLocation(conf, p_filname[i]),
