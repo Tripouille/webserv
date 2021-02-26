@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/26 15:51:50 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/26 16:24:32 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,7 @@ ServerConfig::ServerConfig( std::string const & path ) :
 ** -------------------------------- DESTRUCTOR --------------------------------
 */
 
-ServerConfig::~ServerConfig()
+ServerConfig::~ServerConfig( )
 {
 }
 
@@ -87,6 +87,22 @@ ServerConfig::~ServerConfig()
 /*
 ** --------------------------------- METHODS ----------------------------------
 */
+
+bool					ServerConfig::checkArgumentSolo( string & p_arg )
+{
+	std::stringstream	arg(p_arg);
+	string				word;
+	short				nb(0);
+
+	while (!arg.eof())
+	{
+		arg >> word;
+		nb++;
+	}
+	if (nb > 1)
+			return false;
+	return true;
+}
 
 void					ServerConfig::checkKeyIsNotValid( string const & p_key, int *nbLine )
 {
@@ -156,6 +172,9 @@ string					ServerConfig::checkServerName( map<string, string> & p_map,
 		throw configException("Error params \"server_name:\" not found on ",
 								p_fileName);
 	}
+	else if (!checkArgumentSolo(p_map.at("server_name")))
+			throw std::invalid_argument("Error: Invalid argument: One argument is allowed: " \
+						+ p_fileName);
 	return string(p_map.at("server_name"));
 }
 
@@ -360,6 +379,9 @@ map<string, string> &
 ServerConfig::checkErrorPage( map<string, string> & p_map, string const & p_fileName, \
 								string const & p_root )
 {
+	if (!checkArgumentSolo(const_cast<string&>(p_root)))
+			throw std::invalid_argument("Error: Invalid argument: One argument is allowed: " \
+						+ p_fileName);
 	for (map<string, string>::iterator it = p_map.begin(); \
 			it != p_map.end(); it++)
 	{
@@ -714,29 +736,34 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				}
 			}
 
-			for (map<Regex, map<string, vector<string> > >::iterator reg = regex.begin(); reg != regex.end(); reg++)
+			for (map<string, string>::iterator t = tmp.begin(); t != tmp.end(); t++)
 			{
-				std::cout << "DEBUG REG: " << reg->first.getSource() << std::endl << "\t";
-				for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
-				{
-					std::cout << maps->first << std::endl << "\t\t";
-					for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
-						std::cout << *vec << " ";
-					std::cout << std::endl;
-				}
+				std::cout << "DEBUG REST: " << std::endl << "\t";
+				std::cout << t->first << " " << t->second << std::endl;
 			}
+			// for (map<Regex, map<string, vector<string> > >::iterator reg = regex.begin(); reg != regex.end(); reg++)
+			// {
+			// 	std::cout << "DEBUG REG: " << reg->first.getSource() << std::endl << "\t";
+			// 	for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
+			// 	{
+			// 		std::cout << maps->first << std::endl << "\t\t";
+			// 		for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
+			// 			std::cout << *vec << " ";
+			// 		std::cout << std::endl;
+			// 	}
+			// }
 
-			for (map<string, map<string, vector<string> > >::iterator reg = conf.begin(); reg != conf.end(); reg++)
-			{
-				std::cout << "DEBUG LOCATION: " << reg->first << std::endl << "\t";
-				for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
-				{
-					std::cout << maps->first << std::endl << "\t\t";
-					for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
-						std::cout << *vec << " ";
-					std::cout << std::endl;
-				}
-			}
+			// for (map<string, map<string, vector<string> > >::iterator reg = conf.begin(); reg != conf.end(); reg++)
+			// {
+			// 	std::cout << "DEBUG LOCATION: " << reg->first << std::endl << "\t";
+			// 	for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
+			// 	{
+			// 		std::cout << maps->first << std::endl << "\t\t";
+			// 		for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
+			// 			std::cout << *vec << " ";
+			// 		std::cout << std::endl;
+			// 	}
+			// }
 
 			/* Init stuct Host */
 			Host temp_host = {
