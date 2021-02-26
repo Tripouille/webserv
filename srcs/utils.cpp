@@ -121,3 +121,9 @@ bool				checkEndLine( std::string str, std::string comp)
 		return true;
 	return false;
 }
+
+
+void sigPipeCatcher(int)
+{
+	cerr << "SIGPIPE catched and ignored" << endl;
+}

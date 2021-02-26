@@ -73,6 +73,7 @@ TcpListener::init(void)
 
 	FD_ZERO(&_activeFdSet);
 	FD_SET(_socket, &_activeFdSet);
+	signal(SIGPIPE, sigPipeCatcher);
 }
 
 void
@@ -82,7 +83,6 @@ TcpListener::run(void)
 	int socketCount;
 	while (true)
 	{
-		try {
 		timeval timeout = {60, 0}; // 60 seconds
 		writefds = readfds = _activeFdSet;
 
@@ -102,8 +102,6 @@ TcpListener::run(void)
 					_handleRequest(sock);
 			}
 		}
-		}
-		catch (std::exception const & e) {std::cout << "ups" << std::endl;}
 	}
 }
 
