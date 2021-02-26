@@ -33,7 +33,7 @@ Answer::Answer(SOCKET client, Host const & host, ServerConfig const & config)
 Answer::~Answer()
 {
 	deleteQ(_body);
-	_debugFields();
+	//_debugFields();
 }
 
 Answer::Answer(Answer const & other) : _host(other._host), _config(other._config)
@@ -75,7 +75,7 @@ void
 Answer::sendStatus(HttpRequest::s_status const & status)
 	const throw(sendException)
 {
-	cerr << "sending status " << status.code << " " << status.info << endl;
+	//cerr << "sending status " << status.code << " " << status.info << endl;
 	std::ostringstream oss;
 	oss << HTTP_VERSION << " " << status.code << " " << status.info << "\r\n";
 	_sendToClient(oss.str().c_str(), oss.str().size());
