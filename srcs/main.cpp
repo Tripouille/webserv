@@ -14,7 +14,6 @@ int main(int ac, char *av[])
 
 	try
 	{
-		config.checkConfigFile();
 		config.init();
 		MultiServ		serv(config, config.host);
 
@@ -29,7 +28,7 @@ int main(int ac, char *av[])
 	}
 	catch (std::exception const & e)
 	{
-		cerr << e.what() << "from main" << endl;
+		cerr << e.what() << endl;
 		exit(errno);
 	}
 	return (0);
