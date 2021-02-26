@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/26 16:27:38 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/26 16:42:49 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,6 +101,8 @@ bool					ServerConfig::checkArgumentSolo( string & p_arg )
 	}
 	if (nb > 1)
 			return false;
+	else if (nb == 0)
+		return false;
 	return true;
 }
 
@@ -520,7 +522,7 @@ void
 ServerConfig::checkErrorCode( string & p_key , int *nbLine, string const & p_fileName )
 {
 	uint16_t nb = tryParseInt(p_key);
-	if (nb < 100 && nb > 999)
+	if (nb < 100 || nb > 999)
 		throw std::invalid_argument("Error: line " + toStr(*nbLine) \
 					+ " Invalid argument: This is not an valid Error code " \
 					+ p_fileName);
