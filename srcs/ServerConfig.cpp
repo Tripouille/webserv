@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/26 15:36:53 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/26 15:51:50 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -446,11 +446,13 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 	while(!bracketIsClose)
 	{
 		if (p_line.empty())
+		{
+			*nbLine += 1;
 			getline(p_file, p_line);
+		}
 		std::stringstream		str(p_line);
 		p_line.erase();
 
-		*nbLine += 1;
 		while (!str.eof() && !bracketIsClose)
 		{
 			string		key;
@@ -536,11 +538,13 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 	while(!bracketIsClose)
 	{
 		if (p_arg.empty())
+		{
 			getline(p_file, p_arg);
+			*nbLine += 1;
+		}
 		std::stringstream		str(p_arg);
 		p_arg.erase();
 
-		*nbLine += 1;
 		while (!str.eof() && !bracketIsClose)
 		{
 			string		key;
