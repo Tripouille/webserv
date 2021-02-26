@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/26 13:42:49 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/26 13:57:39 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -529,6 +529,7 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 	bool					bracketIsClose(false);
 	bool					bracketIsOpen(false);
 
+	std::cout << "J'ENTRE ICI " << std::endl;
 	this->checkOpeningBracket(p_arg, nbLine, bracketIsOpen);
 	while(!bracketIsClose)
 	{
@@ -543,8 +544,8 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 			string		key;
 
 			str >> key;
-			if (key.empty() && str.eof())
-				continue ;
+			if (key.empty() || key.at(0) == '#')
+				break ;
 			if (key != "{" && !bracketIsOpen)
 				throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
 					" Invalid argument: Bracket was not open: " + p_fileName);
@@ -556,9 +557,9 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 				bracketIsOpen = true;
 				key.erase();
 				str >> key;
+				if (key.empty())
+					break ;
 			}
-			if (key.empty() || key.at(0) == '#')
-				break ;
 			if (key == "}")
 			{
 				string rest;
@@ -624,8 +625,6 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 void					ServerConfig::initHost( vector<string> & p_filname )
 {
 	string				line;
-	string				key;
-	string				arg;
 
 	for (size_t i = 0; i < p_filname.size(); i++)
 	{
@@ -645,11 +644,13 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 
 			while (getline(hostFile, line))
 			{
-				nbLine++;
+				string				key;
+				string				arg;
 				std::stringstream	str(line);
 
+				nbLine++;
 				str >> key;
-				if (str.eof())
+				if (key.empty())
 					continue;
 				if (key.at(0) == '#')
 					continue;
