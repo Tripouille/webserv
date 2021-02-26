@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/26 13:34:28 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/26 13:42:49 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -452,9 +452,8 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 			string		key;
 
 			str >> key;
-			this->checkIfKeyIsNotRootOrAlias(key, p_location, p_fileName);
-			if (key.empty() && str.eof())
-				continue ;
+			if (key.empty() || key.at(0) == '#')
+				break ;
 			if (key != "{" && !p_bracketIsOpen)
 				throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
 					" Invalid argument: Bracket was not open: " + p_fileName);
@@ -466,9 +465,9 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 				p_bracketIsOpen = true;
 				key.erase();
 				str >> key;
+				if (key.empty())
+					break ;
 			}
-			if (key.empty() || key.at(0) == '#')
-				break ;
 			if (key == "}")
 			{
 				string rest;
@@ -481,6 +480,7 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 			if (str.eof())
 				throw std::invalid_argument("Error: line " + toStr(*nbLine) \
 					+ " Invalid argument: Missing value " + p_fileName);
+			this->checkIfKeyIsNotRootOrAlias(key, p_location, p_fileName);
 			this->checkKeyIsNotValid(key, nbLine);
 			vector<string> tmpV = this->splitArg(str, bracketIsClose);
 			p_location[key] = tmpV;
@@ -543,6 +543,8 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 			string		key;
 
 			str >> key;
+			if (key.empty() && str.eof())
+				continue ;
 			if (key != "{" && !bracketIsOpen)
 				throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
 					" Invalid argument: Bracket was not open: " + p_fileName);
