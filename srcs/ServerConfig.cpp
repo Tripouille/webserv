@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/26 13:57:39 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/26 15:02:24 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -499,12 +499,12 @@ ServerConfig::checkErrorCode( string & p_key , int *nbLine, string const & p_fil
 }
 
 string
-ServerConfig::checkOpeningBracket( string & p_root, int * nbLine, bool & bracketIsOpen )
+ServerConfig::checkOpeningBracket( string & p_root, bool & bracketIsOpen )
 {
 	size_t		pos(0);
 	string 		key;
 
-	(void) nbLine;
+	std::cout << "DEBUG OPENING BRACKET: " << p_root << std::endl;
 	if ((pos = p_root.find_first_not_of(WHITESPACE)) != string::npos)
 		p_root.erase(0, pos);
 	if ((pos = p_root.find_last_of('{')) != string::npos)
@@ -529,8 +529,8 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 	bool					bracketIsClose(false);
 	bool					bracketIsOpen(false);
 
-	std::cout << "J'ENTRE ICI " << std::endl;
-	this->checkOpeningBracket(p_arg, nbLine, bracketIsOpen);
+	std::cout << "DEBUG IS ERROR PAGE: " << p_arg << std::endl;
+	this->checkOpeningBracket(p_arg, bracketIsOpen);
 	while(!bracketIsClose)
 	{
 		if (p_arg.empty())
@@ -549,7 +549,7 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 			if (key != "{" && !bracketIsOpen)
 				throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
 					" Invalid argument: Bracket was not open: " + p_fileName);
-			if (key == "{")
+			else if (key == "{")
 			{
 				if (bracketIsOpen)
 					throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
@@ -560,7 +560,7 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 				if (key.empty())
 					break ;
 			}
-			if (key == "}")
+			else if (key == "}")
 			{
 				string rest;
 				getline(str, rest);
@@ -594,7 +594,7 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 	size_t							pos(0);
 
 	line.erase(0,1);
-	key = this->checkOpeningBracket(line, nbLine, bracketIsOpen);
+	key = this->checkOpeningBracket(line, bracketIsOpen);
 	if ((pos = key.find_first_of(WHITESPACE)) != string::npos)
 			key.erase(0, pos);
 	try {
@@ -617,9 +617,21 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 	bool							bracketIsOpen(false);
 	string							key;
 
-	key = this->checkOpeningBracket(line, nbLine, bracketIsOpen);
+	key = this->checkOpeningBracket(line, bracketIsOpen);
 	this->fillLocation(p_fileName, p_file, location, nbLine, bracketIsOpen, line);
 	p_map[key] = location;
+}
+
+string					ServerConfig::extractBraquetErrorPage( string & p_arg, int *nbLine )
+{
+	size_t		pos(0);
+	if ((pos = p_arg.find_first_not_of('#')) != string::npos)
+	{
+		if (p_arg[pos - 1] == '#')
+			return string("{");
+		throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
+	}
+	return string("{");
 }
 
 void					ServerConfig::initHost( vector<string> & p_filname )
@@ -631,6 +643,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 		string fileName(http.at("host"));
 		fileName += p_filname[i];
 		ifstream  hostFile(fileName.c_str());
+
 		if (hostFile)
 		{
 			map<string, string>							tmp;
@@ -657,8 +670,14 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				getline(str, arg);
 				if ((pos = arg.find_first_not_of(WHITESPACE)) != string::npos)
 					arg.erase(0, pos);
-				if (key == "error_page")
+				if (!std::strncmp(key.c_str(), "error_page", 10))
+				{
+					if ((pos = key.find_first_of('{')) != string::npos)
+					{
+						arg = this->extractBraquetErrorPage(arg, &nbLine);
+					}
 					this->isErrorPage(hostFile, &nbLine, p_filname[i], arg, mapError);
+				}
 				else if (key == "location")
 				{
 					if (arg[0] == '~')

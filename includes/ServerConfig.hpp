@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/25 17:09:21 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/26 14:55:17 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,9 +131,9 @@ class ServerConfig
 		void					fillLocation( string const & p_fileName, ifstream & p_file,\
 										map<string, vector<string> > & p_location,  int * nbLine, \
 										bool p_bracketIsOpen, string & p_line );
-		string					checkOpeningBracket( string & p_root, int * nbLine, \
-									bool & bracketIsOpen );
+		string					checkOpeningBracket( string & p_root, bool & bracketIsOpen );
 		void					checkErrorCode( string & p_key, int *nbLine, string const & p_fileName );
+		string					extractBraquetErrorPage( string & p_arg, int *nbLine );
 
 };
 
