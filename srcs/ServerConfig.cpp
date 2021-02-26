@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/26 12:18:13 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/26 13:34:28 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -453,6 +453,8 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 
 			str >> key;
 			this->checkIfKeyIsNotRootOrAlias(key, p_location, p_fileName);
+			if (key.empty() && str.eof())
+				continue ;
 			if (key != "{" && !p_bracketIsOpen)
 				throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
 					" Invalid argument: Bracket was not open: " + p_fileName);
