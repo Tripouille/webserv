@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/26 17:02:10 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/27 17:06:31 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,6 +136,7 @@ class ServerConfig
 		void					checkErrorCode( string & p_key, int *nbLine, string const & p_fileName );
 		string					extractBraquetErrorPage( string & p_arg, int *nbLine );
 		bool					checkArgumentSolo( string & p_arg );
+		bool					checkArgumentErrorPage( string & p_arg );
 
 };
 

@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/26 17:07:01 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/27 17:06:47 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,6 +88,28 @@ ServerConfig::~ServerConfig( )
 ** --------------------------------- METHODS ----------------------------------
 */
 
+bool					ServerConfig::checkArgumentErrorPage( string & p_arg )
+{
+	std::stringstream	arg(p_arg);
+	string				word;
+	short				nb(0);
+
+	while (!arg.eof())
+	{
+		arg >> word;
+		if (word[0] == '#')
+			break ;
+		else if (word.find_first_not_of("{") != string::npos)
+			break ;
+		nb++;
+	}
+	if (nb > 1)
+			return false;
+	else if (nb == 0)
+		return false;
+	return true;
+}
+
 bool					ServerConfig::checkArgumentSolo( string & p_arg )
 {
 	std::stringstream	arg(p_arg);
@@ -97,6 +119,8 @@ bool					ServerConfig::checkArgumentSolo( string & p_arg )
 	while (!arg.eof())
 	{
 		arg >> word;
+		if (word[0] == '#')
+			break ;
 		nb++;
 	}
 	if (nb > 1)
@@ -555,6 +579,9 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 	bool					bracketIsClose(false);
 	bool					bracketIsOpen(false);
 
+	if (!this->checkArgumentErrorPage(p_arg))
+		throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
+					" Invalid argument: Argument is forbiden: " + p_fileName);
 	this->checkOpeningBracket(p_arg, bracketIsOpen);
 	while(!bracketIsClose)
 	{
@@ -652,6 +679,7 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 string					ServerConfig::extractBraquetErrorPage( string & p_arg, int *nbLine )
 {
 	size_t		pos(0);
+
 	if ((pos = p_arg.find_first_not_of('#')) != string::npos)
 	{
 		if (p_arg[pos - 1] == '#')
@@ -700,9 +728,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				if (!std::strncmp(key.c_str(), "error_page", 10))
 				{
 					if ((pos = key.find_first_of('{')) != string::npos)
-					{
 						arg = this->extractBraquetErrorPage(arg, &nbLine);
-					}
 					this->isErrorPage(hostFile, &nbLine, p_filname[i], arg, mapError);
 				}
 				else if (key == "location")
