@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/27 17:06:47 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/27 17:33:44 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,16 +90,48 @@ ServerConfig::~ServerConfig( )
 
 bool					ServerConfig::checkArgumentErrorPage( string & p_arg )
 {
-	std::stringstream	arg(p_arg);
-	string				word;
+	size_t				pos(0);
+	string				newArg;
 	short				nb(0);
 
+	if ((pos = p_arg.find_first_of('#')) != string::npos)
+		newArg = p_arg.substr(0, pos);
+	else
+		newArg = p_arg;
+	std::stringstream	arg(newArg);
 	while (!arg.eof())
 	{
+		string				word;
+
 		arg >> word;
-		if (word[0] == '#')
+		if (word.empty() || word.find_first_not_of("{") != string::npos)
 			break ;
-		else if (word.find_first_not_of("{") != string::npos)
+		nb++;
+	}
+	if (nb > 1)
+			return false;
+	else if (nb == 0)
+		return false;
+	return true;
+}
+
+bool					ServerConfig::checkArgumentLocation( string & p_arg )
+{
+	size_t				pos(0);
+	string				newArg;
+	short				nb(0);
+
+	if ((pos = p_arg.find_first_of('{')) != string::npos)
+		newArg = p_arg.substr(0, pos);
+	else
+		newArg = p_arg;
+	std::stringstream	arg(newArg);
+	while (!arg.eof())
+	{
+		string				word;
+
+		arg >> word;
+		if (word.empty())
 			break ;
 		nb++;
 	}
@@ -671,6 +703,9 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 	bool							bracketIsOpen(false);
 	string							key;
 
+	if (!this->checkArgumentLocation(line))
+		throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
+					" Invalid argument: Argument is forbiden: " + p_fileName);
 	key = this->checkOpeningBracket(line, bracketIsOpen);
 	this->fillLocation(p_fileName, p_file, location, nbLine, bracketIsOpen, line);
 	p_map[key] = location;

@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/27 17:06:31 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/27 17:32:00 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,6 +137,7 @@ class ServerConfig
 		string					extractBraquetErrorPage( string & p_arg, int *nbLine );
 		bool					checkArgumentSolo( string & p_arg );
 		bool					checkArgumentErrorPage( string & p_arg );
+		bool					checkArgumentLocation( string & p_arg );
 
 };
 
