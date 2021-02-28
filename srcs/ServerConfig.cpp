@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/28 17:23:01 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/28 17:30:08 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -943,6 +943,14 @@ void					ServerConfig::readFile( ifstream & file )
 
 void					ServerConfig::checkIfParamsExist( void )
 {
+	if (http.find("worker_processes") != http.end())
+	{
+		uint16_t nb = tryParseInt(http.at("worker_processes"));
+		if (nb < 1 || nb > 100)
+			throw std::invalid_argument("Error: Invalid argument:'worker_processes' must be 1 and 100.");
+	}
+	else
+		http["worker_processes"] = 8;
 	if (http.find("uri_max_size") == http.end())
 	{
 		errno = EINVAL;
