@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/28 17:16:25 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/28 17:23:01 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -948,11 +948,15 @@ void					ServerConfig::checkIfParamsExist( void )
 		errno = EINVAL;
 		throw configException("Error in config file with params uri_max_size not exist");
 	}
+	else
+		tryParseInt(http.at("uri_max_size"));
 	if (http.find("max_empty_line_before_request") == http.end())
 	{
 		errno = EINVAL;
 		throw configException("Error in config file with params max_empty_line_before_request not exist");
 	}
+	else
+		tryParseInt(http.at("max_empty_line_before_request"));
 }
 
 void					ServerConfig::init( void )
