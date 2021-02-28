@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/27 17:32:00 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/28 17:13:46 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,7 +89,9 @@ class ServerConfig
 	private:
 
 		string									_pathConfFile;
-		list<string>							_dictionary;
+		list<string>							_fileConf;
+		list<string>							_fileHost;
+		list<string>							_location;
 
 /*
 ** ----------------------------- PRIVATE METHODS ------------------------------
@@ -127,7 +129,7 @@ class ServerConfig
 												string & p_arg, string const & p_fileName, int *nbLine );
 		vector<string>			splitArg( std::stringstream & p_sstr, bool & p_bracketIsClose, \
 										int * nbLine, string const & p_fileName );
-		void					checkKeyIsNotValid( string const & p_key, int *nbLine );
+		void					checkKeyIsNotValid( string const & p_key, int *nbLine, list<string> & p_list );
 		bool					checkArgAllowdMethods( vector<string> & p_vector );
 		void					fillLocation( string const & p_fileName, ifstream & p_file,\
 										map<string, vector<string> > & p_location,  int * nbLine, \

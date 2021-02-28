@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/27 17:33:44 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/28 17:14:09 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,37 +36,32 @@ const char *			ServerConfig::configException::what(void) const throw()
 ServerConfig::ServerConfig( std::string const & path ) :
 	_pathConfFile(path)
 {
-	_dictionary.push_back("port");
-	_dictionary.push_back("root");
-	_dictionary.push_back("server_name");
-	_dictionary.push_back("index");
-	_dictionary.push_back("error_page");
-	_dictionary.push_back("location");
-	_dictionary.push_back("cgi");
-	_dictionary.push_back("allowed_methods");
-	_dictionary.push_back("upload_store");
-	_dictionary.push_back("client_max_body_size");
-	_dictionary.push_back("alias");
-	_dictionary.push_back("auth_basic");
-	_dictionary.push_back("auth_basic_user_file");
-	_dictionary.push_back("autoindex");
-	_dictionary.push_back("user");
-	_dictionary.push_back("worker_processes");
-	_dictionary.push_back("pid");
-	_dictionary.push_back("worker_connections");
-	_dictionary.push_back("uri_max_size");
-	_dictionary.push_back("max_empty_line_before_request");
-	_dictionary.push_back("sendfile");
-	_dictionary.push_back("tcp_nopush");
-	_dictionary.push_back("tcp_nodelay");
-	_dictionary.push_back("keepalive_timeout");
-	_dictionary.push_back("types_hash_max_size");
-	_dictionary.push_back("type_file");
-	_dictionary.push_back("default_type");
-	_dictionary.push_back("access_log");
-	_dictionary.push_back("error_log");
-	_dictionary.push_back("gzip");
-	_dictionary.push_back("host");
+	/* Charge FileConf word allowed */
+	_fileConf.push_back("type_file");
+	_fileConf.push_back("worker_processes");
+	_fileConf.push_back("pid");
+	_fileConf.push_back("uri_max_size");
+	_fileConf.push_back("max_empty_line_before_request");
+	_fileConf.push_back("host");
+	/* Charge FileHost word allowed */
+	_fileHost.push_back("port");
+	_fileHost.push_back("root");
+	_fileHost.push_back("server_name");
+	_fileHost.push_back("index");
+	_fileHost.push_back("error_page");
+	_fileHost.push_back("location");
+	_fileHost.push_back("autoindex");
+	/* Charge Location word allowed */
+	_location.push_back("root");
+	_location.push_back("index");
+	_location.push_back("cgi");
+	_location.push_back("allowed_methods");
+	_location.push_back("upload_store");
+	_location.push_back("client_max_body_size");
+	_location.push_back("alias");
+	_location.push_back("auth_basic");
+	_location.push_back("auth_basic_user_file");
+	_location.push_back("autoindex");
 }
 
 
@@ -162,10 +157,10 @@ bool					ServerConfig::checkArgumentSolo( string & p_arg )
 	return true;
 }
 
-void					ServerConfig::checkKeyIsNotValid( string const & p_key, int *nbLine )
+void					ServerConfig::checkKeyIsNotValid( string const & p_key, int *nbLine, list<string> & p_list )
 {
-	for (list<string>::iterator it = _dictionary.begin(); \
-		it != _dictionary.end(); it++)
+	for (list<string>::iterator it = p_list.begin(); \
+		it != p_list.end(); it++)
 		if (*it == p_key)
 			return ;
 	throw std::invalid_argument("Error: line " + toStr(*nbLine) \
@@ -564,7 +559,7 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 				throw std::invalid_argument("Error: line " + toStr(*nbLine) \
 					+ " Invalid argument: Missing value " + p_fileName);
 			this->checkIfKeyIsNotRootOrAlias(key, p_location, p_fileName);
-			this->checkKeyIsNotValid(key, nbLine);
+			this->checkKeyIsNotValid(key, nbLine, _location);
 			vector<string> tmpV = this->splitArg(str, bracketIsClose, nbLine, p_fileName);
 			p_location[key] = tmpV;
 		}
@@ -775,7 +770,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				}
 				else
 				{
-					this->checkKeyIsNotValid(key, &nbLine);
+					this->checkKeyIsNotValid(key, &nbLine, _fileHost);
 					if (arg.find_first_of(';') != string::npos)
 					{
 						if (!checkEndLine(arg.substr(arg.find_first_of(';'), arg.size()), ";"))
@@ -929,7 +924,7 @@ void					ServerConfig::readFile( ifstream & file )
 			continue;
 		if ((nb = key.find_first_of(':') != string::npos))
 			key.erase(key.find_first_of(':'), nb + 1);
-		this->checkKeyIsNotValid(key, &nbLine);
+		this->checkKeyIsNotValid(key, &nbLine, _fileConf);
 		getline(str, arg);
 		if ((nb = arg.find_first_of(';')) != string::npos)
 		{
