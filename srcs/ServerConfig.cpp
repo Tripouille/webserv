@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
+/*   By: ffrey <ffrey@student.42lyon.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/28 20:48:09 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/28 22:16:38 by ffrey            ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -595,6 +595,8 @@ ServerConfig::checkOpeningBracket( string & p_root, bool & bracketIsOpen )
 		key = p_root;
 		p_root.erase();
 	}
+	std::stringstream 	word(key);
+	word >> key;
 	return key;
 }
 
