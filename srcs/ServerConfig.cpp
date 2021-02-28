@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/28 17:30:08 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/28 20:48:09 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -950,7 +950,7 @@ void					ServerConfig::checkIfParamsExist( void )
 			throw std::invalid_argument("Error: Invalid argument:'worker_processes' must be 1 and 100.");
 	}
 	else
-		http["worker_processes"] = 8;
+		http["worker_processes"] = "8";
 	if (http.find("uri_max_size") == http.end())
 	{
 		errno = EINVAL;
