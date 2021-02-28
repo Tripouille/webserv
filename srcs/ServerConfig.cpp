@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/28 17:14:09 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/02/28 17:16:25 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -906,14 +906,14 @@ void					ServerConfig::initConf( void )
 void					ServerConfig::readFile( ifstream & file )
 {
 	string				line;
-	string				key;
-	string				arg;
 	size_t				nb(0);
 	int					nbLine(0);
 	std::map<string, string>::iterator		it = http.begin();
 
 	while (getline(file, line))
 	{
+		string				key;
+		string				arg;
 		std::stringstream	str(line);
 
 		nbLine++;
@@ -938,8 +938,6 @@ void					ServerConfig::readFile( ifstream & file )
 			arg.erase(0, nb);
 		this->checkKeyExist(key, http);
 		http.insert(it, std::pair<string, string>(key, arg));
-		arg = "";
-		key = "";
 	}
 }
 
