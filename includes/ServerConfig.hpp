@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/28 17:27:36 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/01 16:32:44 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ using std::ifstream;
 
 struct Host
 {
-	uint16_t									port;
+	short										port;
 	string										root;
 	bool										autoIndex;
 	vector<string>								index;
@@ -108,7 +108,7 @@ class ServerConfig
 		string					checkRoot( map<string, string> & p_map, string const & p_fileName );
 		bool					checkAutoIndex( map<string, string> & p_map, string const & p_filename );
 		string					checkServerName( map<string, string> & p_map, string const & p_fileName );
-		uint16_t &				checkPort( uint16_t & p_port, string const & p_fileName );
+		short &					checkPort( short & p_port, string const & p_fileName );
 		void					checkCgi( string const & p_map, string const & p_fileName ) const;
 		map<string, string> &	checkErrorPage ( map<string, string> & p_map, string const & p_fileName, \
 													string const & p_root );

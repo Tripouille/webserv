@@ -53,7 +53,7 @@ class TcpListener
 				string _str;
 		};
 
-		TcpListener(in_addr_t const & ipAddress, uint16_t port, \
+		TcpListener(in_addr_t const & ipAddress, short port, \
 			ServerConfig & config, Host & host);
 		virtual ~TcpListener();
 
@@ -63,7 +63,7 @@ class TcpListener
 
 	private:
 		in_addr_t				_ipAddress;
-		uint16_t				_port;
+		short					_port;
 		int						_socket;
 		const int				_backlog;
 		fd_set					_activeFdSet;

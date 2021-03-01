@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ffrey <ffrey@student.42lyon.fr>            +#+  +:+       +#+        */
+/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/28 22:16:38 by ffrey            ###   ########lyon.fr   */
+/*   Updated: 2021/03/01 16:33:25 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -204,7 +204,7 @@ void					ServerConfig::checkKeyExist( string const & p_key,
 	}
 }
 
-uint16_t &				ServerConfig::checkPort( uint16_t & p_port,
+short &					ServerConfig::checkPort( short & p_port,
 													string const & p_fileName )
 {
 	if (p_port == 0)
@@ -569,7 +569,7 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 void
 ServerConfig::checkErrorCode( string & p_key , int *nbLine, string const & p_fileName )
 {
-	uint16_t nb = tryParseInt(p_key);
+	short nb = tryParseInt(p_key);
 	if (nb < 100 || nb > 999)
 		throw std::invalid_argument("Error: line " + toStr(*nbLine) \
 					+ " Invalid argument: This is not an valid Error code " \
@@ -738,7 +738,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 			std::map<string, string>::iterator			it = tmp.begin();
 			map<string, map<string, vector<string> > >	conf;
 			map<Regex, map<string, vector<string> > >	regex;
-			uint16_t									port(0);
+			short										port(0);
 			int											nbLine(0);
 			size_t										pos(0);
 
@@ -947,7 +947,7 @@ void					ServerConfig::checkIfParamsExist( void )
 {
 	if (http.find("worker_processes") != http.end())
 	{
-		uint16_t nb = tryParseInt(http.at("worker_processes"));
+		short nb = tryParseInt(http.at("worker_processes"));
 		if (nb < 1 || nb > 100)
 			throw std::invalid_argument("Error: Invalid argument:'worker_processes' must be 1 and 100.");
 	}

@@ -22,7 +22,7 @@ TcpListener::tcpException::what(void) const throw()
 
 /* Constructors and destructor */
 
-TcpListener::TcpListener(in_addr_t const & ipAddress, uint16_t port,
+TcpListener::TcpListener(in_addr_t const & ipAddress, short port,
 							ServerConfig & config, Host & host)
 			: _ipAddress(ipAddress), _port(port), \
 			  _backlog(BACKLOG), _clientNb(0), \
