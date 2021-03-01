@@ -27,7 +27,7 @@ bool			isHex(std::string const & str);
 std::streamsize loopRecv(SOCKET socket, char * buffer, ssize_t size);
 std::streamsize selectAndRead(SOCKET socket, char * buffer, size_t size);
 std::streamsize selectAndWrite(SOCKET socket, char * buffer, size_t size);
-uint16_t		tryParseInt(std::string & str);
+short			tryParseInt(std::string & str);
 bool			checkEndLine( std::string str, std::string comp);
 
 void			sigPipeCatcher(int);
