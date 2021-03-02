@@ -122,7 +122,7 @@ HttpRequest::analyze(void) throw(parseException, recvException, closeOrderExcept
 	_headerSize = 0;
 	_analyseRequestLine();
 	_analyseHeader();
-	_debugFields();
+	//_debugFields();
 	_setRequiredFile();
 	_analyseBody();
 
