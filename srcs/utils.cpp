@@ -97,17 +97,11 @@ std::streamsize selectAndWrite(SOCKET socket, char * buffer, size_t size)
 
 short			tryParseInt(std::string & str)
 {
-	short	nb;
 	if (str.find_first_not_of("0123456789", 0) != std::string::npos)
 		throw std::invalid_argument("Error: Invalid argument: Params is not a valid number.");
-	try {
-		nb = atoi(str.c_str());
-	}
-	catch(std::out_of_range const & e) {
-		cerr << e.what() << endl;
-		exit(errno);
-	}
-	return (nb);
+	if (str.size() > 9)
+		throw std::invalid_argument("Error: Invalid argument: Params is not a valid number.");
+	return (atoi(str.c_str()));
 }
 
 bool				checkEndLine( std::string str, std::string comp)
@@ -120,7 +114,7 @@ bool				checkEndLine( std::string str, std::string comp)
 		return true;
 	else
 	{
-		if (tmp.find_first_not_of(";") && !tmp.empty())
+		if (tmp.find_first_not_of(";") != std::string::npos && !tmp.empty())
 			return false;
 		tmp.erase();
 		line >> tmp;
