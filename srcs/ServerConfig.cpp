@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 14:12:31 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 15:35:23 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,7 +103,6 @@ bool					ServerConfig::checkArgumentErrorPage( string & p_arg )
 			break ;
 		nb++;
 	}
-	std::cout << "DEBUG: " << nb << std::endl;
 	if (nb >= 1)
 			return false;
 	return true;
@@ -527,12 +526,15 @@ vector<string>			ServerConfig::splitArg( std::stringstream & p_sstr, bool & p_br
 		string	arg;
 
 		p_sstr >> line;
+		std::cout << "DEBUG SPLIT ARG: " << line << std::endl;
 		if ((pos = line.find_first_of("{")) != string::npos)
 			throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
 					" Invalid argument: Bracket was open: " + p_fileName);
 		if ((pos = line.find_first_of(';')) != string::npos)
 		{
 			arg = line.substr(0, pos);
+			if (arg.empty())
+				break ;
 			p_sstr.seekg((line.size() - arg.size() - 1) * -1, std::ios_base::cur);
 			if (line[pos + 1] == '}' && checkEndLine(line.substr(pos + 1), "}"))
 			{
@@ -690,11 +692,25 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 	}
 }
 
+void					ServerConfig::checkEndLineFileLocation(string & p_line, int * nbLine, string const & p_fileName)
+{
+	size_t		pos(0);
+
+	if (p_line[0] == '{' || p_line[0] == '}')
+		return ;
+	else if ((pos = p_line.find_first_of('#')) != string::npos)
+		p_line.erase(pos);
+	if ((pos = p_line.find_first_of(';')) != string::npos)
+		;
+	else
+		throw std::invalid_argument("Error: line " + toStr(*nbLine) \
+					+ " not finish: " + p_fileName);
+}
+
 void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_file,\
 							map<string, vector<string> > & p_location,  int * nbLine, bool p_bracketIsOpen,
 							string & p_line )
 {
-	string		arg;
 	bool		bracketIsClose(false);
 
 	while(!bracketIsClose)
@@ -704,6 +720,8 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 			*nbLine += 1;
 			getline(p_file, p_line);
 		}
+		std::cout << "DEBUG: " << p_line << std::endl;
+		this->checkEndLineFileLocation(p_line,nbLine, p_fileName);
 		std::stringstream		str(p_line);
 		p_line.erase();
 
@@ -745,6 +763,9 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 			this->checkIfKeyIsNotRootOrAlias(key, p_location, p_fileName);
 			this->checkKeyIsNotValid(key, nbLine, _location);
 			vector<string> tmpV = this->splitArg(str, bracketIsClose, nbLine, p_fileName);
+			if (tmpV.empty())
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) \
+					+ " Invalid argument: Argument is empty " + p_fileName);
 			this->checkKeyExist(key, p_location, p_fileName);
 			p_location[key] = tmpV;
 		}
@@ -879,29 +900,29 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				std::cout << "DEBUG Error: " << std::endl << "\t";
 				std::cout << t->first << " " << t->second << std::endl;
 			}
-			// for (map<Regex, map<string, vector<string> > >::iterator reg = regex.begin(); reg != regex.end(); reg++)
-			// {
-			// 	std::cout << "DEBUG REG: " << reg->first.getSource() << std::endl << "\t";
-			// 	for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
-			// 	{
-			// 		std::cout << maps->first << std::endl << "\t\t";
-			// 		for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
-			// 			std::cout << *vec << " ";
-			// 		std::cout << std::endl;
-			// 	}
-			// }
+			for (map<Regex, map<string, vector<string> > >::iterator reg = regex.begin(); reg != regex.end(); reg++)
+			{
+				std::cout << "DEBUG REG: " << reg->first.getSource() << std::endl << "\t";
+				for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
+				{
+					std::cout << maps->first << std::endl << "\t\t";
+					for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
+						std::cout << *vec << " ";
+					std::cout << std::endl;
+				}
+			}
 
-			// for (map<string, map<string, vector<string> > >::iterator reg = conf.begin(); reg != conf.end(); reg++)
-			// {
-			// 	std::cout << "DEBUG LOCATION: " << reg->first << std::endl << "\t";
-			// 	for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
-			// 	{
-			// 		std::cout << maps->first << std::endl << "\t\t";
-			// 		for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
-			// 			std::cout << *vec << " ";
-			// 		std::cout << std::endl;
-			// 	}
-			// }
+			for (map<string, map<string, vector<string> > >::iterator reg = conf.begin(); reg != conf.end(); reg++)
+			{
+				std::cout << "DEBUG LOCATION: " << reg->first << std::endl << "\t";
+				for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
+				{
+					std::cout << maps->first << std::endl << "\t\t";
+					for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
+						std::cout << *vec << " ";
+					std::cout << std::endl;
+				}
+			}
 
 			/* Init stuct Host */
 			Host temp_host = {

@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 13:10:04 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 15:00:39 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,6 +151,7 @@ class ServerConfig
 		bool					checkArgumentLocation( string & p_arg );
 		string 					checkBracketLine(string & p_key, std::stringstream & p_str, char c);
 		void					clearBuff(std::stringstream & p_str);
+		void					checkEndLineFileLocation(string & p_line, int * nbLine, string const & p_fileName);
 
 };
 
