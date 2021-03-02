@@ -8,6 +8,9 @@
 # include <fcntl.h>
 # include <stdexcept>
 
+# define WRITE_TIMEOUT 200000
+# define READ_TIMEOUT 200000
+
 typedef int SOCKET;
 using std::cerr;
 using std::endl;

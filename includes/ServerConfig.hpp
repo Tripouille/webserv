@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 13:06:05 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 13:10:04 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,9 @@
 # include "utils.hpp"
 
 # define WHITESPACE " \n\t\r\v\f"
+# define DEFAULT_WORKER_PROCESSES "8"
+# define DEFAULT_URI_MAX_SIZE "512"
+# define DEFAULT_MAX_EMPTY_LINE_BEFORE_REQUEST "1"
 
 using std::string;
 using std::list;
