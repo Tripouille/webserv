@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 15:39:20 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 16:13:09 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -526,7 +526,7 @@ vector<string>			ServerConfig::splitArg( std::stringstream & p_sstr, bool & p_br
 		string	arg;
 
 		p_sstr >> line;
-		std::cout << "DEBUG SPLIT ARG: " << line << std::endl;
+
 		if ((pos = line.find_first_of("{")) != string::npos)
 			throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
 					" Invalid argument: Bracket was open: " + p_fileName);
@@ -696,6 +696,8 @@ void					ServerConfig::checkEndLineFileLocation(string & p_line, int * nbLine, s
 {
 	size_t		pos(0);
 
+	if (p_line.empty())
+		return ;
 	if (p_line[0] == '{' || p_line[0] == '}')
 		return ;
 	else if ((pos = p_line.find_first_of('#')) != string::npos)
@@ -705,6 +707,20 @@ void					ServerConfig::checkEndLineFileLocation(string & p_line, int * nbLine, s
 	else
 		throw std::invalid_argument("Error: line " + toStr(*nbLine) \
 					+ " not finish: " + p_fileName);
+}
+
+void					ServerConfig::checkAfterBracker( std::stringstream & p_str, int * nbLine, \
+														string const & p_fileName )
+{
+	while (!p_str.eof())
+	{
+		string	word;
+
+		p_str >> word;
+		if (word.find_first_not_of('}') != string::npos)
+			throw std::invalid_argument("Error: line " + toStr(*nbLine) \
+					+ " not finish: " + p_fileName);
+	}
 }
 
 void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_file,\
@@ -720,8 +736,7 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 			*nbLine += 1;
 			getline(p_file, p_line);
 		}
-		std::cout << "DEBUG: " << p_line << std::endl;
-		this->checkEndLineFileLocation(p_line,nbLine, p_fileName);
+		this->checkEndLineFileLocation(p_line, nbLine, p_fileName);
 		std::stringstream		str(p_line);
 		p_line.erase();
 
@@ -763,6 +778,8 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 			this->checkIfKeyIsNotRootOrAlias(key, p_location, p_fileName);
 			this->checkKeyIsNotValid(key, nbLine, _location);
 			vector<string> tmpV = this->splitArg(str, bracketIsClose, nbLine, p_fileName);
+			if (bracketIsClose && !str.eof())
+				this->checkAfterBracker(str, nbLine, p_fileName);
 			if (tmpV.empty())
 				throw std::invalid_argument("Error: line " + toStr(*nbLine) \
 					+ " Invalid argument: Argument is empty " + p_fileName);
@@ -923,6 +940,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 					std::cout << std::endl;
 				}
 			}
+			std::cout << std::endl << std::endl;
 
 			/* Init stuct Host */
 			Host temp_host = {
