@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 16:19:35 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 16:24:29 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,7 +83,8 @@ ServerConfig::~ServerConfig( )
 ** --------------------------------- METHODS ----------------------------------
 */
 
-bool					ServerConfig::checkArgumentErrorPage( string & p_arg )
+bool
+ServerConfig::checkArgumentErrorPage( string & p_arg )
 {
 	size_t				pos(0);
 	string				newArg;
@@ -108,7 +109,8 @@ bool					ServerConfig::checkArgumentErrorPage( string & p_arg )
 	return true;
 }
 
-bool					ServerConfig::checkArgumentLocation( string & p_arg )
+bool
+ServerConfig::checkArgumentLocation( string & p_arg )
 {
 	size_t				pos(0);
 	string				newArg;
@@ -135,7 +137,8 @@ bool					ServerConfig::checkArgumentLocation( string & p_arg )
 	return true;
 }
 
-bool					ServerConfig::checkArgumentSolo( string & p_arg )
+bool
+ServerConfig::checkArgumentSolo( string & p_arg )
 {
 	std::stringstream	arg(p_arg);
 	short				nb(0);
@@ -155,7 +158,8 @@ bool					ServerConfig::checkArgumentSolo( string & p_arg )
 	return true;
 }
 
-void					ServerConfig::checkKeyIsNotValid( string const & p_key, int *nbLine, list<string> & p_list )
+void
+ServerConfig::checkKeyIsNotValid( string const & p_key, int *nbLine, list<string> & p_list )
 {
 	for (list<string>::iterator it = p_list.begin(); \
 		it != p_list.end(); it++)
@@ -165,7 +169,8 @@ void					ServerConfig::checkKeyIsNotValid( string const & p_key, int *nbLine, li
 		+ " '" + p_key + "' is invalid. ");
 }
 
-bool					ServerConfig::checkArgAllowdMethods( vector<string> & p_vector )
+bool
+ServerConfig::checkArgAllowdMethods( vector<string> & p_vector )
 {
 	vector<string>::iterator it = p_vector.begin();
 	for (; it != p_vector.end(); it++)
@@ -174,7 +179,8 @@ bool					ServerConfig::checkArgAllowdMethods( vector<string> & p_vector )
 	return false;
 }
 
-DIR *					ServerConfig::directoryPath( void )
+DIR *
+ServerConfig::directoryPath( void )
 {
 	if (http.find("host") == http.end())
 	{
@@ -186,9 +192,9 @@ DIR *					ServerConfig::directoryPath( void )
 	return opendir(name.c_str());
 }
 
-void					ServerConfig::checkKeyExist( string const & p_key,
-														map<string, string> const & p_tmp,
-														string const & p_filename )
+void
+ServerConfig::checkKeyExist( string const & p_key, map<string, string> const & p_tmp, \
+								string const & p_filename )
 {
 	if (p_tmp.find(p_key.c_str())!= p_tmp.end())
 	{
@@ -197,9 +203,9 @@ void					ServerConfig::checkKeyExist( string const & p_key,
 	}
 }
 
-void					ServerConfig::checkKeyExist( string const & p_key,
-														map<string, vector<string> > const & p_tmp,
-														string const & p_filename )
+void
+ServerConfig::checkKeyExist( string const & p_key, map<string, vector<string> > const & p_tmp, \
+							string const & p_filename )
 {
 	if (p_tmp.find(p_key.c_str())!= p_tmp.end())
 	{
@@ -208,9 +214,9 @@ void					ServerConfig::checkKeyExist( string const & p_key,
 	}
 }
 
-void					ServerConfig::checkKeyExist( string const & p_key,
-														map<string, map<string, vector<string> > > const & p_tmp,
-														string const & p_filename )
+void
+ServerConfig::checkKeyExist( string const & p_key, map<string, map<string, vector<string> > > const & p_tmp, \
+								string const & p_filename )
 {
 	if (p_tmp.find(p_key.c_str())!= p_tmp.end())
 	{
@@ -219,9 +225,9 @@ void					ServerConfig::checkKeyExist( string const & p_key,
 	}
 }
 
-void					ServerConfig::checkKeyExist( Regex const & p_key,
-														map<Regex, map<string, vector<string> > > & p_tmp,
-														string const & p_filename )
+void
+ServerConfig::checkKeyExist( Regex const & p_key, map<Regex, map<string, vector<string> > > & p_tmp,
+							string const & p_filename )
 {
 	for (map<Regex, map<string, vector<string> > >::iterator it = p_tmp.begin(); it != p_tmp.end(); it++)
 	{
@@ -234,8 +240,8 @@ void					ServerConfig::checkKeyExist( Regex const & p_key,
 	}
 }
 
-short &					ServerConfig::checkPort( short & p_port,
-													string const & p_fileName )
+short &
+ServerConfig::checkPort( short & p_port, string const & p_fileName )
 {
 	if (p_port == 0)
 	{
@@ -246,8 +252,8 @@ short &					ServerConfig::checkPort( short & p_port,
 	return p_port;
 }
 
-string					ServerConfig::checkServerName( map<string, string> & p_map,
-															string const & p_fileName )
+string
+ServerConfig::checkServerName( map<string, string> & p_map, string const & p_fileName )
 {
 	if (p_map.find("server_name") == p_map.end())
 	{
@@ -264,8 +270,8 @@ string					ServerConfig::checkServerName( map<string, string> & p_map,
 	return string(p_map.at("server_name"));
 }
 
-string					ServerConfig::checkRoot( map<string, string> & p_map,
-														string const & p_fileName )
+string
+ServerConfig::checkRoot( map<string, string> & p_map, string const & p_fileName )
 {
 	if (p_map.find("root") == p_map.end())
 	{
@@ -279,7 +285,8 @@ string					ServerConfig::checkRoot( map<string, string> & p_map,
 	return string(p_map.at("root"));
 }
 
-vector<string>			ServerConfig::convertIndex( map<string, string> & p_map )
+vector<string>
+ServerConfig::convertIndex( map<string, string> & p_map )
 {
 	vector<string>		tmp;
 
@@ -300,8 +307,8 @@ vector<string>			ServerConfig::convertIndex( map<string, string> & p_map )
 	return tmp;
 }
 
-bool					ServerConfig::checkAutoIndex( map<string, string> & p_map, \
-														string const & p_filename )
+bool
+ServerConfig::checkAutoIndex( map<string, string> & p_map, string const & p_filename )
 {
 	if (p_map.find("autoindex") != p_map.end())
 	{
@@ -483,7 +490,8 @@ ServerConfig::checkErrorPage( map<string, string> & p_map, string const & p_file
 	return p_map;
 }
 
-void		ServerConfig::checkCgi( string const & p_path, string const & p_fileName ) const
+void
+ServerConfig::checkCgi( string const & p_path, string const & p_fileName ) const
 {
 	struct stat fileInfos;
 	if (stat(p_path.c_str(), &fileInfos) != 0)
@@ -514,8 +522,9 @@ ServerConfig::checkIfKeyIsNotRootOrAlias( string const & p_key, map<string, vect
 	}
 }
 
-vector<string>			ServerConfig::splitArg( std::stringstream & p_sstr, bool & p_bracketIsClose, \
-							int * nbLine, string const & p_fileName )
+vector<string>
+ServerConfig::splitArg( std::stringstream & p_sstr, bool & p_bracketIsClose, \
+						int * nbLine, string const & p_fileName )
 {
 	vector<string>		tmp;
 	string				line;
@@ -550,7 +559,8 @@ vector<string>			ServerConfig::splitArg( std::stringstream & p_sstr, bool & p_br
 	return tmp;
 }
 
-void				ServerConfig::clearBuff( std::stringstream & p_buf)
+void
+ServerConfig::clearBuff( std::stringstream & p_buf)
 {
 	string buf;
 
@@ -558,7 +568,8 @@ void				ServerConfig::clearBuff( std::stringstream & p_buf)
 		p_buf >> buf;
 }
 
-string				ServerConfig::checkBracketLine(string & p_key, std::stringstream & p_str, char c)
+string
+ServerConfig::checkBracketLine(string & p_key, std::stringstream & p_str, char c)
 {
 	size_t	pos(0);
 
@@ -695,7 +706,8 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 	}
 }
 
-void					ServerConfig::checkEndLineFileLocation(string & p_line, int * nbLine, string const & p_fileName)
+void
+ServerConfig::checkEndLineFileLocation(string & p_line, int * nbLine, string const & p_fileName)
 {
 	size_t		pos(0);
 
@@ -713,8 +725,9 @@ void					ServerConfig::checkEndLineFileLocation(string & p_line, int * nbLine, s
 					+ " not finish: " + p_fileName);
 }
 
-void					ServerConfig::checkAfterBracket( std::stringstream & p_str, int * nbLine, \
-														string const & p_fileName )
+void
+ServerConfig::checkAfterBracket( std::stringstream & p_str, int * nbLine, \
+									string const & p_fileName )
 {
 	while (!p_str.eof())
 	{
@@ -727,9 +740,9 @@ void					ServerConfig::checkAfterBracket( std::stringstream & p_str, int * nbLin
 	}
 }
 
-void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_file,\
-							map<string, vector<string> > & p_location,  int * nbLine, bool p_bracketIsOpen,
-							string & p_line )
+void
+ServerConfig::fillLocation( string const & p_fileName, ifstream & p_file, map<string, vector<string> > & p_location, \
+							int * nbLine, bool p_bracketIsOpen, string & p_line )
 {
 	bool		bracketIsClose(false);
 
@@ -837,7 +850,8 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 	p_map[key] = location;
 }
 
-void					ServerConfig::initHost( vector<string> & p_filname )
+void
+ServerConfig::initHost( vector<string> & p_filname )
 {
 	string				line;
 
@@ -964,7 +978,8 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 	}
 }
 
-void					ServerConfig::readFolderHost( void )
+void
+ServerConfig::readFolderHost( void )
 {
 
 	DIR *				dir = NULL;
@@ -989,7 +1004,8 @@ void					ServerConfig::readFolderHost( void )
 	this->initHost(fileName);
 }
 
-void					ServerConfig::initConf( void )
+void
+ServerConfig::initConf( void )
 {
 	ofstream			pid;
 	string				line;
@@ -1029,7 +1045,8 @@ void					ServerConfig::initConf( void )
 	}
 }
 
-void					ServerConfig::readFile( ifstream & file )
+void
+ServerConfig::readFile( ifstream & file )
 {
 	string				line;
 	size_t				nb(0);
@@ -1067,7 +1084,8 @@ void					ServerConfig::readFile( ifstream & file )
 	}
 }
 
-void					ServerConfig::checkIfParamsExist( void )
+void
+ServerConfig::checkIfParamsExist( void )
 {
 	if (http.find("worker_processes") != http.end())
 	{
@@ -1087,7 +1105,8 @@ void					ServerConfig::checkIfParamsExist( void )
 		http["max_empty_line_before_request"] = DEFAULT_MAX_EMPTY_LINE_BEFORE_REQUEST;
 }
 
-void					ServerConfig::init( void )
+void
+ServerConfig::init( void )
 {
 	ifstream configFile(_pathConfFile.c_str());
 	if (configFile)
