@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 13:15:53 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 13:41:13 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -257,6 +257,9 @@ string					ServerConfig::checkServerName( map<string, string> & p_map,
 		throw configException("Error params \"server_name:\" not found on ",
 								p_fileName);
 	}
+	else if (p_map.at("server_name").empty())
+		throw std::invalid_argument("Error: Invalid argument: Argument is empty: " \
+						+ p_fileName);
 	else if (!checkArgumentSolo(p_map.at("server_name")))
 			throw std::invalid_argument("Error: Invalid argument: One argument is allowed: " \
 						+ p_fileName);
@@ -272,6 +275,9 @@ string					ServerConfig::checkRoot( map<string, string> & p_map,
 		throw configException("Error params \"root:\" not found on ",
 								p_fileName);
 	}
+	else if (p_map.at("root").empty())
+		throw std::invalid_argument("Error: Invalid argument: Argument is empty: " \
+						+ p_fileName);
 	return string(p_map.at("root"));
 }
 
@@ -287,9 +293,12 @@ vector<string>			ServerConfig::convertIndex( map<string, string> & p_map )
 		while(line)
 		{
 			line >> word;
-			tmp.push_back(word);
+			if (!word.empty())
+				tmp.push_back(word);
 		}
 	}
+	if (tmp.empty())
+		throw std::invalid_argument("Error: Invalid argument: Argument 'index' is empty. ");
 	return tmp;
 }
 
