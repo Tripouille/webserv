@@ -39,7 +39,7 @@ TcpListener::~TcpListener()
 /* Member functions */
 /* Public */
 void
-TcpListener::init(void)
+TcpListener::init(void) throw(tcpException)
 {
 	sockaddr_in		address;
 	size_t			addrlen = sizeof(address);

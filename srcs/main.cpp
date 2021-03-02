@@ -15,16 +15,16 @@ int main(int ac, char *av[])
 	try
 	{
 		config.init();
-		MultiServ		serv(config, config.host);
+		MultiServ		servs(config, config.host);
 
 		/* Stop Serv */
 		if (ac == 2)
 		{
-			serv.stopServ(av[1]);
+			servs.stopServ(av[1]);
 			return (0);
 		}
 		/* Multi Serv */
-		serv.initServs();
+		servs.initServs();
 	}
 	catch (std::exception const & e)
 	{
