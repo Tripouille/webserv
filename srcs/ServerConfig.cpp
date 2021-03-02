@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 15:35:23 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 15:39:20 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -907,7 +907,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				{
 					std::cout << maps->first << std::endl << "\t\t";
 					for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
-						std::cout << *vec << " ";
+						std::cout << *vec << " - ";
 					std::cout << std::endl;
 				}
 			}
@@ -919,7 +919,7 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				{
 					std::cout << maps->first << std::endl << "\t\t";
 					for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
-						std::cout << *vec << " ";
+						std::cout << *vec << " - ";
 					std::cout << std::endl;
 				}
 			}
