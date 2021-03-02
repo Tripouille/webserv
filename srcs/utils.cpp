@@ -108,6 +108,7 @@ bool				checkEndLine( std::string str, std::string comp)
 {
 	std::string			tmp;
 	std::stringstream	line(str);
+	size_t				pos(0);
 
 	line >> tmp;
 	if (tmp == comp && line.eof())
@@ -120,8 +121,8 @@ bool				checkEndLine( std::string str, std::string comp)
 			return false;
 		tmp.erase();
 		line >> tmp;
-		if (tmp[0] == '#')
-			return true;
+		if ((pos = tmp.find_first_of('#')) != std::string::npos)
+			tmp.erase(pos);
 	}
 	if (tmp.empty() && line.eof())
 		return true;

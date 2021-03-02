@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 13:41:13 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 14:06:36 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,13 +140,13 @@ bool					ServerConfig::checkArgumentLocation( string & p_arg )
 bool					ServerConfig::checkArgumentSolo( string & p_arg )
 {
 	std::stringstream	arg(p_arg);
-	string				word;
 	short				nb(0);
 
 	while (!arg.eof())
 	{
+		string				word;
 		arg >> word;
-		if (word[0] == '#')
+		if (word[0] == '#' || word.empty())
 			break ;
 		nb++;
 	}
@@ -847,6 +847,8 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 				}
 				else
 				{
+					if ((pos = arg.find_first_of('#')) != std::string::npos)
+						arg.erase(pos);
 					this->checkKeyIsNotValid(key, &nbLine, _fileHost);
 					if (arg.find_first_of(';') != string::npos)
 					{
