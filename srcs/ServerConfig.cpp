@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 14:06:36 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 14:12:31 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,14 +99,13 @@ bool					ServerConfig::checkArgumentErrorPage( string & p_arg )
 		string				word;
 
 		arg >> word;
-		if (word.empty() || word.find_first_not_of("{") != string::npos)
+		if (word.empty() || word.find_first_not_of("{") == string::npos)
 			break ;
 		nb++;
 	}
-	if (nb > 1)
+	std::cout << "DEBUG: " << nb << std::endl;
+	if (nb >= 1)
 			return false;
-	else if (nb == 0)
-		return false;
 	return true;
 }
 
