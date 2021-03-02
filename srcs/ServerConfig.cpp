@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 11:08:00 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 13:06:34 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -194,13 +194,45 @@ void					ServerConfig::checkKeyExist( string const & p_key,
 {
 	if (p_tmp.find(p_key.c_str())!= p_tmp.end())
 	{
-		string error("Error params \"");
-		error += p_key;
-		error += "\" already exist in file \"";
-		error += p_filename;
-		error += "\".";
 		errno = EINVAL;
-		throw configException(error);
+		throw configException("Error params \"" + p_key + "\" already exist in file \"" + p_filename + "\".");
+	}
+}
+
+void					ServerConfig::checkKeyExist( string const & p_key,
+														map<string, vector<string> > const & p_tmp,
+														string const & p_filename )
+{
+	if (p_tmp.find(p_key.c_str())!= p_tmp.end())
+	{
+		errno = EINVAL;
+		throw configException("Error params \"" + p_key + "\" already exist in file \"" + p_filename + "\".");
+	}
+}
+
+void					ServerConfig::checkKeyExist( string const & p_key,
+														map<string, map<string, vector<string> > > const & p_tmp,
+														string const & p_filename )
+{
+	if (p_tmp.find(p_key.c_str())!= p_tmp.end())
+	{
+		errno = EINVAL;
+		throw configException("Error params \"" + p_key + "\" already exist in file \"" + p_filename + "\".");
+	}
+}
+
+void					ServerConfig::checkKeyExist( Regex const & p_key,
+														map<Regex, map<string, vector<string> > > & p_tmp,
+														string const & p_filename )
+{
+	for (map<Regex, map<string, vector<string> > >::iterator it = p_tmp.begin(); it != p_tmp.end(); it++)
+	{
+		if (it->first.getSource() == p_key.getSource())
+		{
+			errno = EINVAL;
+			throw configException("Error params \"" + p_key.getSource() \
+					+ "\" already exist in file \"" + p_filename + "\".");
+		}
 	}
 }
 
@@ -584,6 +616,7 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 			this->checkIfKeyIsNotRootOrAlias(key, p_location, p_fileName);
 			this->checkKeyIsNotValid(key, nbLine, _location);
 			vector<string> tmpV = this->splitArg(str, bracketIsClose, nbLine, p_fileName);
+			this->checkKeyExist(key, p_location, p_fileName);
 			p_location[key] = tmpV;
 		}
 	}
@@ -685,7 +718,10 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 			this->checkErrorCode(key, nbLine, p_fileName);
 			vector<string> tmpV = this->splitArg(str, bracketIsClose, nbLine, p_fileName);
 			if (tmpV.size() == 1)
+			{
+				this->checkKeyExist(key, p_mapError, p_fileName);
 				p_mapError[key] = tmpV[0];
+			}
 			else
 				throw std::invalid_argument("Error: line " + toStr(*nbLine) \
 					+ " Invalid argument: multi argument: " + p_fileName);
@@ -710,6 +746,7 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 	try {
 		Regex	regex(key);
 		this->fillLocation(p_fileName, p_file, location, nbLine, bracketIsOpen, line);
+		this->checkKeyExist(regex, p_map, p_fileName);
 		p_map[regex] = location;
 	}
 	catch (std::invalid_argument const & e) {
@@ -732,6 +769,7 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 					" Invalid argument: Argument is forbiden: " + p_fileName);
 	key = this->checkOpeningBracket(line, bracketIsOpen);
 	this->fillLocation(p_fileName, p_file, location, nbLine, bracketIsOpen, line);
+	this->checkKeyExist(key, p_map, p_fileName);
 	p_map[key] = location;
 }
 
