@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 16:24:29 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 16:25:02 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -925,39 +925,39 @@ ServerConfig::initHost( vector<string> & p_filname )
 				}
 			}
 
-			for (map<string, string>::iterator t = tmp.begin(); t != tmp.end(); t++)
-			{
-				std::cout << "DEBUG REST: " << std::endl << "\t";
-				std::cout << t->first << " " << t->second << std::endl;
-			}
-			for (map<string, string>::iterator t = mapError.begin(); t != mapError.end(); t++)
-			{
-				std::cout << "DEBUG Error: " << std::endl << "\t";
-				std::cout << t->first << " " << t->second << std::endl;
-			}
-			for (map<Regex, map<string, vector<string> > >::iterator reg = regex.begin(); reg != regex.end(); reg++)
-			{
-				std::cout << "DEBUG REG: " << reg->first.getSource() << std::endl << "\t";
-				for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
-				{
-					std::cout << maps->first << std::endl << "\t\t";
-					for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
-						std::cout << *vec << " - ";
-					std::cout << std::endl;
-				}
-			}
+			// for (map<string, string>::iterator t = tmp.begin(); t != tmp.end(); t++)
+			// {
+			// 	std::cout << "DEBUG REST: " << std::endl << "\t";
+			// 	std::cout << t->first << " " << t->second << std::endl;
+			// }
+			// for (map<string, string>::iterator t = mapError.begin(); t != mapError.end(); t++)
+			// {
+			// 	std::cout << "DEBUG Error: " << std::endl << "\t";
+			// 	std::cout << t->first << " " << t->second << std::endl;
+			// }
+			// for (map<Regex, map<string, vector<string> > >::iterator reg = regex.begin(); reg != regex.end(); reg++)
+			// {
+			// 	std::cout << "DEBUG REG: " << reg->first.getSource() << std::endl << "\t";
+			// 	for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
+			// 	{
+			// 		std::cout << maps->first << std::endl << "\t\t";
+			// 		for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
+			// 			std::cout << *vec << " - ";
+			// 		std::cout << std::endl;
+			// 	}
+			// }
 
-			for (map<string, map<string, vector<string> > >::iterator reg = conf.begin(); reg != conf.end(); reg++)
-			{
-				std::cout << "DEBUG LOCATION: " << reg->first << std::endl << "\t";
-				for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
-				{
-					std::cout << maps->first << std::endl << "\t\t";
-					for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
-						std::cout << *vec << " - ";
-					std::cout << std::endl;
-				}
-			}
+			// for (map<string, map<string, vector<string> > >::iterator reg = conf.begin(); reg != conf.end(); reg++)
+			// {
+			// 	std::cout << "DEBUG LOCATION: " << reg->first << std::endl << "\t";
+			// 	for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
+			// 	{
+			// 		std::cout << maps->first << std::endl << "\t\t";
+			// 		for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
+			// 			std::cout << *vec << " - ";
+			// 		std::cout << std::endl;
+			// 	}
+			// }
 			std::cout << std::endl << std::endl;
 
 			/* Init stuct Host */
