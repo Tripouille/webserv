@@ -6,7 +6,7 @@
 /*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 12:16:20 by aalleman         ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 12:22:22 by aalleman         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -980,20 +980,14 @@ void					ServerConfig::checkIfParamsExist( void )
 	}
 	else
 		http["worker_processes"] = DEFAULT_WORKER_PROCESSES;
-	if (http.find("uri_max_size") == http.end())
-	{
-		errno = EINVAL;
-		throw configException("Error in config file with params uri_max_size not exist");
-	}
-	else
+	if (http.find("uri_max_size") != http.end())
 		tryParseInt(http.at("uri_max_size"));
-	if (http.find("max_empty_line_before_request") == http.end())
-	{
-		errno = EINVAL;
-		throw configException("Error in config file with params max_empty_line_before_request not exist");
-	}
 	else
+		http["uri_max_size"] = DEFAULT_URI_MAX_SIZE;
+	if (http.find("max_empty_line_before_request") != http.end())
 		tryParseInt(http.at("max_empty_line_before_request"));
+	else
+		http["max_empty_line_before_request"] = DEFAULT_MAX_EMPTY_LINE_BEFORE_REQUEST;
 }
 
 void					ServerConfig::init( void )
