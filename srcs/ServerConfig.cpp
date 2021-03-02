@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 16:25:02 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 16:29:54 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -711,7 +711,6 @@ ServerConfig::checkEndLineFileLocation(string & p_line, int * nbLine, string con
 {
 	size_t		pos(0);
 
-	std::cout << p_line << std::endl;
 	if (p_line.empty() || p_line[p_line.find_first_not_of(WHITESPACE)] == '#')
 		return ;
 	if (p_line[0] == '{' || p_line[0] == '}')
@@ -958,7 +957,6 @@ ServerConfig::initHost( vector<string> & p_filname )
 			// 		std::cout << std::endl;
 			// 	}
 			// }
-			std::cout << std::endl << std::endl;
 
 			/* Init stuct Host */
 			Host temp_host = {
