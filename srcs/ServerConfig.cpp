@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 16:13:09 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 16:14:47 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -709,7 +709,7 @@ void					ServerConfig::checkEndLineFileLocation(string & p_line, int * nbLine, s
 					+ " not finish: " + p_fileName);
 }
 
-void					ServerConfig::checkAfterBracker( std::stringstream & p_str, int * nbLine, \
+void					ServerConfig::checkAfterBracket( std::stringstream & p_str, int * nbLine, \
 														string const & p_fileName )
 {
 	while (!p_str.eof())
