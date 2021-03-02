@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 16:14:47 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 16:19:35 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -638,6 +638,7 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 			getline(p_file, p_arg);
 			*nbLine += 1;
 		}
+		this->checkEndLineFileLocation(p_arg, nbLine, p_fileName);
 		std::stringstream		str(p_arg);
 		p_arg.erase();
 
@@ -680,6 +681,8 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 					+ " Invalid argument: Missing value " + p_fileName);
 			this->checkErrorCode(key, nbLine, p_fileName);
 			vector<string> tmpV = this->splitArg(str, bracketIsClose, nbLine, p_fileName);
+			if (bracketIsClose && !str.eof())
+				this->checkAfterBracket(str, nbLine, p_fileName);
 			if (tmpV.size() == 1)
 			{
 				this->checkKeyExist(key, p_mapError, p_fileName);
@@ -696,7 +699,8 @@ void					ServerConfig::checkEndLineFileLocation(string & p_line, int * nbLine, s
 {
 	size_t		pos(0);
 
-	if (p_line.empty())
+	std::cout << p_line << std::endl;
+	if (p_line.empty() || p_line[p_line.find_first_not_of(WHITESPACE)] == '#')
 		return ;
 	if (p_line[0] == '{' || p_line[0] == '}')
 		return ;
@@ -779,7 +783,7 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 			this->checkKeyIsNotValid(key, nbLine, _location);
 			vector<string> tmpV = this->splitArg(str, bracketIsClose, nbLine, p_fileName);
 			if (bracketIsClose && !str.eof())
-				this->checkAfterBracker(str, nbLine, p_fileName);
+				this->checkAfterBracket(str, nbLine, p_fileName);
 			if (tmpV.empty())
 				throw std::invalid_argument("Error: line " + toStr(*nbLine) \
 					+ " Invalid argument: Argument is empty " + p_fileName);
