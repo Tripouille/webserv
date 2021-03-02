@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   MultiServ.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
+/*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/19 10:39:00 by frfrey            #+#    #+#             */
-/*   Updated: 2021/02/24 13:33:04 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 13:30:30 by aalleman         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,27 +62,28 @@ void			MultiServ::initServs( void )
 	{
 		for (std::vector<Host>::iterator host = _host.begin(); host != _host.end(); host++)
 		{
-			pid_t pid;
-			if ((pid = fork()) < 0)
+			pid_t pid = fork();
+			if (pid < 0)
 			{
-					std::cerr << "Error: fork failled" << std::endl;
-					exit(10);
+				std::cerr << "Error: fork failed" << std::endl;
+				exit(ECHILD);
 			}
-			if (pid == 0)
+			else if (pid == 0)
 			{
 				_pids << getpid() << std::endl;
 				TcpListener webserv(INADDR_ANY, host->port, _config, *host);
-				webserv.init();
-				webserv.run();
-			}
-			else
-			{
+				try
+				{
+					webserv.init();
+					webserv.run();
+				}
+				catch (std::exception const & e) { cerr << e.what() << endl; }
+				exit(EXIT_FAILURE);
 			}
 		}
 		wait(&_status);
 		_pids.close();
-		if (WIFSIGNALED(_status))
-			this->stopServ(const_cast<char *>("stop"));
+		this->stopServ(const_cast<char *>("stop"));
 	}
 	else
 	{
@@ -111,7 +112,7 @@ void			MultiServ::stopServ( char * p_arg )
 					pid_t tmp;
 
 					tmp = atoi(arg.c_str());
-					kill(tmp, 15);
+					kill(tmp, SIGTERM);
 				}
 			}
 			else
