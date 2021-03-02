@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/01 16:33:25 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 11:08:00 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -508,6 +508,27 @@ vector<string>			ServerConfig::splitArg( std::stringstream & p_sstr, bool & p_br
 	return tmp;
 }
 
+void				ServerConfig::clearBuff( std::stringstream & p_buf)
+{
+	string buf;
+
+	while (!p_buf.eof())
+		p_buf >> buf;
+}
+
+string				ServerConfig::checkBracketLine(string & p_key, std::stringstream & p_str, char c)
+{
+	size_t	pos(0);
+
+	if ((pos = p_key.find_first_of(c)) != string::npos)
+	{
+		if (p_key[pos + 1] != '#')
+			return p_key;
+	}
+	this->clearBuff(p_str);
+	return p_key.erase(pos + 1);
+}
+
 void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_file,\
 							map<string, vector<string> > & p_location,  int * nbLine, bool p_bracketIsOpen,
 							string & p_line )
@@ -532,6 +553,8 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 			str >> key;
 			if (key.empty() || key.at(0) == '#')
 				break ;
+			if (key[0] == '{' && key.size() != 1 && !p_bracketIsOpen)
+				this->checkBracketLine(key, str, '{');
 			if (key != "{" && !p_bracketIsOpen)
 				throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
 					" Invalid argument: Bracket was not open: " + p_fileName);
@@ -543,7 +566,7 @@ void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_fil
 				p_bracketIsOpen = true;
 				key.erase();
 				str >> key;
-				if (key.empty())
+				if (key.empty() || key[0] == '#')
 					break ;
 			}
 			if (key == "}")
@@ -629,6 +652,10 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 			str >> key;
 			if (key.empty() || key.at(0) == '#')
 				break ;
+			if (key[0] == '{' && key.size() != 1 && !bracketIsOpen)
+				this->checkBracketLine(key, str, '{');
+			else if (key[0] == '}' && key.size() != 1)
+				this->checkBracketLine(key, str, '}');
 			if (key != "{" && !bracketIsOpen)
 				throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
 					" Invalid argument: Bracket was not open: " + p_fileName);

@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/01 16:32:44 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 11:06:31 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,6 +140,8 @@ class ServerConfig
 		bool					checkArgumentSolo( string & p_arg );
 		bool					checkArgumentErrorPage( string & p_arg );
 		bool					checkArgumentLocation( string & p_arg );
+		string 					checkBracketLine(string & p_key, std::stringstream & p_str, char c);
+		void					clearBuff(std::stringstream & p_str);
 
 };
 

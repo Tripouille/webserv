@@ -114,6 +114,8 @@ bool				checkEndLine( std::string str, std::string comp)
 		return true;
 	else
 	{
+		if (tmp[0] == '#')
+			return true;
 		if (tmp.find_first_not_of(";") != std::string::npos && !tmp.empty())
 			return false;
 		tmp.erase();
