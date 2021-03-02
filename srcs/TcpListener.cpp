@@ -83,12 +83,7 @@ TcpListener::run(void)
 {
 	fd_set readfds, writefds;
 	int socketCount;
-	int workerNb;
-
-	if (_config.http.find("worker_processes") != _config.http.end())
-		workerNb = atoi(_config.http["worker_processes"].c_str());
-	else
-		workerNb = DEFAULT_WORKER_NB;
+	int maxWorkerNb = atoi(_config.http["worker_processes"].c_str());
 
 	while (true)
 	{
@@ -101,7 +96,7 @@ TcpListener::run(void)
 			throw tcpException("Select failed");
 		}
 
-		launchThreads(this, readfds, writefds, std::min(workerNb, socketCount));
+		launchThreads(this, readfds, writefds, std::min(maxWorkerNb, socketCount));
 	}
 }
 

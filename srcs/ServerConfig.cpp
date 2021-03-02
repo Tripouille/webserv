@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
+/*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 11:08:00 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 12:16:20 by aalleman         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -979,7 +979,7 @@ void					ServerConfig::checkIfParamsExist( void )
 			throw std::invalid_argument("Error: Invalid argument:'worker_processes' must be 1 and 100.");
 	}
 	else
-		http["worker_processes"] = "8";
+		http["worker_processes"] = DEFAULT_WORKER_PROCESSES;
 	if (http.find("uri_max_size") == http.end())
 	{
 		errno = EINVAL;
