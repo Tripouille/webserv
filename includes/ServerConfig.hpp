@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 12:26:26 by aalleman         ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 13:10:04 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,6 +120,12 @@ class ServerConfig
 		map<Regex, map<string, vector<string> > > &
 								checkRegex( map<Regex, map<string, vector<string> > > & p_map, string const & p_fileName);
 		void					checkKeyExist( string const & p_key, map<string, string> const & p_tmp,
+												 string const & p_filename = "server.conf" );
+		void					checkKeyExist( string const & p_key, map<string, vector<string> > const & p_tmp,
+												 string const & p_filename = "server.conf" );
+		void					checkKeyExist( string const & p_key, map<string, map<string, vector<string> > > const & p_tmp,
+												 string const & p_filename = "server.conf" );
+		void					checkKeyExist( Regex const & p_key, map<Regex, map<string, vector<string> > > & p_tmp,
 												 string const & p_filename = "server.conf" );
 		void					checkIfParamsExist( void );
 		void					checkIfKeyIsNotRootOrAlias( string const & p_key, map<string, vector<string> > & p_map, \
