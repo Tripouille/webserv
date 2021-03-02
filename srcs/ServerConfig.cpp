@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 13:10:45 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 13:15:53 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -561,67 +561,6 @@ string				ServerConfig::checkBracketLine(string & p_key, std::stringstream & p_s
 	return p_key.erase(pos + 1);
 }
 
-void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_file,\
-							map<string, vector<string> > & p_location,  int * nbLine, bool p_bracketIsOpen,
-							string & p_line )
-{
-	string		arg;
-	bool		bracketIsClose(false);
-
-	while(!bracketIsClose)
-	{
-		if (p_line.empty())
-		{
-			*nbLine += 1;
-			getline(p_file, p_line);
-		}
-		std::stringstream		str(p_line);
-		p_line.erase();
-
-		while (!str.eof() && !bracketIsClose)
-		{
-			string		key;
-
-			str >> key;
-			if (key.empty() || key.at(0) == '#')
-				break ;
-			if (key[0] == '{' && key.size() != 1 && !p_bracketIsOpen)
-				this->checkBracketLine(key, str, '{');
-			if (key != "{" && !p_bracketIsOpen)
-				throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
-					" Invalid argument: Bracket was not open: " + p_fileName);
-			if (key == "{")
-			{
-				if (p_bracketIsOpen)
-					throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
-						" Invalid argument: Bracket is already open: " + p_fileName);
-				p_bracketIsOpen = true;
-				key.erase();
-				str >> key;
-				if (key.empty() || key[0] == '#')
-					break ;
-			}
-			if (key == "}")
-			{
-				string rest;
-				getline(str, rest);
-				if (!checkEndLine(rest, "}"))
-					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " Invalid argument: " + p_fileName);
-				bracketIsClose = true;
-				break;
-			}
-			if (str.eof())
-				throw std::invalid_argument("Error: line " + toStr(*nbLine) \
-					+ " Invalid argument: Missing value " + p_fileName);
-			this->checkIfKeyIsNotRootOrAlias(key, p_location, p_fileName);
-			this->checkKeyIsNotValid(key, nbLine, _location);
-			vector<string> tmpV = this->splitArg(str, bracketIsClose, nbLine, p_fileName);
-			this->checkKeyExist(key, p_location, p_fileName);
-			p_location[key] = tmpV;
-		}
-	}
-}
-
 void
 ServerConfig::checkErrorCode( string & p_key , int *nbLine, string const & p_fileName )
 {
@@ -630,6 +569,20 @@ ServerConfig::checkErrorCode( string & p_key , int *nbLine, string const & p_fil
 		throw std::invalid_argument("Error: line " + toStr(*nbLine) \
 					+ " Invalid argument: This is not an valid Error code " \
 					+ p_fileName);
+}
+
+string
+ServerConfig::extractBraquetErrorPage( string & p_arg, int *nbLine )
+{
+	size_t		pos(0);
+
+	if ((pos = p_arg.find_first_not_of('#')) != string::npos)
+	{
+		if (p_arg[pos - 1] == '#')
+			return string("{");
+		throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
+	}
+	return string("{");
 }
 
 string
@@ -729,6 +682,67 @@ ServerConfig::isErrorPage( ifstream & p_file, int *nbLine, string const & p_file
 	}
 }
 
+void					ServerConfig::fillLocation( string const & p_fileName, ifstream & p_file,\
+							map<string, vector<string> > & p_location,  int * nbLine, bool p_bracketIsOpen,
+							string & p_line )
+{
+	string		arg;
+	bool		bracketIsClose(false);
+
+	while(!bracketIsClose)
+	{
+		if (p_line.empty())
+		{
+			*nbLine += 1;
+			getline(p_file, p_line);
+		}
+		std::stringstream		str(p_line);
+		p_line.erase();
+
+		while (!str.eof() && !bracketIsClose)
+		{
+			string		key;
+
+			str >> key;
+			if (key.empty() || key.at(0) == '#')
+				break ;
+			if (key[0] == '{' && key.size() != 1 && !p_bracketIsOpen)
+				this->checkBracketLine(key, str, '{');
+			if (key != "{" && !p_bracketIsOpen)
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
+					" Invalid argument: Bracket was not open: " + p_fileName);
+			if (key == "{")
+			{
+				if (p_bracketIsOpen)
+					throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
+						" Invalid argument: Bracket is already open: " + p_fileName);
+				p_bracketIsOpen = true;
+				key.erase();
+				str >> key;
+				if (key.empty() || key[0] == '#')
+					break ;
+			}
+			if (key == "}")
+			{
+				string rest;
+				getline(str, rest);
+				if (!checkEndLine(rest, "}"))
+					throw std::invalid_argument("Error: line " + toStr(*nbLine) + " Invalid argument: " + p_fileName);
+				bracketIsClose = true;
+				break;
+			}
+			if (str.eof())
+				throw std::invalid_argument("Error: line " + toStr(*nbLine) \
+					+ " Invalid argument: Missing value " + p_fileName);
+			this->checkIfKeyIsNotRootOrAlias(key, p_location, p_fileName);
+			this->checkKeyIsNotValid(key, nbLine, _location);
+			vector<string> tmpV = this->splitArg(str, bracketIsClose, nbLine, p_fileName);
+			this->checkKeyExist(key, p_location, p_fileName);
+			p_location[key] = tmpV;
+		}
+	}
+}
+
 void
 ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstream & p_file, \
 								string & p_arg, string const & p_fileName, int *nbLine )
@@ -771,19 +785,6 @@ ServerConfig::isLocation( map<string, map<string, vector<string> > > & p_map, if
 	this->fillLocation(p_fileName, p_file, location, nbLine, bracketIsOpen, line);
 	this->checkKeyExist(key, p_map, p_fileName);
 	p_map[key] = location;
-}
-
-string					ServerConfig::extractBraquetErrorPage( string & p_arg, int *nbLine )
-{
-	size_t		pos(0);
-
-	if ((pos = p_arg.find_first_not_of('#')) != string::npos)
-	{
-		if (p_arg[pos - 1] == '#')
-			return string("{");
-		throw std::invalid_argument("Error: line " + toStr(*nbLine) + " not finish.");
-	}
-	return string("{");
 }
 
 void					ServerConfig::initHost( vector<string> & p_filname )
@@ -861,6 +862,11 @@ void					ServerConfig::initHost( vector<string> & p_filname )
 			for (map<string, string>::iterator t = tmp.begin(); t != tmp.end(); t++)
 			{
 				std::cout << "DEBUG REST: " << std::endl << "\t";
+				std::cout << t->first << " " << t->second << std::endl;
+			}
+			for (map<string, string>::iterator t = mapError.begin(); t != mapError.end(); t++)
+			{
+				std::cout << "DEBUG Error: " << std::endl << "\t";
 				std::cout << t->first << " " << t->second << std::endl;
 			}
 			// for (map<Regex, map<string, vector<string> > >::iterator reg = regex.begin(); reg != regex.end(); reg++)
