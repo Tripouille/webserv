@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
+/*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 16:29:54 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/03 12:11:08 by aalleman         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -301,9 +301,9 @@ ServerConfig::convertIndex( map<string, string> & p_map )
 			if (!word.empty())
 				tmp.push_back(word);
 		}
+		if (tmp.empty())
+			throw std::invalid_argument("Error: Invalid argument: Argument 'index' is empty. ");
 	}
-	if (tmp.empty())
-		throw std::invalid_argument("Error: Invalid argument: Argument 'index' is empty. ");
 	return tmp;
 }
 
