@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   MultiServ.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/19 10:39:00 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/02 13:30:30 by aalleman         ###   ########lyon.fr   */
+/*   Updated: 2021/03/03 12:50:56 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,6 +58,11 @@ void			MultiServ::initServs( void )
 {
 	if (_config.http.find("pid") != _config.http.end())
 		_pids.open(_config.http.at("pid").c_str());
+	else
+	{
+		errno = ENOENT;
+		throw servException("Error file pid does not exist.");
+	}
 	if (_pids)
 	{
 		for (std::vector<Host>::iterator host = _host.begin(); host != _host.end(); host++)
@@ -117,11 +122,11 @@ void			MultiServ::stopServ( char * p_arg )
 			}
 			else
 			{
-				errno = 2;
+				errno = ENOENT;
 				throw servException("Error file is not open for stop serv:", fileName);
 			}
 		} else {
-			errno = 2;
+			errno = ENOENT;
 			throw servException("Error file pid not exist:");
 		}
 		file.close();
