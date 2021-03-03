@@ -10,7 +10,7 @@ HttpRequest::parseException::parseException(HttpRequest const & request,
 	const_cast<HttpRequest &>(request).setStatus(code, info);
 	while (true)
 	{
-		std::streamsize recvReturn = recv(request._client.s, NULL, CLIENT_MAX_BODY_SIZE, 0);
+		std::streamsize recvReturn = recv(request._client.s, NULL, CLIENT_MAX_BODY_SIZE, MSG_DONTWAIT);
 		if (recvReturn <= 0)
 			return ;
 	}
