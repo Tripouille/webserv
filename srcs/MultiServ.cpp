@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/19 10:39:00 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/03 12:50:56 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/03 14:08:13 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 /*
 ** -------------------------------- Exception ---------------------------------
 */
+MultiServ * MultiServ::instance = NULL;
 
 MultiServ::servException::servException( string str, string arg ) throw()
 	: _str(str + " " + arg + " : " + strerror(errno))
@@ -34,6 +35,7 @@ const char *			MultiServ::servException::what(void) const throw()
 MultiServ::MultiServ( ServerConfig & p_config, vector<Host> & p_host )
 	: _config(p_config), _host(p_host)
 {
+	instance = this;
 }
 
 
@@ -53,6 +55,22 @@ MultiServ::~MultiServ()
 /*
 ** --------------------------------- METHODS ----------------------------------
 */
+
+void			MultiServ::stopServSignal( int sig )
+{
+	(void) sig;
+	instance->stopServ(const_cast<char *>("stop"));
+	exit(0);
+}
+
+void			MultiServ::eraseFile( void )
+{
+	ofstream		file;
+	std::string		fileName = _config.http.at("pid");
+
+	file.open(fileName.c_str(), std::ios_base::trunc);
+	file.close();
+}
 
 void			MultiServ::initServs( void )
 {
@@ -75,6 +93,7 @@ void			MultiServ::initServs( void )
 			}
 			else if (pid == 0)
 			{
+				std::signal(SIGINT, SIG_IGN);
 				_pids << getpid() << std::endl;
 				TcpListener webserv(INADDR_ANY, host->port, _config, *host);
 				try
@@ -92,7 +111,7 @@ void			MultiServ::initServs( void )
 	}
 	else
 	{
-		errno = 2;
+		errno = ENOENT;
 		throw servException("Error file pid is not open:");
 	}
 }
@@ -130,6 +149,7 @@ void			MultiServ::stopServ( char * p_arg )
 			throw servException("Error file pid not exist:");
 		}
 		file.close();
+		this->eraseFile();
 	}
 }
 
