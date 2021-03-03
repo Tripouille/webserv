@@ -4,7 +4,7 @@
 
 #include "ServerConfig.hpp"
 #include "MultiServ.hpp"
-#define PORT 8080
+
 using std::cerr;
 using std::endl;
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   MultiServ.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
+/*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/19 10:39:00 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/03 14:36:59 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/03 16:31:44 by aalleman         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,9 +59,8 @@ MultiServ::~MultiServ()
 
 void			MultiServ::stopServSignal( int sig )
 {
-	(void) sig;
 	instance->stopServ(const_cast<char *>("stop"));
-	exit(0);
+	exit(sig);
 }
 
 void			MultiServ::eraseFile( void )

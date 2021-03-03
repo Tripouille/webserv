@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
+/*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/03 13:05:04 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/03 16:11:13 by aalleman         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -196,7 +196,7 @@ void
 ServerConfig::checkKeyExist( string const & p_key, map<string, string> const & p_tmp, \
 								string const & p_filename )
 {
-	if (p_tmp.find(p_key.c_str())!= p_tmp.end())
+	if (p_tmp.find(p_key.c_str()) != p_tmp.end())
 	{
 		errno = EINVAL;
 		throw configException("Error params \"" + p_key + "\" already exist in file \"" + p_filename + "\".");
@@ -927,40 +927,6 @@ ServerConfig::initHost( vector<string> & p_filname )
 				}
 			}
 
-			// for (map<string, string>::iterator t = tmp.begin(); t != tmp.end(); t++)
-			// {
-			// 	std::cout << "DEBUG REST: " << std::endl << "\t";
-			// 	std::cout << t->first << " " << t->second << std::endl;
-			// }
-			// for (map<string, string>::iterator t = mapError.begin(); t != mapError.end(); t++)
-			// {
-			// 	std::cout << "DEBUG Error: " << std::endl << "\t";
-			// 	std::cout << t->first << " " << t->second << std::endl;
-			// }
-			// for (map<Regex, map<string, vector<string> > >::iterator reg = regex.begin(); reg != regex.end(); reg++)
-			// {
-			// 	std::cout << "DEBUG REG: " << reg->first.getSource() << std::endl << "\t";
-			// 	for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
-			// 	{
-			// 		std::cout << maps->first << std::endl << "\t\t";
-			// 		for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
-			// 			std::cout << *vec << " - ";
-			// 		std::cout << std::endl;
-			// 	}
-			// }
-
-			// for (map<string, map<string, vector<string> > >::iterator reg = conf.begin(); reg != conf.end(); reg++)
-			// {
-			// 	std::cout << "DEBUG LOCATION: " << reg->first << std::endl << "\t";
-			// 	for (map<string, vector<string> >::iterator maps = reg->second.begin(); maps != reg->second.end(); maps++)
-			// 	{
-			// 		std::cout << maps->first << std::endl << "\t\t";
-			// 		for (vector<string>::iterator vec = maps->second.begin(); vec != maps->second.end(); vec++)
-			// 			std::cout << *vec << " - ";
-			// 		std::cout << std::endl;
-			// 	}
-			// }
-
 			/* Init stuct Host */
 			Host temp_host = {
 				this->checkPort(port, p_filname[i]),
@@ -1078,7 +1044,7 @@ ServerConfig::readFile( ifstream & file )
 		}
 		if ((nb = arg.find_first_of(';')) != string::npos)
 			arg.erase(nb, arg.size());
-		if ((nb = arg.find_first_not_of(' ')) != string::npos)
+		if ((nb = arg.find_first_not_of(WHITESPACE)) != string::npos)
 			arg.erase(0, nb);
 		this->checkKeyExist(key, http);
 		http.insert(it, std::pair<string, string>(key, arg));
