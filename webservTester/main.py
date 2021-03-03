@@ -67,8 +67,8 @@ print(colors.RESET)
 
 
 test(200, 'GET', '/index.php', None, {"Host": "localhost"}, None, None)
-print()
-# Stress test
+
+print("\nTest of index.php 100 times")
 for i in range(1000):
 	webserv = client.HTTPConnection('localhost:9999')
 	webservAnswer = doRequest(webserv, 'GET', '/index.php', None, {"Host": "localhost"})

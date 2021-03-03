@@ -47,7 +47,7 @@ std::streamsize selectAndRead(SOCKET socket, char * buffer, size_t size)
 
 	while (static_cast<size_t>(bytesRead) < size)
 	{
-		timeval timeout = {0, READ_TIMEOUT};
+		timeval timeout = {READ_TIMEOUT, 0};
 		if ((selectRet = select(FD_SETSIZE, &fdSet, NULL, NULL, &timeout)) < 0)
 		{
 			cerr << "select error in selectAndRead" << endl;
@@ -77,7 +77,7 @@ std::streamsize selectAndWrite(SOCKET socket, char * buffer, size_t size)
 	fcntl(socket, F_SETFL, O_NONBLOCK);
 	while (static_cast<size_t>(bytesWritten) < size)
 	{
-		timeval timeout = {0, WRITE_TIMEOUT};
+		timeval timeout = {WRITE_TIMEOUT, 0};
 		if ((selectRet = select(FD_SETSIZE, NULL, &fdSet, NULL, &timeout)) < 0)
 		{
 			cerr << "select error in selectAndWrite" << endl;
