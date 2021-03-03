@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/03 12:39:15 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/03 12:57:22 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1066,8 +1066,6 @@ ServerConfig::readFile( ifstream & file )
 			continue;
 		if (key.at(0) == '#')
 			continue;
-		if ((nb = key.find_first_of(':') != string::npos))
-			key.erase(key.find_first_of(':'), nb + 1);
 		this->checkKeyIsNotValid(key, &nbLine, _fileConf);
 		getline(str, arg);
 		if ((nb = arg.find_first_of(';')) != string::npos)
