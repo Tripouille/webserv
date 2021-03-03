@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/19 10:39:00 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/03 14:26:16 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/03 14:31:04 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,7 +117,6 @@ void			MultiServ::initServs( void )
 			else if (pid == 0)
 			{
 				std::signal(SIGINT, SIG_IGN);
-				_pids << getpid() << std::endl;
 				TcpListener webserv(INADDR_ANY, host->port, _config, *host);
 				try
 				{
@@ -127,6 +126,8 @@ void			MultiServ::initServs( void )
 				catch (std::exception const & e) { cerr << e.what() << endl; }
 				exit(EXIT_FAILURE);
 			}
+			else
+				_pids << pid << std::endl;
 		}
 		wait(&_status);
 		_pids.close();
