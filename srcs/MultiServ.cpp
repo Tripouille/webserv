@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/19 10:39:00 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/03 14:31:04 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/03 14:36:59 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,6 +112,7 @@ void			MultiServ::initServs( void )
 			if (pid < 0)
 			{
 				std::cerr << "Error: fork failed" << std::endl;
+				this->stopServ(const_cast<char *>("stop"));
 				exit(ECHILD);
 			}
 			else if (pid == 0)
