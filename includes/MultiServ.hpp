@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/19 10:39:00 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/03 14:07:16 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/03 14:25:51 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,6 +58,7 @@ class MultiServ
 		MultiServ &		operator=( MultiServ const & rhs );
 		MultiServ( MultiServ const & src );
 		void						eraseFile();
+		void						checkWebServLaunch();
 
 };
 

@@ -6,16 +6,17 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/19 10:39:00 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/03 14:08:13 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/03 14:26:16 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "MultiServ.hpp"
 
+MultiServ * MultiServ::instance = NULL;
+
 /*
 ** -------------------------------- Exception ---------------------------------
 */
-MultiServ * MultiServ::instance = NULL;
 
 MultiServ::servException::servException( string str, string arg ) throw()
 	: _str(str + " " + arg + " : " + strerror(errno))
@@ -72,10 +73,32 @@ void			MultiServ::eraseFile( void )
 	file.close();
 }
 
+void			MultiServ::checkWebServLaunch( void )
+{
+	ifstream		file;
+	std::string		str;
+
+	file.open(_config.http.at("pid").c_str());
+	if (file)
+	{
+		file >> str;
+		if (str.empty())
+		{
+			file.close();
+			return ;
+		}
+		file.close();
+		this->stopServ(const_cast<char *>("stop"));
+	}
+}
+
 void			MultiServ::initServs( void )
 {
 	if (_config.http.find("pid") != _config.http.end())
+	{
+		this->checkWebServLaunch();
 		_pids.open(_config.http.at("pid").c_str());
+	}
 	else
 	{
 		errno = ENOENT;

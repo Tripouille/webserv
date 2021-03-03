@@ -1,4 +1,5 @@
 #include <cstring>
+#include <csignal>
 #include <netinet/in.h>
 
 #include "ServerConfig.hpp"
@@ -12,6 +13,7 @@ int main(int ac, char *av[])
 {
 	ServerConfig	config;
 
+	std::signal(SIGINT, MultiServ::stopServSignal);
 	try
 	{
 		config.init();
