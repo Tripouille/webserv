@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/03 12:11:08 by aalleman         ###   ########lyon.fr   */
+/*   Updated: 2021/03/03 12:39:15 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -816,6 +816,9 @@ ServerConfig::isRegex( map<Regex, map<string, vector<string> > > & p_map, ifstre
 	size_t							pos(0);
 
 	line.erase(0,1);
+	if (!this->checkArgumentLocation(line))
+		throw std::invalid_argument("Error: line " + toStr(*nbLine) + \
+					" Invalid argument: Argument is forbiden: " + p_fileName);
 	key = this->checkOpeningBracket(line, bracketIsOpen);
 	if ((pos = key.find_first_of(WHITESPACE)) != string::npos)
 			key.erase(0, pos);
