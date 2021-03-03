@@ -6,7 +6,7 @@
 /*   By: frfrey <frfrey@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/03 12:57:22 by frfrey           ###   ########lyon.fr   */
+/*   Updated: 2021/03/03 13:05:04 by frfrey           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1068,6 +1068,8 @@ ServerConfig::readFile( ifstream & file )
 			continue;
 		this->checkKeyIsNotValid(key, &nbLine, _fileConf);
 		getline(str, arg);
+		if (!this->checkArgumentSolo(arg))
+			throw std::invalid_argument("Error: line " + toStr(nbLine) + " Multi Argument is forbiden.");
 		if ((nb = arg.find_first_of(';')) != string::npos)
 		{
 			if (!checkEndLine(arg.substr(nb, arg.size()), ";"))
