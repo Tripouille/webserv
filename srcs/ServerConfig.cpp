@@ -6,7 +6,7 @@
 /*   By: aalleman <aalleman@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/27 10:12:28 by frfrey            #+#    #+#             */
-/*   Updated: 2021/03/03 16:11:13 by aalleman         ###   ########lyon.fr   */
+/*   Updated: 2021/03/04 14:32:09 by aalleman         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -378,6 +378,14 @@ ServerConfig::checkLocation( map<string, map<string, vector<string> > > & p_map,
 					throw configException("Error in params \"" + map->first + "\" on Location \"" + it->first + \
 								"\", " + map->second.at(0) + "\" is not a Directory in file", p_fileName);
 			}
+			if (map->first == "auth_basic_user_file")
+			{
+				struct stat fileInfos;
+				if (stat(string(map->second[0]).c_str(), &fileInfos) != 0)
+				{
+					throw configException("Error with error file " + string(map->second[0]) + " :", p_fileName);
+				} 
+			}
 			if (map->first == "auth_basic" && (it->second.find("auth_basic_user_file") == it->second.end()))
 			{
 				errno = EINVAL;
@@ -444,6 +452,14 @@ ServerConfig::checkRegex(map<Regex, map<string, vector<string> > > & p_map, stri
 				if (stat(map->second.at(0).c_str(), &fileInfos) != 0 || !S_ISDIR(fileInfos.st_mode))
 					throw configException("Error in params \"" + map->first + "\" on Location \"" + it->first.getSource() + \
 								"\", " + map->second.at(0) + "\" is not a Directory in file", p_fileName);
+			}
+			if (map->first == "auth_basic_user_file")
+			{
+				struct stat fileInfos;
+				if (stat(string(map->second[0]).c_str(), &fileInfos) != 0)
+				{
+					throw configException("Error with error file " + string(map->second[0]) + " :", p_fileName);
+				} 
 			}
 			if (map->first == "auth_basic" && (it->second.find("auth_basic_user_file") == it->second.end()))
 			{
