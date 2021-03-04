@@ -95,8 +95,8 @@ TcpListener::run(void)
 			close(_socket);
 			throw tcpException("Select failed");
 		}
-
-		launchThreads(this, readfds, writefds, std::min(maxWorkerNb, socketCount));
+		if (socketCount > 0)
+			launchThreads(this, readfds, writefds, maxWorkerNb);
 	}
 }
 
